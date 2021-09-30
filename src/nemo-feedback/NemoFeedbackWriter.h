@@ -39,6 +39,8 @@ public:
 
     void write_variable_level_qc(const std::string & variable_name, const std::array<int32_t, 2>& data){};
 
+    static constexpr double double_fillvalue = 99999.0;
+
 private:
     NemoFeedbackWriter() : ncFile(), nobs_dim(), nlevels_dim(), n_levels_() {};
 

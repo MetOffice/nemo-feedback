@@ -22,6 +22,7 @@
 #include "oops/mpi/mpi.h"
 #include "oops/util/Logger.h"
 #include "oops/util/DateTime.h"
+#include "oops/util/missingValues.h"
 #include "nemo-feedback/NemoFeedbackParameters.h"
 #include "nemo-feedback/NemoFeedbackWriter.h"
 #include "ufo/GeoVaLs.h"
@@ -128,6 +129,10 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
     auto nemo_name = nemo_variable_conf.getString("nemo name");
     auto ufo_name = nemo_variable_conf.getString("name");
     obsdb_.get_db("ObsValue", ufo_name, variable_data);
+    auto missing_value = util::missingValue(variable_data[0]);
+    for(int i=0; i<ov.size(); ++i) {
+      if (variable_data[i] == missing_value) variable_data[i] = NemoFeedbackWriter::double_fillvalue;
+    }
     fdbk_writer.write_variable_surf(nemo_name + "_OBS", variable_data);
 
     // Write QC flag data for this variable to the first qc flag index location
@@ -166,7 +171,15 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
           oops::Log::trace() << "iterator distance is "
             << static_cast<std::size_t>(std::distance(ov_varnames.begin(), var_it))
             << std::endl;
-          for(int i=0; i<ov.size(); ++i) variable_data[i] = ov[i];
+          auto missing_value_add = util::missingValue(ov[0]);
+          oops::Log::trace() << "Missing value: " << missing_value_add << std::endl;
+          for(int i=0; i<ov.size(); ++i) {
+            if (ov[i] == missing_value_add) {
+              variable_data[i] = NemoFeedbackWriter::double_fillvalue;
+            } else {
+              variable_data[i] = ov[i];
+            }
+          }
           fdbk_writer.write_variable_surf(add_name, variable_data);
         }
       } else if (!obsdb_.has(ioda_group, ufo_name)) {
