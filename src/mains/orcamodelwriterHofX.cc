@@ -21,7 +21,7 @@ int main(int argc,  char ** argv) {
   orcamodel::Run run(argc, argv);
   oops::instantiateModelFactory<orcamodel::OrcaModelTraits>();
   atlas::Library::instance().initialise();
-  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
+  ufo::instantiateObsFilterFactory();
   nemo_feedback::instantiateObsFilterFactory<ufo::ObsTraits>();
   oops::HofX4D<orcamodel::OrcaModelTraits , ufo::ObsTraits> hofx;
   int i = run.execute(hofx);

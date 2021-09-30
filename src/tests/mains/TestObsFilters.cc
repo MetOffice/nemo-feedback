@@ -13,7 +13,7 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
+  ufo::instantiateObsFilterFactory();
   nemo_feedback::instantiateObsFilterFactory<ufo::ObsTraits>();
   //nemo_feedback::test::instantiateObsFilterFactory<ufo::ObsTraits>();
   ufo::test::ObsFilters tests;
