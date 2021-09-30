@@ -130,6 +130,7 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
     auto ufo_name = nemo_variable_conf.getString("name");
     obsdb_.get_db("ObsValue", ufo_name, variable_data);
     auto missing_value = util::missingValue(variable_data[0]);
+    oops::Log::trace() << "Missing value OBS: " << missing_value << std::endl;
     for(int i=0; i<ov.size(); ++i) {
       if (variable_data[i] == missing_value) variable_data[i] = NemoFeedbackWriter::double_fillvalue;
     }

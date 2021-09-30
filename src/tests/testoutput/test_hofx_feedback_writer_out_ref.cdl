@@ -1,0 +1,292 @@
+netcdf test_hofx_feedback_writer_out {
+dimensions:
+	N_QCF = 2 ;
+	STRINGGRID = 1 ;
+	STRINGJULD = 14 ;
+	STRINGNAM = 8 ;
+	STRINGTYP = 4 ;
+	STRINGWMO = 8 ;
+	N_OBS = 11 ;
+	N_LEVELS = 1 ;
+	N_VARS = 1 ;
+	N_ENTRIES = 1 ;
+variables:
+	char JULD_REFERENCE(STRINGJULD) ;
+		JULD_REFERENCE:long_name = "Date of reference for julian days" ;
+		JULD_REFERENCE:Conventions = "YYYYMMDDHHMMSS" ;
+	char VARIABLES(N_VARS, STRINGNAM) ;
+		VARIABLES:long_name = "List of variables in feedback files" ;
+	char ENTRIES(N_ENTRIES, STRINGNAM) ;
+		ENTRIES:long_name = "List of additional entries for each variable in feedback files" ;
+	double LATITUDE(N_OBS) ;
+		LATITUDE:units = "degrees_north" ;
+		LATITUDE:long_name = "latitude" ;
+	double LONGITUDE(N_OBS) ;
+		LONGITUDE:units = "degrees_east" ;
+		LONGITUDE:long_name = "longitude" ;
+	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:units = "metre" ;
+		DEPTH:long_name = "Depth" ;
+	double JULD(N_OBS) ;
+		JULD:units = "days since JULD_REFERENCE" ;
+		JULD:long_name = "Julian day" ;
+	int STATION_IDENTIFIER(N_OBS, STRINGWMO) ;
+		STATION_IDENTIFIER:long_name = "Station identifier" ;
+	int STATION_TYPE(N_OBS, STRINGTYP) ;
+		STATION_TYPE:long_name = "Code instrument type" ;
+	int DEPTH_QC(N_OBS, N_LEVELS) ;
+		DEPTH_QC:long_name = "Quality on depth" ;
+		DEPTH_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int DEPTH_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		DEPTH_QC_FLAGS:long_name = "Quality on depth" ;
+		DEPTH_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int OBSERVATION_QC(N_OBS) ;
+		OBSERVATION_QC:long_name = "Quality on observation" ;
+		OBSERVATION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int OBSERVATION_QC_FLAGS(N_OBS, N_QCF) ;
+		OBSERVATION_QC_FLAGS:long_name = "Quality on observation" ;
+		OBSERVATION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int POSITION_QC(N_OBS) ;
+		POSITION_QC:long_name = "Quality on position" ;
+		POSITION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int POSITION_QC_FLAGS(N_OBS, N_QCF) ;
+		POSITION_QC_FLAGS:long_name = "Quality on position" ;
+		POSITION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int JULD_QC(N_OBS) ;
+		JULD_QC:long_name = "Quality on date and time" ;
+		JULD_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int JULD_QC_FLAGS(N_OBS, N_QCF) ;
+		JULD_QC_FLAGS:long_name = "Quality on date and time" ;
+		JULD_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	double ICECONC_OBS(N_OBS, N_LEVELS) ;
+	double ICECONC_Hx(N_OBS, N_LEVELS) ;
+	double ICECONC_QC_FLAGS(N_OBS, N_QCF) ;
+	int ICECONC_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+	int ICECONC_QC(N_OBS) ;
+		ICECONC_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int ICECONC_LEVEL_QC(N_OBS, N_LEVELS) ;
+		ICECONC_LEVEL_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int ICECONC_IOBSI(N_OBS) ;
+		ICECONC_IOBSI:long_name = "ORCA grid search I coordinate" ;
+	int ICECONC_IOBSJ(N_OBS) ;
+		ICECONC_IOBSJ:long_name = "ORCA grid search J coordinate" ;
+	int ICECONC_IOBSK(N_OBS, N_LEVELS) ;
+		ICECONC_IOBSK:long_name = "ORCA grid search K coordinate" ;
+	char ICECONC_GRID(STRINGGRID) ;
+		ICECONC_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+data:
+
+ JULD_REFERENCE = "2021063012000" ;
+
+ VARIABLES =
+  "ICECONC " ;
+
+ ENTRIES =
+  "Hx      " ;
+
+ LATITUDE = 31.029390335083, 62.4358901977539, -65.2853622436523, 
+    -51.8797912597656, 41.8941993713379, 22.6518993377686, 3.32629990577698, 
+    -15.9160003662109, -35.2416000366211, -54.4838981628418, -73.7261962890625 ;
+
+ LONGITUDE = 168.337997436523, 31.2149505615234, -24.9150104522705, 
+    -154.481994628906, 38.443000793457, -148.292999267578, 25.1149997711182, 
+    -161.621002197266, 11.7869997024536, -174.949005126953, -1.68499994277954 ;
+
+ DEPTH =
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0 ;
+
+ JULD = 0, 0, 0, 0, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5 ;
+
+ STATION_IDENTIFIER =
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _ ;
+
+ STATION_TYPE =
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _,
+  _, _, _, _ ;
+
+ DEPTH_QC =
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _ ;
+
+ DEPTH_QC_FLAGS =
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _ ;
+
+ OBSERVATION_QC = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ OBSERVATION_QC_FLAGS =
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _ ;
+
+ POSITION_QC = _, _, _, _, _, _, _, _, _, _, _ ;
+
+ POSITION_QC_FLAGS =
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _ ;
+
+ JULD_QC = _, _, _, _, _, _, _, _, _, _, _ ;
+
+ JULD_QC_FLAGS =
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _ ;
+
+ ICECONC_OBS =
+  0,
+  99999,
+  0.996299982070923,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0 ;
+
+ ICECONC_Hx =
+  0,
+  99999,
+  0,
+  0,
+  99999,
+  0,
+  99999,
+  0,
+  0,
+  0,
+  99999 ;
+
+ ICECONC_QC_FLAGS =
+  64, _,
+  0, _,
+  68, _,
+  64, _,
+  0, _,
+  64, _,
+  0, _,
+  64, _,
+  64, _,
+  64, _,
+  0, _ ;
+
+ ICECONC_LEVEL_QC_FLAGS =
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _ ;
+
+ ICECONC_QC = 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ ICECONC_LEVEL_QC =
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _ ;
+
+ ICECONC_IOBSI = _, _, _, _, _, _, _, _, _, _, _ ;
+
+ ICECONC_IOBSJ = _, _, _, _, _, _, _, _, _, _, _ ;
+
+ ICECONC_IOBSK =
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _,
+  _ ;
+
+ ICECONC_GRID = "T" ;
+}

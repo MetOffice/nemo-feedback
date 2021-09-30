@@ -14,19 +14,19 @@ initial condition :
   date: 2021-06-29T21:00:00Z
   state variables: [ ice_area_fraction, ice_area_fraction_background_error ]
   #analytic_init: zeroed state
-  nemo field file: orca-jedi/src/tests/testinput/orca2_t_nemo.nc
-  variance field file: orca-jedi/src/tests/testinput/orca2_t_bkg_var.nc
+  nemo field file: ../../../orca-jedi/src/tests/testinput/orca2_t_nemo.nc
+  variance field file: ../../../orca-jedi/src/tests/testinput/orca2_t_bkg_var.nc
 model :
   name: PseudoModel 
   tstep: P3D
   state variables: [ ice_area_fraction ]
   states:
-    - nemo field file: orca-jedi/src/tests/testinput/orca2_t_nemo.nc
+    - nemo field file: ../../../orca-jedi/src/tests/testinput/orca2_t_nemo.nc
 observations:
 - obs space:
     name: Sea Ice
     obsdatain:
-      obsfile: orca-jedi/src/tests/testinput/ostia_seaice_obs.nc
+      obsfile: ../../../orca-jedi/src/tests/testinput/ostia_seaice_obs.nc
     obsdataout:
       obsfile: test_out.nc
     simulated variables: [ice_area_fraction]
@@ -43,7 +43,7 @@ observations:
     initial prob gross error: 0.04
     PGE threshold: 0.07
   - filter: NEMO Feedback Writer
-    filename: /scratch/tsearle/nemo_fdbk_writer_out.nc
+    filename: testoutput/test_hofx_feedback_writer_out.nc
     variables:
     - name: ice_area_fraction
       nemo name: ICECONC
@@ -51,3 +51,5 @@ observations:
         - name: ice_area_fraction
           feedback suffix: Hx
           ioda group: HofX 
+test:
+  reference filename: testoutput/test_hofx_feedback_writer.ref
