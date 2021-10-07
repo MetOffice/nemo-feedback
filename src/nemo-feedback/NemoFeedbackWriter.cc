@@ -48,8 +48,8 @@ const std::map<std::string, size_t> NemoFeedbackWriter::coord_sizes{
   {N_QCF, 2}, {STRINGNAM, STRINGNAM_NUM}, {STRINGGRID, 1},
   {STRINGWMO, STRINGWMO_NUM}, {STRINGTYP, STRINGTYP_NUM}, {STRINGJULD, 14}};
 
-typedef char fixed_length_name_type[STRINGNAM_NUM];
-typedef char fixed_length_type_type[STRINGTYP_NUM];
+typedef char fixed_length_name_type[STRINGNAM_NUM+1];
+typedef char fixed_length_type_type[STRINGTYP_NUM+1];
 
 NemoFeedbackWriter::NemoFeedbackWriter(eckit::PathName& filename,
     const std::vector<double>& lons, const std::vector<double>& lats,
@@ -106,7 +106,7 @@ void NemoFeedbackWriter::define_coord_variables(const size_t n_obs,
 
 void NemoFeedbackWriter::write_metadata_variables(
     const std::vector<std::string>& variable_names,
-    const std::vector<std::string> & additional_variables,
+    const std::vector<std::string>& additional_variables,
     const util::DateTime& juld_reference) {
   {
     netCDF::NcVar nc_juld_var = ncFile->addVar("JULD_REFERENCE", netCDF::ncChar,
@@ -124,7 +124,6 @@ void NemoFeedbackWriter::write_metadata_variables(
     nc_juld_var.putVar(ref_stream.str().data());
   }
 
-
   {
     size_t n_vars = variable_names.size();
     std::vector<netCDF::NcDim>
@@ -132,20 +131,17 @@ void NemoFeedbackWriter::write_metadata_variables(
     netCDF::NcVar nc_var_list_var = ncFile->addVar("VARIABLES",
         netCDF::ncChar, dims);
     nc_var_list_var.putAtt("long_name", "List of variables in feedback files");
-    fixed_length_name_type *data;
-    data = new fixed_length_name_type[n_vars];
+    fixed_length_name_type data;
     // trim and pad string to fit in nc char array
-    for (size_t i; i < n_vars; ++i) {
+    for (size_t i=0; i < n_vars; ++i) {
       for (size_t j=0; j < STRINGNAM_NUM; ++j) {
         if (j < variable_names[i].length()) {
-          data[i][j] = variable_names[i][j];
-        } else {data[i][j] = ' ';}
+          data[j] = static_cast<char>(variable_names.at(i).at(j));
+        } else {data[j] = ' ';}
       }
+      nc_var_list_var.putVar({i, 0}, {1, STRINGNAM_NUM}, data);
     }
-    nc_var_list_var.putVar(data);
-    delete[] data;
   }
-
 
   {
     size_t max_n_add_entries = additional_variables.size();
@@ -155,18 +151,16 @@ void NemoFeedbackWriter::write_metadata_variables(
         netCDF::ncChar, dims);
     nc_entries_var.putAtt("long_name",
         "List of additional entries for each variable in feedback files");
-    fixed_length_name_type *data;
-    data = new fixed_length_name_type[max_n_add_entries];
+    fixed_length_name_type data;;
     // trim and pad string to fit in nc char array
-    for (size_t i; i < max_n_add_entries; ++i) {
+    for (size_t i=0; i < max_n_add_entries; ++i) {
       for (size_t j=0; j < STRINGNAM_NUM; ++j) {
         if (j < additional_variables[i].length()) {
-          data[i][j] = additional_variables[i][j];
-        } else {data[i][j] = ' ';}
+          data[j] = static_cast<char>(additional_variables.at(i).at(j));
+        } else {data[j] = ' ';}
       }
+      nc_entries_var.putVar({i, 0}, {1, STRINGNAM_NUM}, data);
     }
-    nc_entries_var.putVar({0, 0}, {max_n_add_entries, STRINGNAM_NUM}, data);
-    delete [] data;
   }
 }
 
@@ -304,7 +298,7 @@ void NemoFeedbackWriter::define_variable(const std::string & variable_name,
         ncFile->getDim(STRINGGRID));
     tmp_var.putAtt("long_name", "ORCA grid search grid (T,U,V)");
     char data[2] {"T"};
-    tmp_var.putVar({0}, data);
+    tmp_var.putVar({0}, {1}, data);
   }
 }
 
