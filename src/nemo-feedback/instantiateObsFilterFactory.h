@@ -4,8 +4,7 @@
  * Refer to COPYRIGHT.txt of this distribution for details.
  */
 
-#ifndef OPSINPUTS_INSTANTIATEOBSFILTERFACTORY_H_
-#define OPSINPUTS_INSTANTIATEOBSFILTERFACTORY_H_
+#pragma once
 
 #include "oops/interface/ObsFilterBase.h"
 #include "nemo-feedback/NemoFeedback.h"
@@ -20,4 +19,3 @@ void instantiateObsFilterFactory() {
 
 }  // namespace nemo_feedback
 
-#endif  // OPSINPUTS_INSTANTIATEOBSFILTERFACTORY_H_

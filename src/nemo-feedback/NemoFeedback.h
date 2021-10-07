@@ -1,11 +1,10 @@
 /*
- * (C) Crown Copyright 2020, the Met Office. All rights reserved.
+ * (C) Crown Copyright 2021, the Met Office. All rights reserved.
  *
  * Refer to COPYRIGHT.txt of this distribution for details. 
  */
 
-#ifndef OPSINPUTS_VAROBSWRITER_H_
-#define OPSINPUTS_VAROBSWRITER_H_
+#pragma once
 
 #include <memory>
 #include <ostream>
@@ -37,8 +36,8 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
 
   void preProcess() override {}
   void priorFilter(const ufo::GeoVaLs &) override;
-  //void postFilter(const ioda::ObsVector &ov,
-  //                const ufo::ObsDiagnostics &dv) override;
+  // void postFilter(const ioda::ObsVector &ov,
+  //                 const ufo::ObsDiagnostics &dv) override;
   void postFilter(const ioda::ObsVector &ov,
                   const ioda::ObsVector &bv,
                   const ufo::ObsDiagnostics &dv) override;
@@ -60,4 +59,3 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
 
 }  // namespace nemo_feedback
 
-#endif  // OPSINPUTS_VAROBSWRITER_H_
