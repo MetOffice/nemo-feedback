@@ -53,6 +53,7 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   oops::Variables extradiagvars_;
   std::shared_ptr<ioda::ObsDataVector<int>> flags_;
   std::shared_ptr<ioda::ObsDataVector<float>> obsErrors_;
+  const util::DateTime validityTime_;
 
   NemoFeedbackParameters parameters_;
 };
