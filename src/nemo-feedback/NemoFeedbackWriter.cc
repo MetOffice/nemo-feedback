@@ -21,8 +21,6 @@
 #include "oops/util/Logger.h"
 #include "oops/util/Duration.h"
 
-#include "atlas/field.h"
-
 // names of netCDF dimensions, variables, attributes
 #define N_QCF "N_QCF"
 #define N_ENTRIES "N_ENTRIES"

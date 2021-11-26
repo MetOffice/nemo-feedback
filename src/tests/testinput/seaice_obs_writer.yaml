@@ -21,20 +21,22 @@ geometry :
 initial condition : 
   date: 2021-06-29T21:00:00Z
   state variables: [ ice_area_fraction, ice_area_fraction_background_error ]
-  #analytic_init: zeroed state
-  nemo field file: ../../../orca-jedi/src/tests/testinput/orca2_t_nemo.nc
-  variance field file: ../../../orca-jedi/src/tests/testinput/orca2_t_bkg_var.nc
+  nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
+  variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
 model :
   name: PseudoModel 
   tstep: P3D
   state variables: [ ice_area_fraction ]
   states:
-    - nemo field file: ../../../orca-jedi/src/tests/testinput/orca2_t_nemo.nc
+    - date: 2021-06-29T21:00:00Z
+      state variables: [ ice_area_fraction ]
+      nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
+      variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
 observations:
 - obs space:
     name: Sea Ice
     obsdatain:
-      obsfile: ../../../orca-jedi/src/tests/testinput/ostia_seaice_obs.nc
+      obsfile: ../../../orca-jedi/src/tests/Data/ostia_seaice_obs.nc
     obsdataout:
       obsfile: test_out.nc
     simulated variables: [ice_area_fraction]

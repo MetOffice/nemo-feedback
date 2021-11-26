@@ -17,3 +17,5 @@ ecbuild_add_library( TARGET nemo_feedback
                      HEADER_DESTINATION ${INSTALL_INCLUDE_DIR}/nemo-feedback
                    )
 target_link_libraries( nemo_feedback PUBLIC ufo ioda oops NetCDF::NetCDF_CXX)
+target_include_directories(nemo_feedback PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+                                                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)

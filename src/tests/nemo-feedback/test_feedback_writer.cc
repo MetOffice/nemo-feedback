@@ -43,33 +43,33 @@ CASE("test creating test file ") {
 
   SECTION("JULD_REFERENCE variable is correct") {
     netCDF::NcVar ncVar = ncFile.getVar("JULD_REFERENCE");
-    char data[15];
-    ncVar.getVar(data);
+    char data[15] = { ' ' };
+    ncVar.getVar({0}, {14}, data);
 
-    EXPECT_EQUAL(static_cast<std::string>(data),
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 14),
         static_cast<std::string>("20210831152600"));
   }
 
   SECTION("ENTRIES variable is correct") {
     netCDF::NcVar entriesVar = ncFile.getVar("ENTRIES");
-    char data[9];
+    char data[9] = { ' ' };
     entriesVar.getVar({0, 0}, {1, 8}, data);
-    EXPECT_EQUAL(static_cast<std::string>(data),
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
         static_cast<std::string>("Hx      "));
     entriesVar.getVar({1, 0}, {1, 8}, data);
-    EXPECT_EQUAL(static_cast<std::string>(data),
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
         static_cast<std::string>("DW_FLAGS"));
     entriesVar.getVar({2, 0}, {1, 8}, data);
-    EXPECT_EQUAL(static_cast<std::string>(data),
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
         static_cast<std::string>("STD     "));
   }
 
   SECTION("VARIABLES variable is correct") {
     netCDF::NcVar ncVar = ncFile.getVar("VARIABLES");
-    char data[9];
+    char data[9] = { ' ' };
     ncVar.getVar({0, 0}, {1, 8}, data);
 
-    EXPECT_EQUAL(static_cast<std::string>(data),
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
         static_cast<std::string>("SST     "));
   }
 }
