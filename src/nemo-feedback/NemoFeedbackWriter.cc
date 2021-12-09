@@ -87,11 +87,12 @@ void NemoFeedbackWriter::define_coord_variables(const size_t n_obs,
     const size_t n_levels, const size_t n_obs_vars,
     const size_t n_add_entries) {
   netCDF::NcDim tmp_Dim;
-  for (const auto& [key, value] : coord_sizes) {
-    if (key == N_QCF) {
-      nqcf_dim = std::make_unique<netCDF::NcDim>(ncFile->addDim(key, value));
+  for (const auto& kv : coord_sizes) {
+    if (kv.first == N_QCF) {
+      nqcf_dim = std::make_unique<netCDF::NcDim>(
+          ncFile->addDim(kv.first, kv.second));
     } else {
-      tmp_Dim = ncFile->addDim(key, value);
+      tmp_Dim = ncFile->addDim(kv.first, kv.second);
     }
   }
 
