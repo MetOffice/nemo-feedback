@@ -7,15 +7,20 @@ assignees: twsearle
 
 ---
 
-**Describe the bug**
+## Description
 A clear and concise description of what the bug is.
 
-**To Reproduce**
+## Instructions to reproduce the bug
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Acceptance Criteria (Definition of Done)
+
+What does it mean for this to be finished?
+
+## Dependencies
+
+What must be done before this can be done? Does this block progress on other issues? Please create links to other issues here.

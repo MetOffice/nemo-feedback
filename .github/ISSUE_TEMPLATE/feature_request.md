@@ -7,11 +7,13 @@ assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
+## Description
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## Acceptance Criteria (Definition of Done)
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+What does it mean for this to be finished?
+
+## Dependencies
+
+What must be done before this can be done? Does this block progress on other issues? Please create links to them here.
