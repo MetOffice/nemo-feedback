@@ -30,12 +30,15 @@ CASE("test creating test file ") {
   std::vector<double> depths(n_obs*n_levels, 0);
   std::vector<double> times(n_obs, 0);
   std::vector<std::string> variable_names{"SST"};
+  std::vector<std::string> long_names{"this is a long name"};
+  std::vector<std::string> unit_names{"this is a unit"};
   std::vector<std::string> additional_variables{"Hx", "DW_FLAGS", "STD"};
   util::DateTime juld_reference("2021-08-31T15:26:00Z");
 
   SECTION("file writes") {
     NemoFeedbackWriter fdbk_writer(test_data_path, lons, lats, depths,
-        times, variable_names, additional_variables, n_levels, juld_reference);
+        times, variable_names, long_names, unit_names,
+        additional_variables, n_levels, juld_reference);
   }
 
   netCDF::NcFile ncFile(test_data_path.fullName().asString(),

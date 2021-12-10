@@ -53,8 +53,10 @@ NemoFeedbackWriter::NemoFeedbackWriter(eckit::PathName& filename,
     const std::vector<double>& lons, const std::vector<double>& lats,
     const std::vector<double>& depths, const std::vector<double>& times,
     const std::vector<std::string> & variable_names,
-    const std::vector<std::string>& additional_variables, const size_t n_levels,
-    const util::DateTime & juld_reference )
+    const std::vector<std::string> & long_names,
+    const std::vector<std::string> & unit_names,
+    const std::vector<std::string> & additional_variables,
+    const size_t n_levels, const util::DateTime & juld_reference )
     : ncFile(nullptr), n_levels_(n_levels) {
   oops::Log::debug() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
                      << " filename: " << filename.fullName().asString()
@@ -78,8 +80,9 @@ NemoFeedbackWriter::NemoFeedbackWriter(eckit::PathName& filename,
   write_coord_variables(lons, lats, depths, times);
   define_whole_report_variables(n_obs, n_levels);
 
-  for (const auto& variable_name : variable_names) {
-    define_variable(variable_name, additional_variables);
+  for (int i=0; i < variable_names.size(); ++i) {
+    define_variable(variable_names[i], long_names[i], unit_names[i],
+                    additional_variables);
   }
 }
 
@@ -171,14 +174,15 @@ void NemoFeedbackWriter::define_whole_report_variables(const size_t n_obs,
     const size_t n_levels) {
   {
     const std::vector<netCDF::NcDim> dims{*nobs_dim, ncFile->getDim(STRINGWMO)};
-    netCDF::NcVar tmp_var = ncFile->addVar("STATION_IDENTIFIER", netCDF::ncInt,
+    netCDF::NcVar tmp_var = ncFile->addVar("STATION_IDENTIFIER", netCDF::ncChar,
         dims);
     tmp_var.putAtt("long_name", "Station identifier");
   }
 
   {
     const std::vector<netCDF::NcDim> dims{*nobs_dim, ncFile->getDim(STRINGTYP)};
-    netCDF::NcVar tmp_var = ncFile->addVar("STATION_TYPE", netCDF::ncInt, dims);
+    netCDF::NcVar tmp_var = ncFile->addVar("STATION_TYPE", netCDF::ncChar,
+        dims);
     tmp_var.putAtt("long_name", "Code instrument type");
   }
 
@@ -250,22 +254,27 @@ void NemoFeedbackWriter::define_whole_report_variables(const size_t n_obs,
 /// and additional named variables passed in to the method. All variables are
 /// assumed to be on the T grid.
 void NemoFeedbackWriter::define_variable(const std::string & variable_name,
+    const std::string & longName, const std::string & units,
     const std::vector<std::string> & additional_names ) {
 
   const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
 
   netCDF::NcVar obs_var = ncFile->addVar(variable_name + "_OBS",
       netCDF::ncDouble, dims);
+  obs_var.putAtt("long_name", longName);
+  obs_var.putAtt("units", units);
 
   for (const auto &name : additional_names) {
     netCDF::NcVar add_var = ncFile->addVar(variable_name + "_" + name,
         netCDF::ncDouble, dims);
+    add_var.putAtt("long_name", longName + " " + name);
+    add_var.putAtt("units", units);
   }
 
   {
     const std::vector<netCDF::NcDim> qcf_dims{*nobs_dim, *nqcf_dim};
     netCDF::NcVar qc_flags_var = ncFile->addVar(variable_name + "_QC_FLAGS",
-        netCDF::ncDouble, qcf_dims);
+        netCDF::ncInt, qcf_dims);
   }
 
   {
@@ -347,7 +356,7 @@ void NemoFeedbackWriter::write_variable_surf_qc(
 
 void NemoFeedbackWriter::write_variable_surf_qc(
     const std::string& variable_name, const std::vector<int32_t>& data,
-    const int32_t flag_index) {
+    const size_t flag_index) {
   oops::Log::trace() << "NemoFeedbackWriter::write_variable_surf_qc: writing "
                      << "flag_index: " << flag_index << " of " << variable_name
                      << std::endl;

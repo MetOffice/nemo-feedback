@@ -29,6 +29,8 @@ class NemoFeedbackWriter {
       const std::vector<double>& lons, const std::vector<double>& lats,
       const std::vector<double>& depths, const std::vector<double>& times,
       const std::vector<std::string>& variable_names,
+      const std::vector<std::string> & long_names,
+      const std::vector<std::string> & unit_names,
       const std::vector<std::string>& additional_variables,
       const size_t n_levels, const util::DateTime & juld_reference);
 
@@ -67,6 +69,8 @@ class NemoFeedbackWriter {
       const size_t n_levels);
 
   void define_variable(const std::string & variable_name,
+      const std::string & long_names,
+      const std::string & unit_names,
       const std::vector<std::string> & additional_names =
         std::vector<std::string>());
 

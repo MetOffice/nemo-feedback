@@ -98,9 +98,13 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
   // Generate lists of the variable names to setup the file
   std::vector<std::string> additional_names;
   std::vector<std::string> variable_names;
+  std::vector<std::string> long_names;
+  std::vector<std::string> unit_names;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
     variable_names.push_back(nemoVariableParams.nemoName.value());
+    long_names.push_back(nemoVariableParams.longName.value());
+    unit_names.push_back(nemoVariableParams.units.value());
     auto additionalVariablesParams = nemoVariableParams.variables.value();
     for (const NemoFeedbackAddVariableParameters& addVariableParams :
         additionalVariablesParams) {
@@ -113,7 +117,8 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
   }
 
   NemoFeedbackWriter fdbk_writer(test_data_path, lons, lats, depths,
-      julian_days, variable_names, additional_names, n_levels, juld_reference);
+      julian_days, variable_names, long_names, unit_names,
+      additional_names, n_levels, juld_reference);
 
   // Write the data
   std::vector<double> variable_data;

@@ -33,6 +33,8 @@ class NemoFeedbackVariableParameters : public oops::Parameters {
  public:
   oops::RequiredParameter<std::string> name{"name", this};
   oops::RequiredParameter<std::string> nemoName{"nemo name", this};
+  oops::RequiredParameter<std::string> units{"units", this};
+  oops::RequiredParameter<std::string> longName{"long name", this};
   oops::Parameter<std::vector<NemoFeedbackAddVariableParameters>>
     variables{"additional variables", {}, this};
 };
