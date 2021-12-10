@@ -40,7 +40,7 @@ class NemoFeedbackWriter {
   void write_variable_surf_qc(const std::string & variable_name,
       const std::vector<int32_t>& data);
   void write_variable_surf_qc(const std::string & variable_name,
-      const std::vector<int32_t>& data, const int32_t flag_index);
+      const std::vector<int32_t>& data, const size_t flag_index);
 
   void write_variable(const std::string & variable_name,
       const std::array<double, 2>& data) {}
