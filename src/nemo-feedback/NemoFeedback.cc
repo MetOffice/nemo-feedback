@@ -83,10 +83,10 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
   obsdb_.get_db("MetaData", "longitude", lons);
   std::vector<double> depths(n_obs*n_levels, 0);
 
-  std::vector<std::string> datetimes(n_obs);
-  obsdb_.get_db("MetaData", "datetime", datetimes);
+  std::vector<util::DateTime> datetimes(n_obs);
+  obsdb_.get_db("MetaData", "dateTime", datetimes);
 
-  util::DateTime juld_reference(datetimes[0]);
+  util::DateTime juld_reference{datetimes[0]};
 
   std::vector<double> julian_days(n_obs, 0);
   for (int i=0; i < n_obs; ++i) {
