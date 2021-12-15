@@ -145,9 +145,9 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
     // Convert Met Office QC flags to Ocean Quality Control flags
     variable_qc.resize(variable_qcFlags.size());
     for (int i=0; i < variable_qc.size(); ++i) {
-      if (variable_qcFlags[i] & ufo::MetOfficeQCFlags::Elem::BackRejectFlag) {
+      if (variable_qcFlags[i] & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
         variable_qc[i] = 4;
-      } else {variable_qc[i] = 0;}
+      } else {variable_qc[i] = 1;}
     }
     fdbk_writer.write_variable_surf_qc(nemo_name + "_QC", variable_qc);
 
@@ -156,7 +156,7 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
       if (variable_qcFlags[i]
           & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
         variable_qc[i] = 4;
-      } else {variable_qc[i] = 0;}
+      } else {variable_qc[i] = 1;}
     }
     fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", variable_qc);
 
