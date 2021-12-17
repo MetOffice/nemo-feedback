@@ -27,7 +27,6 @@
 #include "ufo/GeoVaLs.h"
 #include "ufo/ObsDiagnostics.h"
 #include "ufo/filters/DiagnosticFlag.h"
-#include "ufo/filters/QCflags.h"
 #include "ufo/utils/metoffice/MetOfficeQCFlags.h"
 
 
