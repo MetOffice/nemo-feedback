@@ -26,6 +26,8 @@
 #include "nemo-feedback/NemoFeedbackWriter.h"
 #include "ufo/GeoVaLs.h"
 #include "ufo/ObsDiagnostics.h"
+#include "ufo/filters/DiagnosticFlag.h"
+#include "ufo/filters/QCflags.h"
 #include "ufo/utils/metoffice/MetOfficeQCFlags.h"
 
 
@@ -86,7 +88,12 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
   std::vector<util::DateTime> datetimes(n_obs);
   obsdb_.get_db("MetaData", "dateTime", datetimes);
 
-  util::DateTime juld_reference{datetimes[0]};
+  util::DateTime juld_reference;
+  if (parameters_.refDate.value() == "") {
+    juld_reference = datetimes[0];
+  } else {
+    juld_reference = util::DateTime(parameters_.refDate.value());
+  }
 
   std::vector<double> julian_days(n_obs, 0);
   for (int i=0; i < n_obs; ++i) {
@@ -124,6 +131,7 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
   std::vector<double> variable_data;
   std::vector<int> variable_qcFlags;
   std::vector<int> variable_qc;
+  std::vector<ufo::DiagnosticFlag> final_qc;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
     auto nemo_name = nemoVariableParams.nemoName.value();
@@ -141,11 +149,12 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
     obsdb_.get_db("QCFlags", ufo_name, variable_qcFlags);
     fdbk_writer.write_variable_surf_qc(nemo_name + "_QC_FLAGS",
         variable_qcFlags, 0);
-
-    // Convert Met Office QC flags to Ocean Quality Control flags
     variable_qc.resize(variable_qcFlags.size());
-    for (int i=0; i < variable_qc.size(); ++i) {
-      if (variable_qcFlags[i] & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
+
+    // Overall quality control flags
+    obsdb_.get_db("DiagnosticFlags/FinalReject", ufo_name, final_qc);
+    for (int i=0; i < final_qc.size(); ++i) {
+      if (final_qc[i]) {
         variable_qc[i] = 4;
       } else {variable_qc[i] = 1;}
     }
