@@ -87,12 +87,7 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
   std::vector<util::DateTime> datetimes(n_obs);
   obsdb_.get_db("MetaData", "dateTime", datetimes);
 
-  util::DateTime juld_reference;
-  if (parameters_.refDate.value() == "") {
-    juld_reference = datetimes[0];
-  } else {
-    juld_reference = util::DateTime(parameters_.refDate.value());
-  }
+  util::DateTime juld_reference = parameters_.refDate.value().value_or(datetimes[0]);
 
   std::vector<double> julian_days(n_obs, 0);
   for (int i=0; i < n_obs; ++i) {
