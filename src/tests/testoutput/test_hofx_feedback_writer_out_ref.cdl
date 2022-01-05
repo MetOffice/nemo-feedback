@@ -260,7 +260,7 @@ data:
   _, _,
   _, _ ;
 
- ICECONC_QC = 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0 ;
+ ICECONC_QC = 1, 4, 4, 1, 4, 1, 4, 1, 1, 1, 4 ;
 
  ICECONC_LEVEL_QC =
   _,
