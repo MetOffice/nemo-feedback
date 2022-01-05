@@ -50,12 +50,61 @@ observations:
     - name: Identity
     - name: BackgroundErrorIdentity
   obs filters:
+  - filter: Create Diagnostic Flags
+    flags:
+    - name: FinalReject
+      initial value: false
+  - filter: RejectList 
+    defer to post: true
+    where:
+    - variable:
+        name: ice_area_fraction@ObsValue
+      is_not_defined:
+    actions:
+    - name: set
+      flag: FinalReject
+    - name: reject
+  - filter: RejectList 
+    defer to post: true
+    where:
+    - variable:
+        name: ice_area_fraction@HofX
+      is_not_defined:
+    actions:
+    - name: set
+      flag: FinalReject
+    - name: reject
+  - filter: Bounds Check
+    defer to post: true
+    filter variables:
+    - name: ice_area_fraction
+    minvalue: 0.0
+    maxvalue: 1.0
+    actions:
+    - name: set
+      flag: FinalReject
+    - name: reject
+  - filter: Bounds Check
+    defer to post: true
+    filter variables:
+    - name: ice_area_fraction@HofX
+    minvalue: 0.0
+    maxvalue: 1.0
+    actions:
+    - name: set
+      flag: FinalReject
+    - name: reject
   - filter: Bayesian Background Check
+    defer to post: true
     filter variables:
     - name: ice_area_fraction 
     prob density bad obs: 1.0
     initial prob gross error: 0.04
     PGE threshold: 0.07
+    actions:
+    - name: set
+      flag: FinalReject
+    - name: reject
   - filter: NEMO Feedback Writer
     filename: testoutput/test_hofx_feedback_writer_out.nc
     variables:

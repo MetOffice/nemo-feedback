@@ -48,6 +48,7 @@ class NemoFeedbackParameters : public oops::ObsFilterParametersBase {
   oops::Parameter<std::string> Filename{"filename", "nemo_fdbk_out.nc", this};
   oops::RequiredParameter<std::vector<NemoFeedbackVariableParameters>>
     variables{"variables", this};
+  oops::OptionalParameter<util::DateTime> refDate{"reference date", this};
 };
 
 }  // namespace nemo_feedback
