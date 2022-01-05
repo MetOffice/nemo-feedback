@@ -58,7 +58,7 @@ observations:
     defer to post: true
     where:
     - variable:
-        name: ice_area_fraction
+        name: ice_area_fraction@ObsValue
       is_not_defined:
     actions:
     - name: set
