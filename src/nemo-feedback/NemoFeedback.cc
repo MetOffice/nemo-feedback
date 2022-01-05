@@ -159,7 +159,7 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
       if (variable_qcFlags[i]
           & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
         variable_qc[i] = 4;
-      } else {variable_qc[i] = 1;}
+      } else {variable_qc[i] = 0;}
     }
     fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", variable_qc);
 
