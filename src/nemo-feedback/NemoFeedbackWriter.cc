@@ -56,7 +56,8 @@ NemoFeedbackWriter::NemoFeedbackWriter(eckit::PathName& filename,
     const std::vector<std::string> & long_names,
     const std::vector<std::string> & unit_names,
     const std::vector<std::string> & additional_variables,
-    const size_t n_levels, const util::DateTime & juld_reference )
+    const size_t n_levels, const util::DateTime & juld_reference,
+    const std::vector<std::string> & station_types )
     : ncFile(nullptr), n_levels_(n_levels) {
   oops::Log::debug() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
                      << " filename: " << filename.fullName().asString()
@@ -79,6 +80,7 @@ NemoFeedbackWriter::NemoFeedbackWriter(eckit::PathName& filename,
       juld_reference);
   write_coord_variables(lons, lats, depths, times);
   define_whole_report_variables(n_obs, n_levels);
+  write_whole_report_variables(n_obs, station_types);
 
   for (int i=0; i < variable_names.size(); ++i) {
     define_variable(variable_names[i], long_names[i], unit_names[i],
@@ -336,6 +338,23 @@ void NemoFeedbackWriter::write_coord_variables(const std::vector<double>& lons,
   juld_var.putAtt("units", "days since JULD_REFERENCE");
   juld_var.putAtt("long_name", "Julian day");
   juld_var.putVar(times.data());
+}
+
+void NemoFeedbackWriter::write_whole_report_variables(
+    const size_t n_obs,
+    const std::vector<std::string> & station_types) {
+
+  // Write station type.    
+  auto station_type_var = ncFile->getVar("STATION_TYPE");
+  char station_types_char[n_obs][4];
+  size_t nchars = (ncFile->getDim(STRINGTYP)).getSize();
+  for (int i = 0; i < n_obs; ++i) {
+    strncpy(station_types_char[i], 
+            station_types[i].data(), 
+            nchars);
+  }
+  station_type_var.putVar(station_types_char);
+
 }
 
 void NemoFeedbackWriter::write_variable_surf(const std::string & variable_name,

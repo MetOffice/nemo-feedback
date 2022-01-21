@@ -34,11 +34,13 @@ CASE("test creating test file ") {
   std::vector<std::string> unit_names{"this is a unit"};
   std::vector<std::string> additional_variables{"Hx", "DW_FLAGS", "STD"};
   util::DateTime juld_reference("2021-08-31T15:26:00Z");
+  std::vector<std::string> station_types{"  44", "  44", "  44"};
+
 
   SECTION("file writes") {
     NemoFeedbackWriter fdbk_writer(test_data_path, lons, lats, depths,
         times, variable_names, long_names, unit_names,
-        additional_variables, n_levels, juld_reference);
+        additional_variables, n_levels, juld_reference, station_types);
   }
 
   netCDF::NcFile ncFile(test_data_path.fullName().asString(),
@@ -74,6 +76,16 @@ CASE("test creating test file ") {
 
     EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
         static_cast<std::string>("SST     "));
+  }
+  
+  SECTION("STATION_TYPE variable is correct") {
+    netCDF::NcVar ncVar = ncFile.getVar("STATION_TYPE");
+    char data[4] = { ' ' };
+    for (int i = 0; i < 3; ++i) {
+      ncVar.getVar({i, 0}, {1, 4}, data);
+      EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 4),
+        static_cast<std::string>("  44"));
+    }
   }
 }
 

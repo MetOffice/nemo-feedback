@@ -116,10 +116,22 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
       }
     }
   }
-
+  
+  // Define the station type variable. This may not always be defined in obsdb_.
+  std::vector<std::string> station_types(n_obs, "    ");
+  if (obsdb_.has("MetaData", "fdbk_station_type")) {
+    std::vector<int> station_types_int(n_obs);
+    obsdb_.get_db("MetaData", "fdbk_station_type", station_types_int);
+    char buffer[4];
+    for (int i=0; i < n_obs; ++i) {
+      sprintf(buffer, "%4d", station_types_int[i]);
+      station_types[i] = buffer;
+    }
+  } 
+  
   NemoFeedbackWriter fdbk_writer(test_data_path, lons, lats, depths,
       julian_days, variable_names, long_names, unit_names,
-      additional_names, n_levels, juld_reference);
+      additional_names, n_levels, juld_reference, station_types);
 
   // Write the data
   std::vector<double> variable_data;

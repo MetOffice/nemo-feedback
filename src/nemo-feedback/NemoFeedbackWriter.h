@@ -32,19 +32,22 @@ class NemoFeedbackWriter {
       const std::vector<std::string> & long_names,
       const std::vector<std::string> & unit_names,
       const std::vector<std::string>& additional_variables,
-      const size_t n_levels, const util::DateTime & juld_reference);
+      const size_t n_levels, 
+      const util::DateTime & juld_reference,
+      const std::vector<std::string>& station_types);
 
   void write_variable_surf(const std::string & variable_name,
       const std::vector<double>& data);
 
   void write_variable_surf_qc(const std::string & variable_name,
       const std::vector<int32_t>& data);
+      
   void write_variable_surf_qc(const std::string & variable_name,
       const std::vector<int32_t>& data, const size_t flag_index);
 
   void write_variable(const std::string & variable_name,
       const std::array<double, 2>& data) {}
-
+ 
   void write_variable_level_qc(const std::string & variable_name,
       const std::array<int32_t, 2>& data) {}
 
@@ -67,6 +70,10 @@ class NemoFeedbackWriter {
 
   void define_whole_report_variables(const size_t n_obs,
       const size_t n_levels);
+      
+  void write_whole_report_variables(
+      const size_t n_obs,
+      const std::vector<std::string> & station_types);
 
   void define_variable(const std::string & variable_name,
       const std::string & long_names,
