@@ -27,19 +27,25 @@
 #include "ufo/GeoVaLs.h"
 #include "ufo/ObsDiagnostics.h"
 #include "ufo/filters/DiagnosticFlag.h"
+#include "ufo/filters/processWhere.h"
 #include "ufo/utils/metoffice/MetOfficeQCFlags.h"
 
 
 namespace nemo_feedback {
 
-NemoFeedback::NemoFeedback(ioda::ObsSpace & obsdb, const Parameters_ & params,
+NemoFeedback::NemoFeedback(
+    ioda::ObsSpace & obsdb, 
+    const Parameters_ & params,
     std::shared_ptr< ioda::ObsDataVector<int> > flags,
     std::shared_ptr< ioda::ObsDataVector<float> > obsErrors)
-      : obsdb_(obsdb), geovars_(), flags_(std::move(flags)),
-      obsErrors_(std::move(obsErrors)),
+      : 
+    obsdb_(obsdb), 
+    data_(obsdb_),
+    geovars_(), 
+    flags_(std::move(flags)),
+    obsErrors_(std::move(obsErrors)),
     parameters_(params),
-    validityTime_(obsdb.windowStart() + (obsdb.windowEnd()
-      - obsdb.windowStart()) / 2)
+    validityTime_(obsdb.windowStart() + (obsdb.windowEnd() - obsdb.windowStart()) / 2)
 {
   oops::Log::trace() << "NemoFeedback constructor starting" << std::endl;
 
@@ -87,6 +93,7 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
   std::vector<util::DateTime> datetimes(n_obs);
   obsdb_.get_db("MetaData", "dateTime", datetimes);
 
+  // Handle the reference date option.
   util::DateTime juld_reference = parameters_.refDate.value().value_or(datetimes[0]);
 
   std::vector<double> julian_days(n_obs, 0);
@@ -116,6 +123,15 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
       }
     }
   }
+
+  // Handle the where option.
+  size_t n_obs_to_write = 0;
+  const std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_);
+  for (int i = 0; i < n_obs; ++i) {
+    if (to_write[i]) {
+      n_obs_to_write++;
+    }
+  }
   
   // Define the station type variable. This may not always be defined in obsdb_.
   std::vector<std::string> station_types(n_obs, "    ");
@@ -129,9 +145,21 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
     }
   } 
   
-  NemoFeedbackWriter fdbk_writer(test_data_path, lons, lats, depths,
-      julian_days, variable_names, long_names, unit_names,
-      additional_names, n_levels, juld_reference, station_types);
+  NemoFeedbackWriter fdbk_writer(
+      test_data_path, 
+      n_obs_to_write,
+      to_write, 
+      lons, 
+      lats, 
+      depths,
+      julian_days, 
+      variable_names, 
+      long_names, 
+      unit_names,
+      additional_names, 
+      n_levels, 
+      juld_reference, 
+      station_types);
 
   // Write the data
   std::vector<double> variable_data;
@@ -149,11 +177,20 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
       if (variable_data[i] == missing_value)
         variable_data[i] = NemoFeedbackWriter::double_fillvalue;
     }
-    fdbk_writer.write_variable_surf(nemo_name + "_OBS", variable_data);
+    fdbk_writer.write_variable_surf(
+        n_obs,
+        n_obs_to_write,
+        to_write,
+        nemo_name + "_OBS", 
+        variable_data);
 
     // Write QC flag data for this variable to the first qc flag index location
     obsdb_.get_db("QCFlags", ufo_name, variable_qcFlags);
-    fdbk_writer.write_variable_surf_qc(nemo_name + "_QC_FLAGS",
+    fdbk_writer.write_variable_surf_qc(
+        n_obs,
+        n_obs_to_write,
+        to_write,
+        nemo_name + "_QC_FLAGS",
         variable_qcFlags, 0);
     variable_qc.resize(variable_qcFlags.size());
 
@@ -164,7 +201,12 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
         variable_qc[i] = 4;
       } else {variable_qc[i] = 1;}
     }
-    fdbk_writer.write_variable_surf_qc(nemo_name + "_QC", variable_qc);
+    fdbk_writer.write_variable_surf_qc(
+        n_obs,
+        n_obs_to_write,
+        to_write,
+        nemo_name + "_QC", 
+        variable_qc);
 
     // Whole Observation report QC flags
     for (int i=0; i < variable_qc.size(); ++i) {
@@ -173,7 +215,12 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
         variable_qc[i] = 4;
       } else {variable_qc[i] = 0;}
     }
-    fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", variable_qc);
+    fdbk_writer.write_variable_surf_qc(
+        n_obs,
+        n_obs_to_write,
+        to_write,
+        "OBSERVATION_QC", 
+        variable_qc);
 
     // Write additional variables for this variable
     auto additionalVariablesParams = nemoVariableParams.variables.value();
@@ -202,7 +249,12 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
               variable_data[i] = ov[i];
             }
           }
-          fdbk_writer.write_variable_surf(add_name, variable_data);
+          fdbk_writer.write_variable_surf(
+              n_obs,
+              n_obs_to_write,
+              to_write,
+              add_name, 
+              variable_data);
         }
       } else if (!obsdb_.has(ioda_group, ufo_name)) {
         oops::Log::trace() << obsdb_ << std::endl;
@@ -210,7 +262,12 @@ void NemoFeedback::postFilter(const ioda::ObsVector &ov,
                               + "/" + ufo_name, Here());
       } else {
         obsdb_.get_db(ioda_group, ufo_name, variable_data);
-        fdbk_writer.write_variable_surf(add_name, variable_data);
+        fdbk_writer.write_variable_surf(
+            n_obs,
+            n_obs_to_write,
+            to_write, 
+            add_name, 
+            variable_data);
       }
     }
   }

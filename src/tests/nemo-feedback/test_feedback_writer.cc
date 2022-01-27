@@ -25,22 +25,33 @@ CASE("test creating test file ") {
 
   size_t n_obs = 3;
   size_t n_levels = 1;
-  std::vector<double> lats(n_obs, 0);
-  std::vector<double> lons(n_obs, 0);
+  std::vector<double> lats{1.0, 2.0, 3.0};
+  std::vector<double> lons{4.0, 5.0, 6.0};
   std::vector<double> depths(n_obs*n_levels, 0);
-  std::vector<double> times(n_obs, 0);
+  std::vector<double> times{7.0, 8.0, 9.0};
   std::vector<std::string> variable_names{"SST"};
   std::vector<std::string> long_names{"this is a long name"};
   std::vector<std::string> unit_names{"this is a unit"};
   std::vector<std::string> additional_variables{"Hx", "DW_FLAGS", "STD"};
   util::DateTime juld_reference("2021-08-31T15:26:00Z");
-  std::vector<std::string> station_types{"  44", "  44", "  44"};
-
+  std::vector<std::string> station_types{"  44", "  45", "  46"};
 
   SECTION("file writes") {
-    NemoFeedbackWriter fdbk_writer(test_data_path, lons, lats, depths,
-        times, variable_names, long_names, unit_names,
-        additional_variables, n_levels, juld_reference, station_types);
+    NemoFeedbackWriter fdbk_writer(
+        test_data_path, 
+        2,
+        {true, false, true},
+        lons, 
+        lats, 
+        depths,
+        times, 
+        variable_names, 
+        long_names, 
+        unit_names,
+        additional_variables, 
+        n_levels, 
+        juld_reference, 
+        station_types);
   }
 
   netCDF::NcFile ncFile(test_data_path.fullName().asString(),
@@ -81,11 +92,12 @@ CASE("test creating test file ") {
   SECTION("STATION_TYPE variable is correct") {
     netCDF::NcVar ncVar = ncFile.getVar("STATION_TYPE");
     char data[4] = { ' ' };
-    for (int i = 0; i < 3; ++i) {
-      ncVar.getVar({i, 0}, {1, 4}, data);
-      EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 4),
+    ncVar.getVar({0, 0}, {1, 4}, data);
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 4),
         static_cast<std::string>("  44"));
-    }
+    ncVar.getVar({1, 0}, {1, 4}, data);
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 4),
+        static_cast<std::string>("  46"));
   }
 }
 
