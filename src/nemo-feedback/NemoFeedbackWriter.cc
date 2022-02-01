@@ -415,19 +415,16 @@ void NemoFeedbackWriter::write_whole_report_variables(
     const std::vector<std::string> & station_types) {
 
   // Write station type.    
-  auto station_type_var = ncFile->getVar("STATION_TYPE");
-  char station_types_char[n_obs_to_write][4];
   size_t nchars = (ncFile->getDim(STRINGTYP)).getSize();
-  std::vector<std::string> reduced_station_types = reduce_data(n_obs, 
-                                                               n_obs_to_write, 
-                                                               to_write, 
-                                                               station_types);
-  for (int i = 0; i < n_obs_to_write; ++i) {
-    strncpy(station_types_char[i], 
-            reduced_station_types[i].data(), 
-            nchars);
+  auto station_type_var = ncFile->getVar("STATION_TYPE");
+  int j = 0;
+  for (int i = 0; i < n_obs; ++i) {
+    if (to_write[i]) {
+      station_type_var.putVar({j++, 0}, 
+                              {1, nchars}, 
+                              station_types[i].c_str());
+    }
   }
-  station_type_var.putVar(station_types_char);
 
 }
 

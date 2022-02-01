@@ -23,24 +23,24 @@ namespace test {
 CASE("test creating test file ") {
   eckit::PathName test_data_path("../testoutput/simple_nemo_out.nc");
 
-  size_t n_obs = 3;
+  size_t n_obs = 5;
   size_t n_levels = 1;
-  std::vector<double> lats{1.0, 2.0, 3.0};
-  std::vector<double> lons{4.0, 5.0, 6.0};
+  std::vector<double> lats{1.0, 2.0, 3.0, 4.0, 5.0};
+  std::vector<double> lons{6.0, 7.0, 8.0, 9.0, 10.0};
   std::vector<double> depths(n_obs*n_levels, 0);
-  std::vector<double> times{7.0, 8.0, 9.0};
+  std::vector<double> times{11.0, 12.0, 13.0, 14.0, 15.0};
   std::vector<std::string> variable_names{"SST"};
   std::vector<std::string> long_names{"this is a long name"};
   std::vector<std::string> unit_names{"this is a unit"};
   std::vector<std::string> additional_variables{"Hx", "DW_FLAGS", "STD"};
   util::DateTime juld_reference("2021-08-31T15:26:00Z");
-  std::vector<std::string> station_types{"  44", "  45", "  46"};
+  std::vector<std::string> station_types{"  44", "  45", "  46", "  47", "  48"};
 
   SECTION("file writes") {
     NemoFeedbackWriter fdbk_writer(
         test_data_path, 
-        2,
-        {true, false, true},
+        4,
+        {true, false, true, true, true},
         lons, 
         lats, 
         depths,
@@ -98,6 +98,12 @@ CASE("test creating test file ") {
     ncVar.getVar({1, 0}, {1, 4}, data);
     EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 4),
         static_cast<std::string>("  46"));
+    ncVar.getVar({2, 0}, {1, 4}, data);
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 4),
+        static_cast<std::string>("  47"));
+    ncVar.getVar({3, 0}, {1, 4}, data);
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 4),
+        static_cast<std::string>("  48"));
   }
 }
 
