@@ -68,7 +68,8 @@ void NemoFeedback::priorFilter(const ufo::GeoVaLs & gv) {
   oops::Log::trace() << "NemoFeedback priorFilter" << std::endl;
 }
 
-void NemoFeedback::postFilter(const ioda::ObsVector &ov,
+void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
+                  const ioda::ObsVector &ov,
                   const ioda::ObsVector &bv,
                   const ufo::ObsDiagnostics &dv) {
   oops::Log::trace() << "NemoFeedback postFilter" << std::endl;
