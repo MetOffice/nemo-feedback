@@ -37,11 +37,11 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
 
   void preProcess() override {}
   void priorFilter(const ufo::GeoVaLs &) override;
-  // void postFilter(const ioda::ObsVector &ov,
-  //                 const ufo::ObsDiagnostics &dv) override;
-  void postFilter(const ioda::ObsVector &ov,
+  void postFilter(const ufo::GeoVaLs & gv,
+                  const ioda::ObsVector &ov,
                   const ioda::ObsVector &bv,
                   const ufo::ObsDiagnostics &dv) override;
+  void checkFilterData(const oops::FilterStage filterStage) override {}
 
   oops::Variables requiredVars() const override {return geovars_;}
   oops::Variables requiredHdiagnostics() const override {return extradiagvars_;}
