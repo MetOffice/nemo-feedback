@@ -210,6 +210,13 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         to_write,
         nemo_name + "_QC", 
         variable_qc);
+    fdbk_writer.write_variable_surf_qc(
+        n_obs,
+        n_obs_to_write,
+        to_write,
+        nemo_name + "_LEVEL_QC", 
+        variable_qc, 
+        0);
 
     // Whole Observation report QC flags
     for (int i=0; i < variable_qc.size(); ++i) {
