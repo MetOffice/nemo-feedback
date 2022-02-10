@@ -186,14 +186,16 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         variable_data);
 
     // Write QC flag data for this variable to the first qc flag index location
-    obsdb_.get_db("QCFlags", ufo_name, variable_qcFlags);
-    fdbk_writer.write_variable_surf_qc(
-        n_obs,
-        n_obs_to_write,
-        to_write,
-        nemo_name + "_QC_FLAGS",
-        variable_qcFlags, 0);
-    variable_qc.resize(variable_qcFlags.size());
+    if (obsdb_.has("QCFlags", ufo_name)) {
+      obsdb_.get_db("QCFlags", ufo_name, variable_qcFlags);
+      fdbk_writer.write_variable_surf_qc(
+          n_obs,
+          n_obs_to_write,
+          to_write,
+          nemo_name + "_QC_FLAGS",
+          variable_qcFlags, 0);
+      variable_qc.resize(variable_qcFlags.size());
+    }
 
     // Overall quality control flags
     obsdb_.get_db("DiagnosticFlags/FinalReject", ufo_name, final_qc);
