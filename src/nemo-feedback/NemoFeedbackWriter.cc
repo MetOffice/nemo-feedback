@@ -420,11 +420,17 @@ void NemoFeedbackWriter::write_whole_report_variables(
   int j = 0;
   for (int i = 0; i < n_obs; ++i) {
     if (to_write[i]) {
-      station_type_var.putVar({j++, 0}, 
-                              {1, nchars}, 
-                              station_types[i].c_str());
+  // +1 is for the null-terminator of a cstring
+  char* buffer = new char[n_obs_to_write*nchars+1];
+  for (int i = 0; i < n_obs; ++i) {
+    if (to_write[i]) {
+      strcpy(buffer + nchars*j++, station_types[i].c_str());
     }
   }
+  station_type_var.putVar({0, 0},
+                          {n_obs_to_write, nchars},
+                          buffer);
+  delete[] buffer;
 
 }
 
