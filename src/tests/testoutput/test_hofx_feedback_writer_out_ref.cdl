@@ -78,6 +78,10 @@ variables:
 		ICECONC_IOBSK:long_name = "ORCA grid search K coordinate" ;
 	char ICECONC_GRID(STRINGGRID) ;
 		ICECONC_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+
+// global attributes:
+		:title = "NEMO observation operator output" ;
+		:Convention = "NEMO unified observation operator output" ;
 data:
 
  JULD_REFERENCE = "2021063012000" ;
