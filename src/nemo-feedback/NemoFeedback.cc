@@ -139,7 +139,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   if (obsdb_.has("MetaData", "fdbk_station_type")) {
     std::vector<int> station_types_int(n_obs);
     obsdb_.get_db("MetaData", "fdbk_station_type", station_types_int);
-    char buffer[4];
+    char buffer[5];
     for (int i=0; i < n_obs; ++i) {
       sprintf(buffer, "%4d", station_types_int[i]);
       station_types[i] = buffer;
