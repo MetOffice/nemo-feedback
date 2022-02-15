@@ -16,6 +16,7 @@
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 #include "nemo-feedback/NemoFeedbackParameters.h"
+#include "ufo/filters/ObsFilterData.h"
 #include "ufo/ObsTraits.h"
 
 namespace nemo_feedback {
@@ -49,6 +50,7 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   void print(std::ostream &) const override;
 
   ioda::ObsSpace & obsdb_;
+  ufo::ObsFilterData data_;
   oops::Variables geovars_;
   oops::Variables extradiagvars_;
   std::shared_ptr<ioda::ObsDataVector<int>> flags_;

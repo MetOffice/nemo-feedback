@@ -14,6 +14,7 @@
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/RequiredParameter.h"
+#include "ufo/filters/processWhere.h"
 
 namespace nemo_feedback {
 /// \brief NemoFeedback options for an "additional" variable.
@@ -49,6 +50,9 @@ class NemoFeedbackParameters : public oops::ObsFilterParametersBase {
   oops::RequiredParameter<std::vector<NemoFeedbackVariableParameters>>
     variables{"variables", this};
   oops::OptionalParameter<util::DateTime> refDate{"reference date", this};
+  /// Logic used to select locations to be written to file.
+  /// If not specified, all locations will be written.
+  oops::Parameter<std::vector<ufo::WhereParameters>> where{"where", {}, this};
 };
 
 }  // namespace nemo_feedback

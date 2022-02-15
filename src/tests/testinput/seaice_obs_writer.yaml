@@ -105,8 +105,16 @@ observations:
     - name: set
       flag: FinalReject
     - name: reject
+  - filter: Create Diagnostic Flags 
+    flags:
+    - name: ObsToWrite
+      initial value: true
   - filter: NEMO Feedback Writer
     filename: testoutput/test_hofx_feedback_writer_out.nc
+    where:
+    - variable:
+        name: DiagnosticFlags/ObsToWrite/ice_area_fraction
+      is_true:    
     variables:
     - name: ice_area_fraction
       nemo name: ICECONC
