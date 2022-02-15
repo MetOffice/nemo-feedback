@@ -141,6 +141,8 @@ void NemoFeedbackWriter::write_metadata_variables(
     const std::vector<std::string>& additional_variables,
     const util::DateTime& juld_reference) {
   {
+    ncFile->putAtt("title", "NEMO observation operator output");
+    ncFile->putAtt("Convention", "NEMO unified observation operator output");
     netCDF::NcVar nc_juld_var = ncFile->addVar("JULD_REFERENCE", netCDF::ncChar,
         ncFile->getDim(STRINGJULD));
     nc_juld_var.putAtt("long_name", "Date of reference for julian days");
