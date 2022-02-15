@@ -418,8 +418,6 @@ void NemoFeedbackWriter::write_whole_report_variables(
   size_t nchars = (ncFile->getDim(STRINGTYP)).getSize();
   auto station_type_var = ncFile->getVar("STATION_TYPE");
   int j = 0;
-  for (int i = 0; i < n_obs; ++i) {
-    if (to_write[i]) {
   // +1 is for the null-terminator of a cstring
   char* buffer = new char[n_obs_to_write*nchars+1];
   for (int i = 0; i < n_obs; ++i) {

@@ -106,6 +106,7 @@ observations:
       flag: FinalReject
     - name: reject
   - filter: Create Diagnostic Flags 
+    flags:
     - name: ObsToWrite
       initial value: true
   - filter: NEMO Feedback Writer
