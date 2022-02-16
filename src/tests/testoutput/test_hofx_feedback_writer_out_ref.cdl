@@ -86,7 +86,7 @@ variables:
 		:Convention = "NEMO unified observation operator output" ;
 data:
 
- JULD_REFERENCE = "2021063012000" ;
+ JULD_REFERENCE = "20210630120000" ;
 
  VARIABLES =
   "ICECONC " ;

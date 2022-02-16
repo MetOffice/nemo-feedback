@@ -35,6 +35,7 @@
 #define STRINGTYP "STRINGTYP"
 #define STRINGTYP_NUM 4
 #define STRINGJULD "STRINGJULD"
+#define STRINGJULD_NUM 14
 
 #define QC_CONVENTIONS "U.S. Integrated Ocean Observing System, 2017. Manual "\
   "for the Use of Real-Time Oceanographic Data Quality Control Flags, Version"\
@@ -44,7 +45,7 @@ namespace nemo_feedback {
 
 const std::map<std::string, size_t> NemoFeedbackWriter::coord_sizes{
   {N_QCF, 2}, {STRINGNAM, STRINGNAM_NUM}, {STRINGGRID, 1},
-  {STRINGWMO, STRINGWMO_NUM}, {STRINGTYP, STRINGTYP_NUM}, {STRINGJULD, 14}};
+  {STRINGWMO, STRINGWMO_NUM}, {STRINGTYP, STRINGTYP_NUM}, {STRINGJULD, STRINGJULD_NUM}};
 
 typedef char fixed_length_name_type[STRINGNAM_NUM+1];
 typedef char fixed_length_type_type[STRINGTYP_NUM+1];
@@ -150,12 +151,18 @@ void NemoFeedbackWriter::write_metadata_variables(
     int year, month, day, hour, minute, second;
     juld_reference.toYYYYMMDDhhmmss(year, month, day, hour, minute, second);
     std::ostringstream ref_stream;
-    ref_stream << std::setw(4) << std::setfill('0') << year;
-    ref_stream << std::setw(2) << month << day << hour << minute;
-    // fudge to handle lack of padding when seconds are 0.
-    if (second == 0) {ref_stream << "00";} else {ref_stream << second;};
+    ref_stream << std::setfill('0');
+    ref_stream << std::setw(4) << year;
+    ref_stream << std::setw(2) << month; 
+    ref_stream << std::setw(2) << day; 
+    ref_stream << std::setw(2) << hour; 
+    ref_stream << std::setw(2) << minute;
+    ref_stream << std::setw(2) << second;
 
-    nc_juld_var.putVar(ref_stream.str().data());
+    char buffer[15];
+    ref_stream.str().copy(buffer, 14);
+    buffer[14] = '\0';
+    nc_juld_var.putVar({0}, {STRINGJULD_NUM}, buffer);
   }
 
   {
