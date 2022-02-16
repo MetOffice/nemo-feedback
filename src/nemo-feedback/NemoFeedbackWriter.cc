@@ -276,6 +276,13 @@ void NemoFeedbackWriter::define_whole_report_variables() {
     tmp_var.putAtt("long_name", "Quality on date and time");
     tmp_var.putAtt("Conventions", "OPS flag conventions");
   }
+    
+  {
+    netCDF::NcVar tmp_var = ncFile->addVar("ORIGINAL_FILE_INDEX", netCDF::ncInt,
+        *nobs_dim);
+    tmp_var.putAtt("long_name", "Index in original data file");
+  }
+
 }
 
 /// Define a main variable with its auxillary variables in the feedback file
