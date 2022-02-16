@@ -58,8 +58,8 @@ variables:
 	int JULD_QC_FLAGS(N_OBS, N_QCF) ;
 		JULD_QC_FLAGS:long_name = "Quality on date and time" ;
 		JULD_QC_FLAGS:Conventions = "OPS flag conventions" ;
-    int ORIGINAL_FILE_INDEX(N_OBS) ;
-        ORIGINAL_FILE_INDEX:long_name = "Index in original data file" ;
+	int ORIGINAL_FILE_INDEX(N_OBS) ;
+		ORIGINAL_FILE_INDEX:long_name = "Index in original data file" ;
 	double ICECONC_OBS(N_OBS, N_LEVELS) ;
 		ICECONC_OBS:long_name = "ice area fraction" ;
 		ICECONC_OBS:units = "Fraction" ;
@@ -213,6 +213,8 @@ data:
   _, _,
   _, _,
   _, _ ;
+
+ ORIGINAL_FILE_INDEX = _, _, _, _, _, _, _, _, _, _, _ ;
 
  ICECONC_OBS =
   0,
