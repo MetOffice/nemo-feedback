@@ -161,7 +161,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   // Write the data
   std::vector<double> variable_data;
   std::vector<int> variable_qcFlags;
-  std::vector<int> variable_qc;
+  std::vector<int> variable_qc(n_obs);
   std::vector<ufo::DiagnosticFlag> final_qc;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
@@ -170,7 +170,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     obsdb_.get_db("ObsValue", ufo_name, variable_data);
     auto missing_value = util::missingValue(variable_data[0]);
     oops::Log::trace() << "Missing value OBS: " << missing_value << std::endl;
-    for (int i=0; i < ov.size(); ++i) {
+    for (int i=0; i < n_obs; ++i) {
       if (variable_data[i] == missing_value)
         variable_data[i] = NemoFeedbackWriter::double_fillvalue;
     }
@@ -181,16 +181,31 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         nemo_name + "_OBS", 
         variable_data);
 
-    // Write QC flag data for this variable to the first qc flag index location
+    // Write Met Office QC flag data for this variable if they exist. 
     if (obsdb_.has("QCFlags", ufo_name)) {
       obsdb_.get_db("QCFlags", ufo_name, variable_qcFlags);
+      
+      // To the first qc flag index location
       fdbk_writer.write_variable_surf_qc(
           n_obs,
           n_obs_to_write,
           to_write,
           nemo_name + "_QC_FLAGS",
           variable_qcFlags, 0);
-      variable_qc.resize(variable_qcFlags.size());
+
+      // Whole Observation report QC flags
+      for (int i=0; i < variable_qc.size(); ++i) {
+        if (variable_qcFlags[i]
+            & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
+          variable_qc[i] = 4;
+        } else {variable_qc[i] = 0;}
+      }
+      fdbk_writer.write_variable_surf_qc(
+          n_obs,
+          n_obs_to_write,
+          to_write,
+          "OBSERVATION_QC", 
+          variable_qc);
     }
 
     // Overall quality control flags
@@ -214,20 +229,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         variable_qc, 
         0);
 
-    // Whole Observation report QC flags
-    for (int i=0; i < variable_qc.size(); ++i) {
-      if (variable_qcFlags[i]
-          & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
-        variable_qc[i] = 4;
-      } else {variable_qc[i] = 0;}
-    }
-    fdbk_writer.write_variable_surf_qc(
-        n_obs,
-        n_obs_to_write,
-        to_write,
-        "OBSERVATION_QC", 
-        variable_qc);
-
     // Write additional variables for this variable
     auto additionalVariablesParams = nemoVariableParams.variables.value();
     for (const NemoFeedbackAddVariableParameters& addParams :
@@ -241,18 +242,19 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           auto var_it = std::find(ov_varnames.begin(), ov_varnames.end(),
               ufo_name);
           oops::Log::trace() << "ov_varnames = " << ov_varnames << std::endl;
+          std::size_t var_it_dist = static_cast<std::size_t>(
+                                    std::distance(ov_varnames.begin(), var_it));
           oops::Log::trace() << "iterator distance is "
-              << static_cast<std::size_t>(
-                  std::distance(ov_varnames.begin(), var_it))
-              << std::endl;
-          auto missing_value_add = util::missingValue(ov[0]);
+                             << var_it_dist
+                             << std::endl;
+          auto missing_value_add = util::missingValue(ov[var_it_dist * n_obs]);
           oops::Log::trace() << "Missing value: " << missing_value_add
               << std::endl;
-          for (int i=0; i < ov.size(); ++i) {
-            if (ov[i] == missing_value_add) {
+          for (int i=0; i < n_obs; ++i) {
+            if (ov[i+(var_it_dist * n_obs)] == missing_value_add) {
               variable_data[i] = NemoFeedbackWriter::double_fillvalue;
             } else {
-              variable_data[i] = ov[i];
+              variable_data[i] = ov[i+(var_it_dist * n_obs)];
             }
           }
           fdbk_writer.write_variable_surf(
