@@ -35,6 +35,11 @@ CASE("test creating test file ") {
   std::vector<std::string> additional_variables{"Hx", "DW_FLAGS", "STD"};
   util::DateTime juld_reference("2021-08-31T15:26:00Z");
   std::vector<std::string> station_types{"  44", "  45", "  46", "  47", "  48"};
+  std::vector<std::string> station_ids{"12345678", 
+                                       " 2345678", 
+                                       "1234567 ", 
+                                       " 3456789", 
+                                       "123"};
 
   SECTION("file writes") {
     NemoFeedbackWriter fdbk_writer(
@@ -51,7 +56,8 @@ CASE("test creating test file ") {
         additional_variables, 
         n_levels, 
         juld_reference, 
-        station_types);
+        station_types,
+        station_ids);
   }
 
   netCDF::NcFile ncFile(test_data_path.fullName().asString(),
@@ -105,6 +111,24 @@ CASE("test creating test file ") {
     EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 4),
         static_cast<std::string>("  48"));
   }
+
+  SECTION("STATION_IDENTIFIER variable is correct") {
+    netCDF::NcVar ncVar = ncFile.getVar("STATION_IDENTIFIER");
+    char data[8] = { ' ' };
+    ncVar.getVar({0, 0}, {1, 8}, data);
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
+        static_cast<std::string>("12345678"));
+    ncVar.getVar({1, 0}, {1, 8}, data);
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
+        static_cast<std::string>("1234567 "));
+    ncVar.getVar({2, 0}, {1, 8}, data);
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
+        static_cast<std::string>(" 3456789"));
+    ncVar.getVar({3, 0}, {1, 8}, data);
+    EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
+        static_cast<std::string>("123"));
+  }
+
 }
 
 }  // namespace test

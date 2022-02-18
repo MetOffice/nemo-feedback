@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 #include <bitset>
+#include <string.h>
 
 #include "eckit/mpi/Comm.h"
 #include "eckit/mpi/Parallel.h"
@@ -142,6 +143,39 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     }
   } 
   
+  // Define the station identifier variable. These may not always be defined
+  // in odbsb_ and may be contained in either the station_id or 
+  // buoy_identifier variables, or both.
+  std::vector<std::string> station_ids(n_obs, "        ");
+  if (obsdb_.has("MetaData", "station_id")) {
+    std::vector<std::string> station_ids_tmp(n_obs);
+    obsdb_.get_db("MetaData", "station_id", station_ids_tmp);
+    char buffer[9];
+    int sl;
+    for (int i=0; i< n_obs; ++i) {
+      if (station_ids_tmp[i] != "") {
+        strcpy(buffer, "        ");
+        sl = station_ids_tmp[i].length();
+        if (sl > 8) { sl = 8; }
+        buffer[8] = '\0';
+        station_ids_tmp[i].copy(buffer, sl);
+        station_ids[i] = buffer;
+      }
+    }
+  } 
+  if (obsdb_.has("MetaData", "buoy_identifier")) {
+    std::vector<int> buoy_ids(n_obs);
+    obsdb_.get_db("MetaData", "buoy_identifier", buoy_ids);
+    char buffer[9];
+    auto buoy_id_missing_value = util::missingValue(buoy_ids[0]);
+    for (int i=0; i < n_obs; ++i) {
+      if (buoy_ids[i] != buoy_id_missing_value) {
+        sprintf(buffer, "%8d", buoy_ids[i]);
+        station_ids[i] = buffer;
+      }
+    }
+  } 
+   
   NemoFeedbackWriter fdbk_writer(
       test_data_path, 
       n_obs_to_write,
@@ -156,11 +190,12 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       additional_names, 
       n_levels, 
       juld_reference, 
-      station_types);
+      station_types,
+      station_ids);
 
   // Write the data
   std::vector<double> variable_data;
-  std::vector<int> variable_qcFlags;
+  std::vector<int> variable_qcFlags(n_obs, 0);
   std::vector<int> variable_qc(n_obs);
   std::vector<ufo::DiagnosticFlag> final_qc;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
@@ -192,21 +227,21 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           to_write,
           nemo_name + "_QC_FLAGS",
           variable_qcFlags, 0);
-
-      // Whole Observation report QC flags
-      for (int i=0; i < variable_qc.size(); ++i) {
-        if (variable_qcFlags[i]
-            & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
-          variable_qc[i] = 4;
-        } else {variable_qc[i] = 0;}
-      }
-      fdbk_writer.write_variable_surf_qc(
-          n_obs,
-          n_obs_to_write,
-          to_write,
-          "OBSERVATION_QC", 
-          variable_qc);
     }
+    
+    // Whole Observation report QC flags
+    for (int i=0; i < variable_qc.size(); ++i) {
+      if (variable_qcFlags[i]
+          & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
+        variable_qc[i] = 4;
+      } else {variable_qc[i] = 0;}
+    }
+    fdbk_writer.write_variable_surf_qc(
+        n_obs,
+        n_obs_to_write,
+        to_write,
+        "OBSERVATION_QC", 
+        variable_qc);
 
     // Overall quality control flags
     obsdb_.get_db("DiagnosticFlags/FinalReject", ufo_name, final_qc);
