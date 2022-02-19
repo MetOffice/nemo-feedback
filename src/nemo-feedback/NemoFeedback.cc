@@ -170,7 +170,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     auto buoy_id_missing_value = util::missingValue(buoy_ids[0]);
     for (int i=0; i < n_obs; ++i) {
       if (buoy_ids[i] != buoy_id_missing_value) {
-        sprintf(buffer, "%8d", buoy_ids[i]);
+        sprintf(buffer, "%-8d", buoy_ids[i]);
         station_ids[i] = buffer;
       }
     }
