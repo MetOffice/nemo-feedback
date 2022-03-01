@@ -114,7 +114,8 @@ CASE("test creating test file ") {
 
   SECTION("STATION_IDENTIFIER variable is correct") {
     netCDF::NcVar ncVar = ncFile.getVar("STATION_IDENTIFIER");
-    char data[8] = { ' ' };
+    char data[9] = { ' ' };
+    data[4] = '\0';
     ncVar.getVar({0, 0}, {1, 8}, data);
     EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
         static_cast<std::string>("12345678"));

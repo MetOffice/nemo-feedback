@@ -150,16 +150,10 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   if (obsdb_.has("MetaData", "station_id")) {
     std::vector<std::string> station_ids_tmp(n_obs);
     obsdb_.get_db("MetaData", "station_id", station_ids_tmp);
-    char buffer[9];
-    int sl;
     for (int i=0; i< n_obs; ++i) {
       if (station_ids_tmp[i] != "") {
-        strcpy(buffer, "        ");
-        sl = station_ids_tmp[i].length();
-        if (sl > 8) { sl = 8; }
-        buffer[8] = '\0';
-        station_ids_tmp[i].copy(buffer, sl);
-        station_ids[i] = buffer;
+             station_ids_tmp[i].resize(8, ' ');
+             station_ids[i] = station_ids_tmp[i].substr(0,8);
       }
     }
   } 
