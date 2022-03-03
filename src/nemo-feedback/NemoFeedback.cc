@@ -178,7 +178,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     int latest_version;
     auto version_missing_value = util::missingValue(version[0]);
     for (int ymd_to_find : ymd_set) {    
-      for (int sid_to_find: sid_set) {
+      for (int sid_to_find : sid_set) {
         latest_version = 0;
         for (int i=0; i < n_obs; ++i) {
           if (to_write[i] &&
