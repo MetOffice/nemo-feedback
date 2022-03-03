@@ -95,7 +95,8 @@ class NemoFeedbackWriter {
       const size_t n_obs_to_write, 
       const size_t n_levels,
       const size_t n_obs_vars, 
-      const size_t n_add_entries);
+      const size_t n_add_entries,
+      const size_t n_extra);
 
   void write_coord_variables(
       const size_t & n_obs,
