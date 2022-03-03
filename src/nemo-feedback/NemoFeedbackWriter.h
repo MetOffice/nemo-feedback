@@ -37,6 +37,7 @@ class NemoFeedbackWriter {
       const std::vector<std::string> & long_names,
       const std::vector<std::string> & unit_names,
       const std::vector<std::string> & additional_variables,
+      const std::vector<bool> & extra_vars,
       const size_t n_levels, 
       const util::DateTime & juld_reference,
       const std::vector<std::string>& station_types,
@@ -125,6 +126,11 @@ class NemoFeedbackWriter {
       const std::string & unit_names,
       const std::vector<std::string> & additional_names =
         std::vector<std::string>());
+
+  void define_extra_variable(
+      const std::string & variable_name,
+      const std::string & long_name,
+      const std::string & unit_name);
 
   std::unique_ptr<netCDF::NcFile> ncFile;
   std::unique_ptr<netCDF::NcDim> nobs_dim;

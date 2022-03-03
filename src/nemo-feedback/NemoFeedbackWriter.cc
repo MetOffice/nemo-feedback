@@ -62,6 +62,7 @@ NemoFeedbackWriter::NemoFeedbackWriter(
     const std::vector<std::string> & long_names,
     const std::vector<std::string> & unit_names,
     const std::vector<std::string> & additional_variables,
+    const std::vector<bool> & extra_vars,
     const size_t n_levels, 
     const util::DateTime & juld_reference,
     const std::vector<std::string> & station_types,
@@ -109,11 +110,17 @@ NemoFeedbackWriter::NemoFeedbackWriter(
       station_ids);
 
   for (int i=0; i < variable_names.size(); ++i) {
-    define_variable(
-        variable_names[i], 
-        long_names[i], 
-        unit_names[i],
-        additional_variables);
+    if (extra_vars[i]) {
+      define_extra_variable(variable_names[i],
+                            long_names[i], 
+                            unit_names[i]);
+    } else {
+      define_variable(
+          variable_names[i], 
+          long_names[i], 
+          unit_names[i],
+          additional_variables);
+    }
   }
 }
 
@@ -357,6 +364,20 @@ void NemoFeedbackWriter::define_variable(
     char data[2] {"T"};
     tmp_var.putVar({0}, {1}, data);
   }
+}
+
+/// Define an extra variable.
+void NemoFeedbackWriter::define_variable(
+    const std::string & variable_name,
+    const std::string & longName, 
+    const std::string & units ) {
+
+  const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
+
+  netCDF::NcVar var = ncFile->addVar(variable_name,
+                                     netCDF::ncDouble, dims);
+  var.putAtt("long_name", longName);
+  var.putAtt("units", units);
 }
 
 // Routine to subset data before writing.

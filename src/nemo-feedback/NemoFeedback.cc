@@ -110,6 +110,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   std::vector<std::string> variable_names;
   std::vector<std::string> long_names;
   std::vector<std::string> unit_names;
+  std::vector<bool> extra_vars;
   bool is_altimeter = false;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
@@ -119,6 +120,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     variable_names.push_back(nemoVariableParams.nemoName.value());
     long_names.push_back(nemoVariableParams.longName.value());
     unit_names.push_back(nemoVariableParams.units.value());
+    extra_vars.push_back(nemoVariableParams.extravar.value_or(false));
     auto additionalVariablesParams = nemoVariableParams.variables.value();
     for (const NemoFeedbackAddVariableParameters& addVariableParams :
         additionalVariablesParams) {
@@ -257,7 +259,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       variable_names, 
       long_names, 
       unit_names,
-      additional_names, 
+      additional_names,
+      extra_vars, 
       n_levels, 
       juld_reference, 
       station_types,
@@ -279,6 +282,19 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       if (variable_data[i] == missing_value)
         variable_data[i] = NemoFeedbackWriter::double_fillvalue;
     }
+    auto extra_var = nemoVariableParams.extravar.value_or(false);
+    if (extra_var) {
+      fdbk_writer.write_variable_surf(
+          n_obs,
+          n_obs_to_write,
+          to_write,
+          nemo_name, 
+          variable_data);
+      // If this is an extra variable we do not want to write any of the
+      // other variables with _OBS, _QC etc. added on to the name.
+      continue;
+    } 
+    
     fdbk_writer.write_variable_surf(
         n_obs,
         n_obs_to_write,
