@@ -271,6 +271,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   std::vector<int> variable_qcFlags(n_obs, 0);
   std::vector<int> variable_qc(n_obs);
   std::vector<ufo::DiagnosticFlag> final_qc;
+  std::vector<ufo::DiagnosticFlag> do_not_assimilate;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
     auto nemo_name = nemoVariableParams.nemoName.value();
@@ -335,6 +336,15 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       if (final_qc[i]) {
         variable_qc[i] = 4;
       } else {variable_qc[i] = 1;}
+    }
+    // Add do not assimilate flag if required.
+    if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
+      obsdb_.get_db("DiagnosticFlags/DoNotAssimilate", ufo_name, do_not_assimilate);
+      for (int i=0; i < final_qc.size(); ++i) {
+        if (do_not_assimilate[i]) {
+          variable_qc[i] += 128;
+        } 
+      } 
     }
     fdbk_writer.write_variable_surf_qc(
         n_obs,
