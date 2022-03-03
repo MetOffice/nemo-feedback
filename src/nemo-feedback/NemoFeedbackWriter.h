@@ -110,6 +110,7 @@ class NemoFeedbackWriter {
   void write_metadata_variables(
       const std::vector<std::string>& variable_names,
       const std::vector<std::string> & additional_variables,
+      const std::vector<bool>& extra_vars,
       const util::DateTime& juld_reference);
 
   void define_whole_report_variables();

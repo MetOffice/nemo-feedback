@@ -29,17 +29,18 @@ CASE("test creating test file ") {
   std::vector<double> lons{6.0, 7.0, 8.0, 9.0, 10.0};
   std::vector<double> depths(n_obs*n_levels, 0);
   std::vector<double> times{11.0, 12.0, 13.0, 14.0, 15.0};
-  std::vector<std::string> variable_names{"SST"};
-  std::vector<std::string> long_names{"this is a long name"};
-  std::vector<std::string> unit_names{"this is a unit"};
+  std::vector<std::string> variable_names{"SST", "MDT"};
+  std::vector<std::string> long_names{"this is a long name", "this is another long name"};
+  std::vector<std::string> unit_names{"this is a unit", "this is another unit"};
   std::vector<std::string> additional_variables{"Hx", "DW_FLAGS", "STD"};
+  std::vector<bool> extra_variables{false, true};
   util::DateTime juld_reference("2021-08-31T15:26:00Z");
   std::vector<std::string> station_types{"  44", "  45", "  46", "  47", "  48"};
   std::vector<std::string> station_ids{"12345678", 
                                        " 2345678", 
                                        "1234567 ", 
                                        " 3456789", 
-                                       "123"};
+                                       "123     "};
 
   SECTION("file writes") {
     NemoFeedbackWriter fdbk_writer(
@@ -54,6 +55,7 @@ CASE("test creating test file ") {
         long_names, 
         unit_names,
         additional_variables, 
+        extra_variables,
         n_levels, 
         juld_reference, 
         station_types,
@@ -128,7 +130,7 @@ CASE("test creating test file ") {
         static_cast<std::string>(" 3456789"));
     ncVar.getVar({3, 0}, {1, 8}, data);
     EXPECT_EQUAL(static_cast<std::string>(data).substr(0, 8),
-        static_cast<std::string>("123"));
+        static_cast<std::string>("123     "));
   }
 
 }

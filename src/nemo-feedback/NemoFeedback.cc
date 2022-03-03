@@ -120,7 +120,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     variable_names.push_back(nemoVariableParams.nemoName.value());
     long_names.push_back(nemoVariableParams.longName.value());
     unit_names.push_back(nemoVariableParams.units.value());
-    extra_vars.push_back(nemoVariableParams.extravar.value_or(false));
+    extra_vars.push_back(nemoVariableParams.extravar.value().value_or(false));
     auto additionalVariablesParams = nemoVariableParams.variables.value();
     for (const NemoFeedbackAddVariableParameters& addVariableParams :
         additionalVariablesParams) {
@@ -134,7 +134,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 
   // Handle the where option.
   size_t n_obs_to_write = 0;
-  const std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_);
+  std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_);
  
   // Set up the station type and identifier variables. The way to do this
   // depends on the data type. Also modify which obs to write is this is 
@@ -150,11 +150,10 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     char buffer9[9];
     char buffer5[5];
     for (int i=0; i < n_obs; ++i) {
-      sprintf(buffer9, "%-04d", satellite_ids[i]);
-      buffer9[4:8] = "    ";
+      sprintf(buffer9, "%04d    ", satellite_ids[i]);
       station_ids[i] = buffer9;
-      sprintf(buffer4, "%4d", satellite_ids[i]);
-      station_types[i] = buffer4;
+      sprintf(buffer5, "%4d", satellite_ids[i]);
+      station_types[i] = buffer5;
     }
 
     // Get the most recent versions of the data.
@@ -283,7 +282,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       if (variable_data[i] == missing_value)
         variable_data[i] = NemoFeedbackWriter::double_fillvalue;
     }
-    auto extra_var = nemoVariableParams.extravar.value_or(false);
+    auto extra_var = nemoVariableParams.extravar.value().value_or(false);
     if (extra_var) {
       fdbk_writer.write_variable_surf(
           n_obs,

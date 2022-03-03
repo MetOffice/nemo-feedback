@@ -96,6 +96,7 @@ NemoFeedbackWriter::NemoFeedbackWriter(
   write_metadata_variables(
       variable_names,  
       additional_variables,
+      extra_vars,
       juld_reference);
   write_coord_variables(
       n_obs,
@@ -157,6 +158,7 @@ void NemoFeedbackWriter::define_coord_variables(
 void NemoFeedbackWriter::write_metadata_variables(
     const std::vector<std::string>& variable_names,
     const std::vector<std::string>& additional_variables,
+    const std::vector<bool>& extra_vars,
     const util::DateTime& juld_reference) {
   {
     ncFile->putAtt("title", "NEMO observation operator output");
@@ -204,7 +206,7 @@ void NemoFeedbackWriter::write_metadata_variables(
     int ivar = 0;
     int iextra = 0;
     // trim and pad string to fit in nc char array
-    for (size_t i=0; i < n_vars; ++i) {
+    for (size_t i=0; i < (n_vars + n_extra); ++i) {
       for (size_t j=0; j < STRINGNAM_NUM; ++j) {
         if (j < variable_names[i].length()) {
           data[j] = static_cast<char>(variable_names.at(i).at(j));
@@ -392,7 +394,7 @@ void NemoFeedbackWriter::define_variable(
 }
 
 /// Define an extra variable.
-void NemoFeedbackWriter::define_variable(
+void NemoFeedbackWriter::define_extra_variable(
     const std::string & variable_name,
     const std::string & longName, 
     const std::string & units ) {
