@@ -39,7 +39,8 @@ class NemoFeedbackWriter {
       const std::vector<std::string> & additional_variables,
       const size_t n_levels, 
       const util::DateTime & juld_reference,
-      const std::vector<std::string>& station_types);
+      const std::vector<std::string>& station_types,
+      const std::vector<std::string>& station_ids);
 
   void write_variable_surf(
       const size_t & n_obs,
@@ -115,7 +116,8 @@ class NemoFeedbackWriter {
       const size_t & n_obs,
       const size_t & n_obs_to_write,
       const std::vector<bool> & to_write,
-      const std::vector<std::string> & station_types);
+      const std::vector<std::string> & station_types,
+      const std::vector<std::string> & station_ids);
 
   void define_variable(
       const std::string & variable_name,

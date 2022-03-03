@@ -64,7 +64,8 @@ NemoFeedbackWriter::NemoFeedbackWriter(
     const std::vector<std::string> & additional_variables,
     const size_t n_levels, 
     const util::DateTime & juld_reference,
-    const std::vector<std::string> & station_types )
+    const std::vector<std::string> & station_types,
+    const std::vector<std::string> & station_ids )
     : ncFile(nullptr), n_levels_(n_levels) {
   oops::Log::debug() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
                      << " filename: " << filename.fullName().asString()
@@ -104,7 +105,8 @@ NemoFeedbackWriter::NemoFeedbackWriter(
       n_obs,
       n_obs_to_write,
       to_write, 
-      station_types);
+      station_types,
+      station_ids);
 
   for (int i=0; i < variable_names.size(); ++i) {
     define_variable(
@@ -428,24 +430,44 @@ void NemoFeedbackWriter::write_whole_report_variables(
     const size_t & n_obs,
     const size_t & n_obs_to_write,
     const std::vector<bool> & to_write,
-    const std::vector<std::string> & station_types) {
+    const std::vector<std::string> & station_types,
+    const std::vector<std::string> & station_ids) {
 
-  // Write station type.    
-  size_t nchars = (ncFile->getDim(STRINGTYP)).getSize();
-  auto station_type_var = ncFile->getVar("STATION_TYPE");
-  int j = 0;
-  // +1 is for the null-terminator of a cstring
-  char* buffer = new char[n_obs_to_write*nchars+1];
-  for (int i = 0; i < n_obs; ++i) {
-    if (to_write[i]) {
-      strcpy(buffer + nchars*j++, station_types[i].c_str());
+  // Write station type. 
+  {   
+    size_t nchars = (ncFile->getDim(STRINGTYP)).getSize();
+    auto station_type_var = ncFile->getVar("STATION_TYPE");
+    int j = 0;
+    // +1 is for the null-terminator of a cstring
+    char* buffer = new char[n_obs_to_write*nchars+1];
+    for (int i = 0; i < n_obs; ++i) {
+      if (to_write[i]) {
+        strcpy(buffer + nchars*j++, station_types[i].c_str());
+      }
     }
+    station_type_var.putVar({0, 0},
+                            {n_obs_to_write, nchars},
+                            buffer);
+    delete[] buffer;
   }
-  station_type_var.putVar({0, 0},
+
+  // Write station IDs.    
+  {
+    size_t nchars = (ncFile->getDim(STRINGWMO)).getSize();
+    auto station_id_var = ncFile->getVar("STATION_IDENTIFIER");
+    int j = 0;
+    // +1 is for the null-terminator of a cstring
+    char* buffer = new char[n_obs_to_write*nchars+1];
+    for (int i = 0; i < n_obs; ++i) {
+      if (to_write[i]) {
+        strcpy(buffer + nchars*j++, station_ids[i].c_str());
+      }
+    }
+    station_id_var.putVar({0, 0},
                           {n_obs_to_write, nchars},
                           buffer);
-  delete[] buffer;
-
+    delete[] buffer;
+  }
 }
 
 void NemoFeedbackWriter::write_variable_surf(
