@@ -371,20 +371,23 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           std::vector<std::string> ov_varnames = ov.varnames().variables();
           auto var_it = std::find(ov_varnames.begin(), ov_varnames.end(),
               ufo_name);
-          oops::Log::trace() << "ov_varnames = " << ov_varnames << std::endl;
+          oops::Log::trace() << "NemoFeedback::ov_varnames = "
+                             << ov_varnames << std::endl;
           std::size_t var_it_dist = static_cast<std::size_t>(
                                     std::distance(ov_varnames.begin(), var_it));
-          oops::Log::trace() << "iterator distance is "
+          oops::Log::trace() << "NemoFeedback::iterator distance is "
                              << var_it_dist
+                             << " ov.nvars: " << ov.nvars()
                              << std::endl;
-          auto missing_value_add = util::missingValue(ov[var_it_dist * n_obs]);
-          oops::Log::trace() << "Missing value: " << missing_value_add
+          const auto missing_value_add = util::missingValue(ov[var_it_dist]);
+          oops::Log::trace() << "NemoFeedback::Missing value: " << missing_value_add
               << std::endl;
           for (int i=0; i < n_obs; ++i) {
-            if (ov[i+(var_it_dist * n_obs)] == missing_value_add) {
+            const size_t indx = i * ov.nvars() + var_it_dist;
+            if (ov[indx] == missing_value_add) {
               variable_data[i] = NemoFeedbackWriter::double_fillvalue;
             } else {
-              variable_data[i] = ov[i+(var_it_dist * n_obs)];
+              variable_data[i] = ov[indx];
             }
           }
           fdbk_writer.write_variable_surf(
