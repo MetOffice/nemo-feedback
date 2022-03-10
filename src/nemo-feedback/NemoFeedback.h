@@ -1,7 +1,7 @@
 /*
  * (C) Crown Copyright 2021, the Met Office. All rights reserved.
  *
- * Refer to COPYRIGHT.txt of this distribution for details. 
+ * Refer to COPYRIGHT.txt of this distribution for details.
  */
 
 #pragma once
