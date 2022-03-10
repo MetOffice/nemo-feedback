@@ -6,10 +6,12 @@
 
 #include "nemo-feedback/NemoFeedback.h"
 
+#include <string.h>
+
 #include <utility>
 #include <vector>
 #include <bitset>
-#include <string.h>
+#include <set>
 
 #include "eckit/mpi/Comm.h"
 #include "eckit/mpi/Parallel.h"
@@ -35,18 +37,19 @@
 namespace nemo_feedback {
 
 NemoFeedback::NemoFeedback(
-    ioda::ObsSpace & obsdb, 
+    ioda::ObsSpace & obsdb,
     const Parameters_ & params,
     std::shared_ptr< ioda::ObsDataVector<int> > flags,
     std::shared_ptr< ioda::ObsDataVector<float> > obsErrors)
-      : 
-    obsdb_(obsdb), 
+      :
+    obsdb_(obsdb),
     data_(obsdb_),
-    geovars_(), 
+    geovars_(),
     flags_(std::move(flags)),
     obsErrors_(std::move(obsErrors)),
     parameters_(params),
-    validityTime_(obsdb.windowStart() + (obsdb.windowEnd() - obsdb.windowStart()) / 2)
+    validityTime_(obsdb.windowStart() +
+        (obsdb.windowEnd() - obsdb.windowStart()) / 2)
 {
   oops::Log::trace() << "NemoFeedback constructor starting" << std::endl;
 
@@ -96,7 +99,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   obsdb_.get_db("MetaData", "dateTime", datetimes);
 
   // Handle the reference date option.
-  util::DateTime juld_reference = parameters_.refDate.value().value_or(datetimes[0]);
+  util::DateTime juld_reference =
+      parameters_.refDate.value().value_or(datetimes[0]);
 
   std::vector<double> julian_days(n_obs, 0);
   for (int i=0; i < n_obs; ++i) {
@@ -116,7 +120,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         parameters_.variables.value()) {
     if (nemoVariableParams.nemoName.value() == "SLA") {
       is_altimeter = true;
-    }    
+    }
     variable_names.push_back(nemoVariableParams.nemoName.value());
     long_names.push_back(nemoVariableParams.longName.value());
     unit_names.push_back(nemoVariableParams.units.value());
@@ -135,24 +139,24 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   // Handle the where option.
   size_t n_obs_to_write = 0;
   std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_);
- 
+
   // Set up the station type and identifier variables. The way to do this
-  // depends on the data type. Also modify which obs to write is this is 
-  // altimeter data. 
+  // depends on the data type. Also modify which obs to write is this is
+  // altimeter data.
   std::vector<std::string> station_types(n_obs, "    ");
   std::vector<std::string> station_ids(n_obs, "        ");
-  if (is_altimeter) {
 
-    // Station type and station identifier are both defined from the 
+  if (is_altimeter) {
+    // Station type and station identifier are both defined from the
     // satellite_identifier metadata.
     std::vector<int> satellite_ids(n_obs);
     obsdb_.get_db("MetaData", "satellite_identifier", satellite_ids);
     char buffer9[9];
     char buffer5[5];
     for (int i=0; i < n_obs; ++i) {
-      sprintf(buffer9, "%04d    ", satellite_ids[i]);
+      snprintf(buffer9, sizeof(buffer9), "%04d    ", satellite_ids[i]);
       station_ids[i] = buffer9;
-      sprintf(buffer5, "%4d", satellite_ids[i]);
+      snprintf(buffer5, sizeof(buffer5), "%4d", satellite_ids[i]);
       station_types[i] = buffer5;
     }
 
@@ -160,7 +164,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     // Read version information.
     std::vector<int> version(n_obs);
     obsdb_.get_db("MetaData", "instrument_type", version);
-  
+
     // Get integer values for the day of each data point.
     std::vector<int> ymd(n_obs);
     int ymd_tmp;
@@ -177,7 +181,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     // Loop through the unique values of ymd and satellite_ids.
     int latest_version;
     auto version_missing_value = util::missingValue(version[0]);
-    for (int ymd_to_find : ymd_set) {    
+    for (int ymd_to_find : ymd_set) {
       for (int sid_to_find : sid_set) {
         latest_version = 0;
         for (int i=0; i < n_obs; ++i) {
@@ -186,8 +190,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
               satellite_ids[i] == sid_to_find &&
               version[i] != version_missing_value &&
               version[i] > latest_version) {
-            latest_version = version[i];  
-          }   
+            latest_version = version[i];
+          }
         }
         // If latest_version is still 0, this means that either there are
         // no data with a version number defined or all the data are marked
@@ -199,34 +203,35 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                 ymd[i] == ymd_to_find &&
                 satellite_ids[i] == sid_to_find &&
                 version[i] < latest_version) {
-              to_write[i] = false;  
-            }   
-          } 
+              to_write[i] = false;
+            }
+          }
         }
       }
     }
   } else {
-    // Define the station type variable. This may not always be defined in obsdb_.
+    // Define the station type variable. This may not always be defined in
+    // obsdb_.
     if (obsdb_.has("MetaData", "fdbk_station_type")) {
       std::vector<int> station_types_int(n_obs);
       obsdb_.get_db("MetaData", "fdbk_station_type", station_types_int);
       char buffer[5];
       for (int i=0; i < n_obs; ++i) {
-        sprintf(buffer, "%-4d", station_types_int[i]);
+        snprintf(buffer, sizeof(buffer), "%-4d", station_types_int[i]);
         station_types[i] = buffer;
       }
-    } 
-  
+    }
+
     // Define the station identifier variable. These may not always be defined
-    // in odbsb_ and may be contained in either the station_id or 
-    // buoy_identifier variables, or both. 
+    // in odbsb_ and may be contained in either the station_id or
+    // buoy_identifier variables, or both.
     if (obsdb_.has("MetaData", "station_id")) {
       std::vector<std::string> station_ids_tmp(n_obs);
       obsdb_.get_db("MetaData", "station_id", station_ids_tmp);
       for (int i=0; i< n_obs; ++i) {
         if (station_ids_tmp[i] != "") {
                station_ids_tmp[i].resize(8, ' ');
-               station_ids[i] = station_ids_tmp[i].substr(0,8);
+               station_ids[i] = station_ids_tmp[i].substr(0, 8);
         }
       }
     }
@@ -237,31 +242,31 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       auto buoy_id_missing_value = util::missingValue(buoy_ids[0]);
       for (int i=0; i < n_obs; ++i) {
         if (buoy_ids[i] != buoy_id_missing_value) {
-          sprintf(buffer, "%-8d", buoy_ids[i]);
+          snprintf(buffer, sizeof(buffer), "%-8d", buoy_ids[i]);
           station_ids[i] = buffer;
         }
       }
     }
-  } 
-   
+  }
+
   // Calculate total number of obs to actually write.
   n_obs_to_write = std::count(to_write.begin(), to_write.end(), true);
-     
+
   NemoFeedbackWriter fdbk_writer(
-      test_data_path, 
+      test_data_path,
       n_obs_to_write,
-      to_write, 
-      lons, 
-      lats, 
+      to_write,
+      lons,
+      lats,
       depths,
-      julian_days, 
-      variable_names, 
-      long_names, 
+      julian_days,
+      variable_names,
+      long_names,
       unit_names,
       additional_names,
-      extra_vars, 
-      n_levels, 
-      juld_reference, 
+      extra_vars,
+      n_levels,
+      juld_reference,
       station_types,
       station_ids);
 
@@ -288,24 +293,24 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           n_obs,
           n_obs_to_write,
           to_write,
-          nemo_name, 
+          nemo_name,
           variable_data);
       // If this is an extra variable we do not want to write any of the
       // other variables with _OBS, _QC etc. added on to the name.
       continue;
-    } 
-    
+    }
+
     fdbk_writer.write_variable_surf(
         n_obs,
         n_obs_to_write,
         to_write,
-        nemo_name + "_OBS", 
+        nemo_name + "_OBS",
         variable_data);
 
-    // Write Met Office QC flag data for this variable if they exist. 
+    // Write Met Office QC flag data for this variable if they exist.
     if (obsdb_.has("QCFlags", ufo_name)) {
       obsdb_.get_db("QCFlags", ufo_name, variable_qcFlags);
-      
+
       // To the first qc flag index location
       fdbk_writer.write_variable_surf_qc(
           n_obs,
@@ -314,7 +319,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           nemo_name + "_QC_FLAGS",
           variable_qcFlags, 0);
     }
-    
+
     // Whole Observation report QC flags
     for (int i=0; i < variable_qc.size(); ++i) {
       if (variable_qcFlags[i]
@@ -326,7 +331,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         n_obs,
         n_obs_to_write,
         to_write,
-        "OBSERVATION_QC", 
+        "OBSERVATION_QC",
         variable_qc);
 
     // Overall quality control flags
@@ -338,25 +343,26 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     }
     // Add do not assimilate flag if required.
     if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
-      obsdb_.get_db("DiagnosticFlags/DoNotAssimilate", ufo_name, do_not_assimilate);
+      obsdb_.get_db("DiagnosticFlags/DoNotAssimilate", ufo_name,
+          do_not_assimilate);
       for (int i=0; i < final_qc.size(); ++i) {
         if (do_not_assimilate[i]) {
           variable_qc[i] += 128;
-        } 
-      } 
+        }
+      }
     }
     fdbk_writer.write_variable_surf_qc(
         n_obs,
         n_obs_to_write,
         to_write,
-        nemo_name + "_QC", 
+        nemo_name + "_QC",
         variable_qc);
     fdbk_writer.write_variable_surf_qc(
         n_obs,
         n_obs_to_write,
         to_write,
-        nemo_name + "_LEVEL_QC", 
-        variable_qc, 
+        nemo_name + "_LEVEL_QC",
+        variable_qc,
         0);
 
     // Write additional variables for this variable
@@ -380,8 +386,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                              << " ov.nvars: " << ov.nvars()
                              << std::endl;
           const auto missing_value_add = util::missingValue(ov[var_it_dist]);
-          oops::Log::trace() << "NemoFeedback::Missing value: " << missing_value_add
-              << std::endl;
+          oops::Log::trace() << "NemoFeedback::Missing value: "
+                             << missing_value_add << std::endl;
           for (int i=0; i < n_obs; ++i) {
             const size_t indx = i * ov.nvars() + var_it_dist;
             if (ov[indx] == missing_value_add) {
@@ -394,7 +400,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
               n_obs,
               n_obs_to_write,
               to_write,
-              add_name, 
+              add_name,
               variable_data);
         }
       } else if (!obsdb_.has(ioda_group, ufo_name)) {
@@ -406,8 +412,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         fdbk_writer.write_variable_surf(
             n_obs,
             n_obs_to_write,
-            to_write, 
-            add_name, 
+            to_write,
+            add_name,
             variable_data);
       }
     }
