@@ -24,6 +24,7 @@
 // names of netCDF dimensions, variables, attributes
 #define N_QCF "N_QCF"
 #define N_ENTRIES "N_ENTRIES"
+#define N_EXTRA "N_EXTRA"
 #define N_VARS "N_VARS"
 #define N_OBS "N_OBS"
 #define N_LEVELS "N_LEVELS"
@@ -62,6 +63,7 @@ NemoFeedbackWriter::NemoFeedbackWriter(
     const std::vector<std::string> & long_names,
     const std::vector<std::string> & unit_names,
     const std::vector<std::string> & additional_variables,
+    const std::vector<bool> & extra_vars,
     const size_t n_levels, 
     const util::DateTime & juld_reference,
     const std::vector<std::string> & station_types,
@@ -82,15 +84,19 @@ NemoFeedbackWriter::NemoFeedbackWriter(
 
   size_t n_obs = lats.size();
   size_t n_obs_vars = variable_names.size();
+  size_t n_extra = std::count(extra_vars.begin(), extra_vars.end(), true);
+  n_obs_vars -= n_extra;
   size_t max_n_add_entries = additional_variables.size();
   define_coord_variables(
       n_obs_to_write, 
       n_levels, 
       n_obs_vars, 
-      max_n_add_entries);
+      max_n_add_entries,
+      n_extra);
   write_metadata_variables(
       variable_names,  
       additional_variables,
+      extra_vars,
       juld_reference);
   write_coord_variables(
       n_obs,
@@ -109,11 +115,17 @@ NemoFeedbackWriter::NemoFeedbackWriter(
       station_ids);
 
   for (int i=0; i < variable_names.size(); ++i) {
-    define_variable(
-        variable_names[i], 
-        long_names[i], 
-        unit_names[i],
-        additional_variables);
+    if (extra_vars[i]) {
+      define_extra_variable(variable_names[i],
+                            long_names[i], 
+                            unit_names[i]);
+    } else {
+      define_variable(
+          variable_names[i], 
+          long_names[i], 
+          unit_names[i],
+          additional_variables);
+    }
   }
 }
 
@@ -121,7 +133,8 @@ void NemoFeedbackWriter::define_coord_variables(
     const size_t n_obs_to_write,
     const size_t n_levels, 
     const size_t n_obs_vars,
-    const size_t n_add_entries) {
+    const size_t n_add_entries,
+    const size_t n_extra) {
   netCDF::NcDim tmp_Dim;
   for (const auto& kv : coord_sizes) {
     if (kv.first == N_QCF) {
@@ -137,11 +150,15 @@ void NemoFeedbackWriter::define_coord_variables(
         n_levels));
   tmp_Dim = ncFile->addDim(N_VARS, n_obs_vars);
   tmp_Dim = ncFile->addDim(N_ENTRIES, n_add_entries);
+  if (n_extra > 0) {
+    tmp_Dim = ncFile->addDim(N_EXTRA, n_extra);
+  }
 }
 
 void NemoFeedbackWriter::write_metadata_variables(
     const std::vector<std::string>& variable_names,
     const std::vector<std::string>& additional_variables,
+    const std::vector<bool>& extra_vars,
     const util::DateTime& juld_reference) {
   {
     ncFile->putAtt("title", "NEMO observation operator output");
@@ -169,20 +186,37 @@ void NemoFeedbackWriter::write_metadata_variables(
 
   {
     size_t n_vars = variable_names.size();
+    int n_extra = std::count(extra_vars.begin(), extra_vars.end(), true);
+    n_vars -= n_extra;
+    
     std::vector<netCDF::NcDim>
         dims{ncFile->getDim(N_VARS), ncFile->getDim(STRINGNAM)};
     netCDF::NcVar nc_var_list_var = ncFile->addVar("VARIABLES",
         netCDF::ncChar, dims);
+    netCDF::NcVar nc_var_list_extra;
+    if (n_extra > 0) {
+      std::vector<netCDF::NcDim>
+          dimsextra{ncFile->getDim(N_EXTRA), ncFile->getDim(STRINGNAM)};
+      nc_var_list_extra = ncFile->addVar("EXTRA",
+                                         netCDF::ncChar, 
+                                         dimsextra);    
+    }
     nc_var_list_var.putAtt("long_name", "List of variables in feedback files");
     fixed_length_name_type data;
+    int ivar = 0;
+    int iextra = 0;
     // trim and pad string to fit in nc char array
-    for (size_t i=0; i < n_vars; ++i) {
+    for (size_t i=0; i < (n_vars + n_extra); ++i) {
       for (size_t j=0; j < STRINGNAM_NUM; ++j) {
         if (j < variable_names[i].length()) {
           data[j] = static_cast<char>(variable_names.at(i).at(j));
         } else {data[j] = ' ';}
       }
-      nc_var_list_var.putVar({i, 0}, {1, STRINGNAM_NUM}, data);
+      if (extra_vars[i]) {
+        nc_var_list_extra.putVar({iextra++, 0}, {1, STRINGNAM_NUM}, data);
+      } else {
+        nc_var_list_var.putVar({ivar++, 0}, {1, STRINGNAM_NUM}, data);
+      }
     }
   }
 
@@ -357,6 +391,20 @@ void NemoFeedbackWriter::define_variable(
     char data[2] {"T"};
     tmp_var.putVar({0}, {1}, data);
   }
+}
+
+/// Define an extra variable.
+void NemoFeedbackWriter::define_extra_variable(
+    const std::string & variable_name,
+    const std::string & longName, 
+    const std::string & units ) {
+
+  const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
+
+  netCDF::NcVar var = ncFile->addVar(variable_name,
+                                     netCDF::ncDouble, dims);
+  var.putAtt("long_name", longName);
+  var.putAtt("units", units);
 }
 
 // Routine to subset data before writing.

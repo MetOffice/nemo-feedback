@@ -10,12 +10,14 @@ dimensions:
 	N_LEVELS = 1 ;
 	N_VARS = 1 ;
 	N_ENTRIES = 1 ;
+	N_EXTRA = 1 ;
 variables:
 	char JULD_REFERENCE(STRINGJULD) ;
 		JULD_REFERENCE:long_name = "Date of reference for julian days" ;
 		JULD_REFERENCE:Conventions = "YYYYMMDDHHMMSS" ;
 	char VARIABLES(N_VARS, STRINGNAM) ;
 		VARIABLES:long_name = "List of variables in feedback files" ;
+	char EXTRA(N_EXTRA, STRINGNAM) ;
 	char ENTRIES(N_ENTRIES, STRINGNAM) ;
 		ENTRIES:long_name = "List of additional entries for each variable in feedback files" ;
 	double LATITUDE(N_OBS) ;
@@ -80,6 +82,9 @@ variables:
 		ICECONC_IOBSK:long_name = "ORCA grid search K coordinate" ;
 	char ICECONC_GRID(STRINGGRID) ;
 		ICECONC_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+	double MDT(N_OBS, N_LEVELS) ;
+		MDT:long_name = "fake MDT" ;
+		MDT:units = "fake metres" ;
 
 // global attributes:
 		:title = "NEMO observation operator output" ;
@@ -90,6 +95,9 @@ data:
 
  VARIABLES =
   "ICECONC " ;
+
+ EXTRA =
+  "MDT     " ;
 
  ENTRIES =
   "Hx      " ;
@@ -301,4 +309,17 @@ data:
   _ ;
 
  ICECONC_GRID = "T" ;
+
+ MDT =
+  0,
+  99999,
+  0.996299982070923,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0 ;
 }
