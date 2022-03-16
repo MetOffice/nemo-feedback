@@ -1,7 +1,7 @@
 forecast length : P3D
 window begin: 2021-06-29T21:00:00Z
 window length: P1D
-geometry : 
+geometry :
   nemo variables:
     - name: ice_area_fraction
       nemo field name: iiceconc
@@ -18,13 +18,13 @@ geometry :
   grid name: ORCA2_T
   number levels: 10
   variance names: [ ice_area_fraction_background_error ]
-initial condition : 
+initial condition :
   date: 2021-06-29T21:00:00Z
   state variables: [ ice_area_fraction, ice_area_fraction_background_error ]
   nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
   variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
 model :
-  name: PseudoModel 
+  name: PseudoModel
   tstep: P3D
   state variables: [ ice_area_fraction ]
   states:
@@ -50,11 +50,16 @@ observations:
     - name: Identity
     - name: BackgroundErrorIdentity
   obs filters:
+  - filter: Variable Assignment
+    assignments:
+    - name: ice_area_fraction@GrossErrorProbability
+      type: float
+      value: 0.04
   - filter: Create Diagnostic Flags
     flags:
     - name: FinalReject
       initial value: false
-  - filter: RejectList 
+  - filter: RejectList
     defer to post: true
     where:
     - variable:
@@ -64,7 +69,7 @@ observations:
     - name: set
       flag: FinalReject
     - name: reject
-  - filter: RejectList 
+  - filter: RejectList
     defer to post: true
     where:
     - variable:
@@ -97,15 +102,14 @@ observations:
   - filter: Bayesian Background Check
     defer to post: true
     filter variables:
-    - name: ice_area_fraction 
+    - name: ice_area_fraction
     prob density bad obs: 1.0
-    initial prob gross error: 0.04
     PGE threshold: 0.07
     actions:
     - name: set
       flag: FinalReject
     - name: reject
-  - filter: Create Diagnostic Flags 
+  - filter: Create Diagnostic Flags
     flags:
     - name: ObsToWrite
       initial value: true
@@ -114,7 +118,7 @@ observations:
     where:
     - variable:
         name: DiagnosticFlags/ObsToWrite/ice_area_fraction
-      is_true:    
+      is_true:
     variables:
     - name: ice_area_fraction
       nemo name: ICECONC
