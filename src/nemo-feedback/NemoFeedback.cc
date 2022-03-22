@@ -409,6 +409,11 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                               + "/" + ufo_name, Here());
       } else {
         obsdb_.get_db(ioda_group, ufo_name, variable_data);
+        auto missing_value = util::missingValue(variable_data[0]);
+        for (int i=0; i < n_obs; ++i) {
+          if (variable_data[i] == missing_value)
+            variable_data[i] = NemoFeedbackWriter::double_fillvalue;
+        }
         fdbk_writer.write_variable_surf(
             n_obs,
             n_obs_to_write,
