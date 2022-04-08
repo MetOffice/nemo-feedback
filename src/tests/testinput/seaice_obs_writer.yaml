@@ -1,4 +1,4 @@
-forecast length : P3D
+forecast length : P1D
 window begin: 2021-06-29T21:00:00Z
 window length: P1D
 geometry :
@@ -25,7 +25,7 @@ initial condition :
   variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
 model :
   name: PseudoModel
-  tstep: P3D
+  tstep: P1D
   state variables: [ ice_area_fraction ]
   states:
     - date: 2021-06-29T21:00:00Z
