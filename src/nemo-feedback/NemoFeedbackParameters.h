@@ -14,6 +14,7 @@
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/RequiredParameter.h"
+#include "ufo/filters/processWhere.h"
 
 namespace nemo_feedback {
 /// \brief NemoFeedback options for an "additional" variable.
