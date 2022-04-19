@@ -138,7 +138,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 
   // Handle the where option.
   size_t n_obs_to_write = 0;
-  std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_);
+  std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_,
+                                   ufo::WhereOperator::AND);
 
   // Set up the station type and identifier variables. The way to do this
   // depends on the data type. Also modify which obs to write is this is
