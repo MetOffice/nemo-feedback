@@ -17,49 +17,49 @@ jobs:
         with:
           path: ci/jedicmake
           repository: JCSDA-internal/jedi-cmake
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PATH }}
       - name: checkout saber
         uses: actions/checkout@v2
         with:
           path: ci/saber
           repository: JCSDA-internal/saber
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PATH }}
       - name: checkout oops
         uses: actions/checkout@v2
         with:
           path: ci/oops
           repository: JCSDA-internal/oops
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PATH }}
       - name: checkout ioda
         uses: actions/checkout@v2
         with:
           path: ci/ioda
           repository: JCSDA-internal/ioda
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PATH }}
       - name: checkout ufo
         uses: actions/checkout@v2
         with:
           path: ci/ufo
           repository: JCSDA-internal/ufo
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PATH }}
       - name: checkout atlas
         uses: actions/checkout@v2
         with:
           path: ci/atlas
           repository: ecmwf/atlas
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PATH }}
       - name: checkout atlas-orca
         uses: actions/checkout@v2
         with:
           path: ci/atlas-orca
           repository: wdeconinck/atlas-orca
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PATH }}
       - name: checkout orca-jedi
         uses: actions/checkout@v2
         with:
           path: ci/orca-jedi
           repository: MetOffice/orca-jedi
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PATH }}
       - name: build and test
         run: |
           docker run --rm \
