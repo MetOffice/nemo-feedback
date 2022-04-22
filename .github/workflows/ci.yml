@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout current repo
+        uses: actions/checkout@v2
+      - name: checkout jedicmake
+        uses: actions/checkout@v2
+        with:
+          path: ci/jedicmake
+          repository: JCSDA-internal/jedi-cmake
+          token: ${{ secrets.GH_PAT }}
+      - name: checkout saber
+        uses: actions/checkout@v2
+        with:
+          path: ci/saber
+          repository: JCSDA-internal/saber
+          token: ${{ secrets.GH_PAT }}
+      - name: checkout oops
+        uses: actions/checkout@v2
+        with:
+          path: ci/oops
+          repository: JCSDA-internal/oops
+          token: ${{ secrets.GH_PAT }}
+      - name: checkout ioda
+        uses: actions/checkout@v2
+        with:
+          path: ci/ioda
+          repository: JCSDA-internal/ioda
+          token: ${{ secrets.GH_PAT }}
+      - name: checkout ufo
+        uses: actions/checkout@v2
+        with:
+          path: ci/ufo
+          repository: JCSDA-internal/ufo
+          token: ${{ secrets.GH_PAT }}
+      - name: checkout atlas
+        uses: actions/checkout@v2
+        with:
+          path: ci/atlas
+          repository: ecmwf/atlas
+          token: ${{ secrets.GH_PAT }}
+      - name: checkout atlas-orca
+        uses: actions/checkout@v2
+        with:
+          path: ci/atlas-orca
+          repository: wdeconinck/atlas-orca
+          token: ${{ secrets.GH_PAT }}
+      - name: checkout orca-jedi
+        uses: actions/checkout@v2
+        with:
+          path: ci/orca-jedi
+          repository: MetOffice/orca-jedi
+          token: ${{ secrets.GH_PAT }}
+      - name: build and test
+        run: |
+          docker run --rm \
+            --entrypoint=/usr/local/src/nemo-feedback/ci/build.sh \
+            --workdir=/usr/local/src/nemo-feedback/ci \
+            --volume $PWD:/usr/local/src/nemo-feedback \
+            'jcsda/docker-gnu-openmpi-dev:latest'
