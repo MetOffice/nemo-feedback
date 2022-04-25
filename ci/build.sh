@@ -22,6 +22,7 @@ cd "${WORKD}"
 
 rm -f "${HERE}/nemo-feedback"
 ln -s '..' "${HERE}/nemo-feedback"
+sed -i -e 's/project( eckit CXX/project( eckit CXX Fortran/' ${HERE}/eckit/CMakeLists.txt
 ecbuild -S "${HERE}" -DMPI_ARGS="--oversubscribe"
 make -j "${NPROC}"
 env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
