@@ -17,7 +17,7 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          TAG=$(echo $GITHUB_SHA | head -c7)
+          TAG="latest"
           IMAGE="twsearle/nemo-feedback-ci"
           echo ::set-output name=tagged_image::${IMAGE}:${TAG}
           echo ::set-output name=tag::${TAG}
@@ -124,4 +124,4 @@ jobs:
             --entrypoint=/usr/local/src/nemo-feedback/ci/build.sh \
             --workdir=/usr/local/src/nemo-feedback/ci \
             --volume ${PWD}:/usr/local/src/nemo-feedback \
-            "twsearle/nemo-feedback-ci:${TAG}"
+            "twsearle/nemo-feedback-ci:latest"
