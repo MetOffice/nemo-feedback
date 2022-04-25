@@ -71,7 +71,7 @@ jobs:
           repository: JCSDA-internal/eckit
           ref: develop
           token: ${{ secrets.GH_PAT }}
-      - name: checkout eckit
+      - name: checkout fckit
         uses: actions/checkout@v2
         with:
           path: ci/fckit
