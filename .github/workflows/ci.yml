@@ -68,14 +68,14 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: ci/eckit
-          repository: JCSDA-internal/eckit
+          repository: ecmwf/eckit
           ref: develop
           token: ${{ secrets.GH_PAT }}
       - name: checkout fckit
         uses: actions/checkout@v2
         with:
           path: ci/fckit
-          repository: JCSDA-internal/fckit
+          repository: ecmwf/fckit
           ref: develop
           token: ${{ secrets.GH_PAT }}
       - name: checkout saber
