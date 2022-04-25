@@ -7,7 +7,7 @@ set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_CURRENT_SOURCE
 include( ecbuild_bundle )
 set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
 set( ENABLE_OMP ON CACHE BOOL "Compile with OpenMP" )
-option(ECBUILD_2_COMPAT "ECBUILD_2_COMPAT" ON)
+set( ECBUILD_2_COMPAT ON CACHE BOOL "ECBUILD_2_COMPAT" )
 # Prevents CMake from being re-run after each commit (useful for development,
 # not necessarily for production).
 set( ECBUILD_RECORD_GIT_COMMIT_SHA1 OFF CACHE BOOL
