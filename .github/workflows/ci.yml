@@ -124,4 +124,4 @@ jobs:
             --entrypoint=/usr/local/src/nemo-feedback/ci/build.sh \
             --workdir=/usr/local/src/nemo-feedback/ci \
             --volume $PWD:/usr/local/src/nemo-feedback \
-            'twsearle/nemo-feedback-ci:latest'
+            "twsearle/nemo-feedback-ci:${TAG}"
