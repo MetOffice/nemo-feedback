@@ -21,9 +21,6 @@ if(NOT DEFINED jedicmake_DIR)
 endif()
 include( jedicmake/cmake/Functions/git_functions.cmake )
 
-#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/eckit" EXCLUDE_FROM_ALL)
-#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/fckit" EXCLUDE_FROM_ALL)
-
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/eckit" EXCLUDE_FROM_ALL)
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/fckit" EXCLUDE_FROM_ALL)
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/atlas" EXCLUDE_FROM_ALL)
