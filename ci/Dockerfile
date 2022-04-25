@@ -3,7 +3,13 @@ FROM jcsda/docker-gnu-openmpi-dev:latest AS base
 RUN apt-get update \
     && apt-get -y install libhdf5-serial-dev \
     && apt-get -y install libnetcdf-dev libnetcdff-dev libnetcdf-c++4-dev \
-    && apt-get -y install lz4
+    && cd /root \
+    && git clone git@github.com:lz4/lz4.git \
+    && cd lz4 \
+    && git checkout tags/v1.9.3 \
+    && make \
+    && make --eval prefix=/opt install \
+    && export LZ4_ROOT=/opt
 
 # Something like the below pattern would be quicker than using github-actions
 #caching, however I would likely need to slim down the jcsda image as it is
