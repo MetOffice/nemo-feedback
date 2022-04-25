@@ -10,10 +10,6 @@ finally() {
     fi
 }
 
-apt-get -y install libhdf5-serial-dev \
-apt-get -y install libnetcdf-dev libnetcdff-dev libnetcdf-c++4-dev \
-apt-get -y install lz4
-
 HERE="$(cd "$(dirname "$0")" && pwd)"
 THIS="$(basename "$0")"
 NPROC=${NPROC:-2}
