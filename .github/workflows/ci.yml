@@ -18,6 +18,18 @@ jobs:
           path: ci/jedicmake
           repository: JCSDA-internal/jedi-cmake
           token: ${{ secrets.GH_PAT }}
+      - name: checkout eckit
+        uses: actions/checkout@v2
+        with:
+          path: ci/eckit
+          repository: JCSDA-internal/eckit
+          token: ${{ secrets.GH_PAT }}
+      - name: checkout eckit
+        uses: actions/checkout@v2
+        with:
+          path: ci/fckit
+          repository: JCSDA-internal/fckit
+          token: ${{ secrets.GH_PAT }}
       - name: checkout saber
         uses: actions/checkout@v2
         with:
