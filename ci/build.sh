@@ -28,4 +28,7 @@ make -j "${NPROC}"
 env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
     ctest -j "${NPROC}" --output-on-failure --test-dir './nemo-feedback'
 
+env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+    ctest -j "${NPROC}" -V --rerun-failed --test-dir './nemo-feedback'
+
 exit
