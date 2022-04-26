@@ -78,12 +78,6 @@ jobs:
           repository: ecmwf/fckit
           ref: develop
           token: ${{ secrets.GH_PAT }}
-      - name: checkout saber
-        uses: actions/checkout@v2
-        with:
-          path: ci/saber
-          repository: JCSDA-internal/saber
-          token: ${{ secrets.GH_PAT }}
       - name: checkout oops
         uses: actions/checkout@v2
         with:
