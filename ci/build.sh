@@ -22,8 +22,8 @@ cd "${WORKD}"
 
 rm -f "${HERE}/nemo-feedback"
 ln -s '..' "${HERE}/nemo-feedback"
-#sed -i -e 's/project( eckit CXX/project( eckit CXX Fortran/' ${HERE}/eckit/CMakeLists.txt
-ecbuild -S "${HERE}" -DECBUILD_2_COMPAT="ON" -DMPI_ARGS="--oversubscribe"
+
+ecbuild -S "${HERE}" -DCMAKE_BUILD_TYPE=Debug -DECBUILD_2_COMPAT="ON" -DMPI_ARGS="--oversubscribe"
 make -j "${NPROC}"
 env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
     ctest -j "${NPROC}" --output-on-failure --test-dir './nemo-feedback'
