@@ -11,13 +11,13 @@ Test     : Final state:
 Test     :  Model state valid at time: 2021-06-30T21:00:00Z
 Test     :     4 variables: ice_area_fraction, sea_surface_temperature, ice_area_fraction_background_error, sea_surface_temperature_background_error
 Test     :     atlas field norms:
-Test     :         ice_area_fraction: 0.00323467
-Test     :         sea_surface_temperature: 0.136432
+Test     :         ice_area_fraction: 0.00320233
+Test     :         sea_surface_temperature: 0.136508
 Test     :         ice_area_fraction_background_error: 0.00303628
 Test     :         sea_surface_temperature_background_error: 0.000607255
 
 Test     : H(x): 
-Test     : Sea Ice nobs= 14 Min=0, Max=18.1724, RMS=12.6338
+Test     : Sea Ice nobs= 14 Min=0, Max=18.1824, RMS=12.6368
 
 Test     : End H(x)
 
