@@ -20,9 +20,6 @@ trap finally EXIT
 
 cd "${WORKD}"
 
-rm -f "${HERE}/nemo-feedback"
-ln -s '..' "${HERE}/nemo-feedback"
-
 export LD_LIBRARY_PATH="${WORKD}/lib:$LD_LIBRARY_PATH"
 export PLUGINS_MANIFEST_PATH="${WORKD}/share/plugins"
 
