@@ -115,6 +115,8 @@ jobs:
           repository: MetOffice/orca-jedi
           token: ${{ secrets.GH_PAT }}
       - name: checkout atlas-orca grids
+        uses: actions/checkout@v2
+        with:
           path: ci/atlas-data
           repository: MetOffice/atlas-data
           token: ${{ secrets.GH_PAT }}
