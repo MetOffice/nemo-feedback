@@ -114,6 +114,10 @@ jobs:
           path: ci/orca-jedi
           repository: MetOffice/orca-jedi
           token: ${{ secrets.GH_PAT }}
+      - name: checkout atlas-orca grids
+          path: ci/atlas-data
+          repository: MetOffice/atlas-data
+          token: ${{ secrets.GH_PAT }}
       - name: build and test
         run: |
           docker run --rm \
