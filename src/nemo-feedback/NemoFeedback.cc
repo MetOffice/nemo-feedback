@@ -63,6 +63,8 @@ NemoFeedback::NemoFeedback(
   }
   geovars_ = oops::Variables(varnames, channels);
 
+  if (obsdb.comm().size() > 1)
+    throw eckit::BadValue("nemo-feedback filter not MPI capable", Here());
   MPI_Comm mpiComm = MPI_COMM_WORLD;
   if (auto parallelComm =
         dynamic_cast<const eckit::mpi::Parallel*>(&obsdb.comm())) {
@@ -85,29 +87,27 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   oops::Log::trace() << "NemoFeedback postFilter" << std::endl;
 
   eckit::PathName test_data_path(parameters_.Filename);
+
+  //  Calculate n_obs, n_levels, starts, counts
+  //  Fill out lats, lons, depths, julian_days
   // ov.n_obs is the number of non-missing non-qced obs?
-  // obsdb_.nlocs is the number of original locations I think.
-  size_t n_obs = obsdb_.nlocs();
-  size_t n_levels = 1;
+  // obsdb_.nlocs is the number of original point-observation locations.
+  // TODO: We need lats/lons/depths to be of size N_OBS for profiles
+  size_t n_locs = obsdb_.nlocs();
+  size_t n_obs  = n_locs;
   std::vector<double> lats(n_obs, 0);
   obsdb_.get_db("MetaData", "latitude", lats);
   std::vector<double> lons(n_obs, 0);
   obsdb_.get_db("MetaData", "longitude", lons);
-  std::vector<double> depths(n_obs*n_levels, 0);
+  std::vector<double> depths(n_obs, 0);
 
-  std::vector<util::DateTime> datetimes(n_obs);
-  obsdb_.get_db("MetaData", "dateTime", datetimes);
-
-  // Handle the reference date option.
-  util::DateTime juld_reference =
-      parameters_.refDate.value().value_or(datetimes[0]);
+  // TODO n_levels is equal to largest number of levels across an entire
+  // profile data.
+  size_t n_levels = 1;
 
   std::vector<double> julian_days(n_obs, 0);
-  for (int i=0; i < n_obs; ++i) {
-    util::Duration duration = static_cast<util::DateTime>(datetimes[i])
-        - juld_reference;
-    julian_days[i] = duration.toSeconds() / 86400.0;
-  }
+  util::DateTime juld_reference;
+  setupJulianDay(n_obs, juld_reference, julian_days);
 
   // Generate lists of the variable names to setup the file
   std::vector<std::string> additional_names;
@@ -142,112 +142,15 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                                    ufo::WhereOperator::AND);
 
   // Set up the station type and identifier variables. The way to do this
-  // depends on the data type. Also modify which obs to write is this is
+  // depends on the data type. Also modify which obs to write if this is
   // altimeter data.
   std::vector<std::string> station_types(n_obs, "    ");
   std::vector<std::string> station_ids(n_obs, "        ");
 
   if (is_altimeter) {
-    // Station type and station identifier are both defined from the
-    // satellite_identifier metadata.
-    std::vector<int> satellite_ids(n_obs);
-    obsdb_.get_db("MetaData", "satellite_identifier", satellite_ids);
-    char buffer9[9];
-    char buffer5[5];
-    for (int i=0; i < n_obs; ++i) {
-      snprintf(buffer9, sizeof(buffer9), "%04d    ", satellite_ids[i]);
-      station_ids[i] = buffer9;
-      snprintf(buffer5, sizeof(buffer5), "%4d", satellite_ids[i]);
-      station_types[i] = buffer5;
-    }
-
-    // Get the most recent versions of the data.
-    // Read version information.
-    std::vector<int> version(n_obs);
-    obsdb_.get_db("MetaData", "instrument_type", version);
-
-    // Get integer values for the day of each data point.
-    std::vector<int> ymd(n_obs);
-    int ymd_tmp;
-    int hms_tmp;
-    for (int i=0; i < n_obs; ++i) {
-      datetimes[i].toYYYYMMDDhhmmss(ymd_tmp, hms_tmp);
-      ymd[i] = ymd_tmp;
-    }
-
-    // Get unique values.
-    std::set<int> ymd_set(ymd.begin(), ymd.end());
-    std::set<int> sid_set(satellite_ids.begin(), satellite_ids.end());
-
-    // Loop through the unique values of ymd and satellite_ids.
-    int latest_version;
-    auto version_missing_value = util::missingValue(version[0]);
-    for (int ymd_to_find : ymd_set) {
-      for (int sid_to_find : sid_set) {
-        latest_version = 0;
-        for (int i=0; i < n_obs; ++i) {
-          if (to_write[i] &&
-              ymd[i] == ymd_to_find &&
-              satellite_ids[i] == sid_to_find &&
-              version[i] != version_missing_value &&
-              version[i] > latest_version) {
-            latest_version = version[i];
-          }
-        }
-        // If latest_version is still 0, this means that either there are
-        // no data with a version number defined or all the data are marked
-        // as not to write already. Therefore, we only need to do anything
-        // further if latest_version > 0.
-        if (latest_version > 0) {
-          for (int i=0; i < n_obs; ++i) {
-            if (to_write[i] &&
-                ymd[i] == ymd_to_find &&
-                satellite_ids[i] == sid_to_find &&
-                version[i] < latest_version) {
-              to_write[i] = false;
-            }
-          }
-        }
-      }
-    }
+    setupAltimeterIds(n_obs, station_ids, station_types, to_write);
   } else {
-    // Define the station type variable. This may not always be defined in
-    // obsdb_.
-    if (obsdb_.has("MetaData", "fdbk_station_type")) {
-      std::vector<int> station_types_int(n_obs);
-      obsdb_.get_db("MetaData", "fdbk_station_type", station_types_int);
-      char buffer[5];
-      for (int i=0; i < n_obs; ++i) {
-        snprintf(buffer, sizeof(buffer), "%-4d", station_types_int[i]);
-        station_types[i] = buffer;
-      }
-    }
-
-    // Define the station identifier variable. These may not always be defined
-    // in odbsb_ and may be contained in either the station_id or
-    // buoy_identifier variables, or both.
-    if (obsdb_.has("MetaData", "station_id")) {
-      std::vector<std::string> station_ids_tmp(n_obs);
-      obsdb_.get_db("MetaData", "station_id", station_ids_tmp);
-      for (int i=0; i< n_obs; ++i) {
-        if (station_ids_tmp[i] != "") {
-               station_ids_tmp[i].resize(8, ' ');
-               station_ids[i] = station_ids_tmp[i].substr(0, 8);
-        }
-      }
-    }
-    if (obsdb_.has("MetaData", "buoy_identifier")) {
-      std::vector<int> buoy_ids(n_obs);
-      obsdb_.get_db("MetaData", "buoy_identifier", buoy_ids);
-      char buffer[9];
-      auto buoy_id_missing_value = util::missingValue(buoy_ids[0]);
-      for (int i=0; i < n_obs; ++i) {
-        if (buoy_ids[i] != buoy_id_missing_value) {
-          snprintf(buffer, sizeof(buffer), "%-8d", buoy_ids[i]);
-          station_ids[i] = buffer;
-        }
-      }
-    }
+    setupSurfaceIds(n_obs, station_ids, station_types);
   }
 
   // Calculate total number of obs to actually write.
@@ -424,6 +327,148 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       }
     }
   }
+}
+
+void NemoFeedback::setupJulianDay(const size_t n_obs,
+    util::DateTime& juld_reference,
+    std::vector<double>& julian_days) const {
+    if (n_obs != obsdb_.nlocs())
+      throw eckit::BadValue(std::string("n_obs != nlocs. ")
+          + "setupJulianDay doesn't support observations at depth",
+          Here());
+
+    std::vector<util::DateTime> datetimes(n_obs);
+    obsdb_.get_db("MetaData", "dateTime", datetimes);
+
+    // Handle the reference date option.
+    juld_reference = parameters_.refDate.value().value_or(datetimes[0]);
+
+    for (int i=0; i < n_obs; ++i) {
+      util::Duration duration = static_cast<util::DateTime>(datetimes[i])
+          - juld_reference;
+      julian_days[i] = duration.toSeconds() / 86400.0;
+    }
+}
+
+void NemoFeedback::setupSurfaceIds(const size_t n_obs,
+    std::vector<std::string>& station_ids,
+    std::vector<std::string>& station_types) const {
+    if (n_obs != obsdb_.nlocs())
+      throw eckit::BadValue(std::string("n_obs != nlocs. ")
+          + "Surface observations don't have depth!",
+          Here());
+    // Define the station type variable. This may not always be defined in
+    // obsdb_.
+    if (obsdb_.has("MetaData", "fdbk_station_type")) {
+      std::vector<int> station_types_int(n_obs);
+      obsdb_.get_db("MetaData", "fdbk_station_type", station_types_int);
+      char buffer[5];
+      for (int i=0; i < n_obs; ++i) {
+        snprintf(buffer, sizeof(buffer), "%-4d", station_types_int[i]);
+        station_types[i] = buffer;
+      }
+    }
+
+    // Define the station identifier variable. These may not always be defined
+    // in odbsb_ and may be contained in either the station_id or
+    // buoy_identifier variables, or both.
+    if (obsdb_.has("MetaData", "station_id")) {
+      std::vector<std::string> station_ids_tmp(n_obs);
+      obsdb_.get_db("MetaData", "station_id", station_ids_tmp);
+      for (int i=0; i< n_obs; ++i) {
+        if (station_ids_tmp[i] != "") {
+               station_ids_tmp[i].resize(8, ' ');
+               station_ids[i] = station_ids_tmp[i].substr(0, 8);
+        }
+      }
+    }
+    if (obsdb_.has("MetaData", "buoy_identifier")) {
+      std::vector<int> buoy_ids(n_obs);
+      obsdb_.get_db("MetaData", "buoy_identifier", buoy_ids);
+      char buffer[9];
+      auto buoy_id_missing_value = util::missingValue(buoy_ids[0]);
+      for (int i=0; i < n_obs; ++i) {
+        if (buoy_ids[i] != buoy_id_missing_value) {
+          snprintf(buffer, sizeof(buffer), "%-8d", buoy_ids[i]);
+          station_ids[i] = buffer;
+        }
+      }
+    }
+}
+
+void NemoFeedback::setupAltimeterIds(const size_t n_obs,
+    std::vector<std::string>& station_ids,
+    std::vector<std::string>& station_types,
+    std::vector<bool>& to_write) const {
+    if (n_obs != obsdb_.nlocs())
+      throw eckit::BadValue("n_obs != nlocs. Altimeters don't have depth!",
+          Here());
+
+    std::vector<util::DateTime> datetimes(n_obs);
+    obsdb_.get_db("MetaData", "dateTime", datetimes);
+
+    // Station type and station identifier are both defined from the
+    // satellite_identifier metadata.
+    std::vector<int> satellite_ids(n_obs);
+    obsdb_.get_db("MetaData", "satellite_identifier", satellite_ids);
+
+    // Get the most recent versions of the data.
+    // Read version information.
+    std::vector<int> version(n_obs);
+    obsdb_.get_db("MetaData", "instrument_type", version);
+    char buffer9[9];
+    char buffer5[5];
+    for (int i=0; i < n_obs; ++i) {
+      snprintf(buffer9, sizeof(buffer9), "%04d    ", satellite_ids[i]);
+      station_ids[i] = buffer9;
+      snprintf(buffer5, sizeof(buffer5), "%4d", satellite_ids[i]);
+      station_types[i] = buffer5;
+    }
+
+    // Get integer values for the day of each data point.
+    std::vector<int> ymd(n_obs);
+    int ymd_tmp;
+    int hms_tmp;
+    for (int i=0; i < n_obs; ++i) {
+      datetimes[i].toYYYYMMDDhhmmss(ymd_tmp, hms_tmp);
+      ymd[i] = ymd_tmp;
+    }
+
+    // Get unique values.
+    std::set<int> ymd_set(ymd.begin(), ymd.end());
+    std::set<int> sid_set(satellite_ids.begin(), satellite_ids.end());
+
+    // Loop through the unique values of ymd and satellite_ids.
+    int latest_version;
+    auto version_missing_value = util::missingValue(version[0]);
+    for (int ymd_to_find : ymd_set) {
+      for (int sid_to_find : sid_set) {
+        latest_version = 0;
+        for (int i=0; i < n_obs; ++i) {
+          if (to_write[i] &&
+              ymd[i] == ymd_to_find &&
+              satellite_ids[i] == sid_to_find &&
+              version[i] != version_missing_value &&
+              version[i] > latest_version) {
+            latest_version = version[i];
+          }
+        }
+        // If latest_version is still 0, this means that either there are
+        // no data with a version number defined or all the data are marked
+        // as not to write already. Therefore, we only need to do anything
+        // further if latest_version > 0.
+        if (latest_version > 0) {
+          for (int i=0; i < n_obs; ++i) {
+            if (to_write[i] &&
+                ymd[i] == ymd_to_find &&
+                satellite_ids[i] == sid_to_find &&
+                version[i] < latest_version) {
+              to_write[i] = false;
+            }
+          }
+        }
+      }
+    }
 }
 
 void NemoFeedback::print(std::ostream & os) const {

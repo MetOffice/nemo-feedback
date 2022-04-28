@@ -47,6 +47,16 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   oops::Variables requiredHdiagnostics() const override {return extradiagvars_;}
 
  private:
+ void setupJulianDay(const size_t n_obs,
+                     util::DateTime& juld_reference,
+                     std::vector<double>& julian_days) const;
+  void setupAltimeterIds(const size_t n_obs,
+                        std::vector<std::string>& station_ids,
+                        std::vector<std::string>& station_types,
+                        std::vector<bool>& to_write) const;
+  void setupSurfaceIds(const size_t n_obs,
+                       std::vector<std::string>& station_ids,
+                       std::vector<std::string>& station_types) const;
   void print(std::ostream &) const override;
 
   ioda::ObsSpace & obsdb_;
