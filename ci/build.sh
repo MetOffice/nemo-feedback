@@ -22,7 +22,7 @@ cd "${WORKD}"
 
 export LD_LIBRARY_PATH="${WORKD}/lib:$LD_LIBRARY_PATH"
 export PLUGINS_MANIFEST_PATH="${WORKD}/share/plugins"
-export ATLAS_DATA_PATH=/usr/local/src/nemo-feedback/atlas-data
+export ATLAS_DATA_PATH=/usr/local/src/nemo-feedback/ci/atlas-data
 
 ecbuild -S "${HERE}" -DCMAKE_BUILD_TYPE=Debug -DECBUILD_2_COMPAT="ON" -DMPI_ARGS="--oversubscribe"
 make -j "${NPROC}"
