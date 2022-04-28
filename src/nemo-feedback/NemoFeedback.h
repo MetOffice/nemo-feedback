@@ -16,6 +16,7 @@
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 #include "nemo-feedback/NemoFeedbackParameters.h"
+#include "nemo-feedback/NemoFeedbackWriter.h"
 #include "ufo/filters/ObsFilterData.h"
 #include "ufo/ObsTraits.h"
 
@@ -47,9 +48,12 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   oops::Variables requiredHdiagnostics() const override {return extradiagvars_;}
 
  private:
- void setupJulianDay(const size_t n_obs,
-                     util::DateTime& juld_reference,
-                     std::vector<double>& julian_days) const;
+  void groupCoordsByRecord(size_t n_obs,
+                          NemoFeedbackWriter::CoordData& coords,
+                          size_t n_levels,
+                          std::vector<int>& record_starts,
+                          std::vector<int>& record_counts,
+                          bool is_profile) const;
   void setupAltimeterIds(const size_t n_obs,
                         std::vector<std::string>& station_ids,
                         std::vector<std::string>& station_types,

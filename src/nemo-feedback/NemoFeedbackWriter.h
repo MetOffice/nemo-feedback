@@ -25,9 +25,18 @@ namespace nemo_feedback {
 
 class NemoFeedbackWriter {
  public:
+
+  struct CoordData {
+    std::vector<double> lats;
+    std::vector<double> lons;
+    std::vector<double> depths;
+    std::vector<double> julian_days;
+    util::DateTime juld_reference;
+  };
+
   NemoFeedbackWriter(
       eckit::PathName& filename,
-      const size_t n_obs_to_write,
+      const size_t & n_obs_to_write,
       const std::vector<bool> & to_write,
       const std::vector<double> & lons,
       const std::vector<double> & lats,
@@ -49,6 +58,11 @@ class NemoFeedbackWriter {
       const std::vector<bool> & to_write,
       const std::string & variable_name,
       const std::vector<double>& data);
+
+  void write_variable_profile(
+      const size_t & n_obs,
+      const std::string & variable_name,
+      const std::vector<double>& data) {};
 
   void write_variable_surf_qc(
       const size_t & n_obs,

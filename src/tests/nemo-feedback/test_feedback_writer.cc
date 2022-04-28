@@ -136,6 +136,49 @@ CASE("test creating test file ") {
   }
 }
 
+CASE("test creating test profile file ") {
+  eckit::PathName test_data_path("../testoutput/simple_nemo_profile_out.nc");
+
+  size_t n_obs = 1;
+  size_t n_levels = 5;
+  std::vector<double> lats{1.0};
+  std::vector<double> lons{6.0};
+  std::vector<double> depths(n_obs*n_levels, 0);
+  std::vector<double> times{11.0};
+  std::vector<std::string> variable_names{"POTM", "PSAL"};
+  std::vector<std::string> long_names{"this is a long name",
+                                      "this is another long name"};
+  std::vector<std::string> unit_names{"this is a unit", "this is another unit"};
+  std::vector<std::string> additional_variables{"Hx", "SuperOb"};
+  std::vector<bool> extra_variables{false, true};
+  util::DateTime juld_reference("2021-08-31T15:26:00Z");
+  std::vector<std::string> station_types{" 401"};
+  std::vector<std::string> station_ids{ "123     "};
+
+  SECTION("file writes") {
+    NemoFeedbackWriter fdbk_writer(
+        test_data_path,
+        n_obs,
+        {true},
+        lons,
+        lats,
+        depths,
+        times,
+        variable_names,
+        long_names,
+        unit_names,
+        additional_variables,
+        extra_variables,
+        n_levels,
+        juld_reference,
+        station_types,
+        station_ids);
+  }
+
+  netCDF::NcFile ncFile(test_data_path.fullName().asString(),
+      netCDF::NcFile::read);
+}
+
 }  // namespace test
 }  // namespace nemo_feedback
 

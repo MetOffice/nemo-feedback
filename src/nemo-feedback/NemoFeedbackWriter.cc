@@ -54,7 +54,7 @@ typedef char fixed_length_type_type[STRINGTYP_NUM+1];
 
 NemoFeedbackWriter::NemoFeedbackWriter(
     eckit::PathName& filename,
-    const size_t n_obs_to_write,
+    const size_t & n_obs_to_write,
     const std::vector<bool> & to_write,
     const std::vector<double> & lons,
     const std::vector<double> & lats,
@@ -70,8 +70,8 @@ NemoFeedbackWriter::NemoFeedbackWriter(
     const std::vector<std::string> & station_types,
     const std::vector<std::string> & station_ids )
     : ncFile(nullptr), n_levels_(n_levels) {
-  oops::Log::debug() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
-                     << " filename: " << filename.fullName().asString()
+  oops::Log::trace() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
+                     << " constructing for: " << filename.fullName().asString()
                      << std::endl;
 
   ncFile = std::make_unique<netCDF::NcFile>(filename.fullName().asString(),
@@ -83,11 +83,11 @@ NemoFeedbackWriter::NemoFeedbackWriter(
     eckit::BadValue(err_stream.str(), Here());
   }
 
-  size_t n_obs = lats.size();
-  size_t n_obs_vars = variable_names.size();
-  size_t n_extra = std::count(extra_vars.begin(), extra_vars.end(), true);
-  n_obs_vars -= n_extra;
-  size_t max_n_add_entries = additional_variables.size();
+  const size_t n_obs = lats.size();
+  const size_t n_extra = std::count(extra_vars.begin(), extra_vars.end(), true);
+  const size_t n_obs_vars = variable_names.size() - n_extra;
+  const size_t max_n_add_entries = additional_variables.size();
+
   define_coord_variables(
       n_obs_to_write,
       n_levels,

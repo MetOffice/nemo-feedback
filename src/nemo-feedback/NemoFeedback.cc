@@ -88,27 +88,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 
   eckit::PathName test_data_path(parameters_.Filename);
 
-  //  Calculate n_obs, n_levels, starts, counts
-  //  Fill out lats, lons, depths, julian_days
-  // ov.n_obs is the number of non-missing non-qced obs?
-  // obsdb_.nlocs is the number of original point-observation locations.
-  // TODO: We need lats/lons/depths to be of size N_OBS for profiles
-  size_t n_locs = obsdb_.nlocs();
-  size_t n_obs  = n_locs;
-  std::vector<double> lats(n_obs, 0);
-  obsdb_.get_db("MetaData", "latitude", lats);
-  std::vector<double> lons(n_obs, 0);
-  obsdb_.get_db("MetaData", "longitude", lons);
-  std::vector<double> depths(n_obs, 0);
-
-  // TODO n_levels is equal to largest number of levels across an entire
-  // profile data.
-  size_t n_levels = 1;
-
-  std::vector<double> julian_days(n_obs, 0);
-  util::DateTime juld_reference;
-  setupJulianDay(n_obs, juld_reference, julian_days);
-
   // Generate lists of the variable names to setup the file
   std::vector<std::string> additional_names;
   std::vector<std::string> variable_names;
@@ -116,10 +95,15 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   std::vector<std::string> unit_names;
   std::vector<bool> extra_vars;
   bool is_altimeter = false;
+  bool is_profile = false;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
     if (nemoVariableParams.nemoName.value() == "SLA") {
       is_altimeter = true;
+    }
+    if (nemoVariableParams.nemoName.value() == "POTM" ||
+        nemoVariableParams.nemoName.value() == "PSAL") {
+      is_profile = true;
     }
     variable_names.push_back(nemoVariableParams.nemoName.value());
     long_names.push_back(nemoVariableParams.longName.value());
@@ -136,10 +120,32 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     }
   }
 
+  if (is_profile && is_altimeter)
+    throw eckit::BadValue(std::string("NemoFeedback::postFilter cannot write")
+        + " profile and altimeter data to the same file", Here());
+
+  //  Calculate n_obs, n_levels, starts, counts
+  //  Fill out lats, lons, depths, julian_days
+  // ov.n_obs is the number of non-missing non-qced obs?
+  // obsdb_.nlocs is the number of original point-observation locations.
+  // TODO: We need lats/lons/depths to be of size N_OBS for profiles
+
+  NemoFeedbackWriter::CoordData coords;
+  std::vector<int> record_starts;
+  std::vector<int> record_counts;
+  size_t n_levels = 1;
+  size_t n_obs  = obsdb_.nlocs();
+
+  groupCoordsByRecord(n_obs, coords, n_levels, record_starts, record_counts,
+      is_profile);
+
   // Handle the where option.
-  size_t n_obs_to_write = 0;
   std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_,
                                    ufo::WhereOperator::AND);
+  // Calculate total number of obs to actually write.
+  const size_t n_obs_to_write = std::count(to_write.begin(), to_write.end(),
+      true);
+
 
   // Set up the station type and identifier variables. The way to do this
   // depends on the data type. Also modify which obs to write if this is
@@ -153,24 +159,21 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     setupSurfaceIds(n_obs, station_ids, station_types);
   }
 
-  // Calculate total number of obs to actually write.
-  n_obs_to_write = std::count(to_write.begin(), to_write.end(), true);
-
   NemoFeedbackWriter fdbk_writer(
       test_data_path,
       n_obs_to_write,
       to_write,
-      lons,
-      lats,
-      depths,
-      julian_days,
+      coords.lons,
+      coords.lats,
+      coords.depths,
+      coords.julian_days,
       variable_names,
       long_names,
       unit_names,
       additional_names,
       extra_vars,
       n_levels,
-      juld_reference,
+      coords.juld_reference,
       station_types,
       station_ids);
 
@@ -309,8 +312,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         }
       } else if (!obsdb_.has(ioda_group, ufo_name)) {
         oops::Log::trace() << obsdb_ << std::endl;
-        throw eckit::BadValue("missing variable: " + ioda_group
-                              + "/" + ufo_name, Here());
+        throw eckit::BadValue("NemoFeedback::postFilter missing variable: "
+            + ioda_group + "/" + ufo_name, Here());
       } else {
         obsdb_.get_db(ioda_group, ufo_name, variable_data);
         auto missing_value = util::missingValue(variable_data[0]);
@@ -329,24 +332,73 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   }
 }
 
-void NemoFeedback::setupJulianDay(const size_t n_obs,
-    util::DateTime& juld_reference,
-    std::vector<double>& julian_days) const {
-    if (n_obs != obsdb_.nlocs())
-      throw eckit::BadValue(std::string("n_obs != nlocs. ")
-          + "setupJulianDay doesn't support observations at depth",
+void NemoFeedback::groupCoordsByRecord(size_t n_obs,
+                                       NemoFeedbackWriter::CoordData& coords,
+                                       size_t n_levels,
+                                       std::vector<int>& record_starts,
+                                       std::vector<int>& record_counts,
+                                       bool is_profile) const {
+    size_t n_locs = obsdb_.nlocs();
+    if (n_obs != n_locs)
+      throw eckit::BadValue(std::string("NemoFeedback::setupJulianDay: ")
+          + "n_obs != nlocs (doesn't support observations at depth)",
           Here());
 
-    std::vector<util::DateTime> datetimes(n_obs);
+    std::vector<util::DateTime> datetimes(n_locs);
     obsdb_.get_db("MetaData", "dateTime", datetimes);
+    coords.lats.resize(n_locs);
+    obsdb_.get_db("MetaData", "latitude", coords.lats);
+    coords.lons.resize(n_locs);
+    obsdb_.get_db("MetaData", "longitude", coords.lons);
 
     // Handle the reference date option.
-    juld_reference = parameters_.refDate.value().value_or(datetimes[0]);
+    coords.juld_reference = parameters_.refDate.value().value_or(datetimes[0]);
 
+    if (is_profile) {
+      std::vector<double> record_lats(1, coords.lats[0]);
+      std::vector<double> record_lons(1, coords.lons[0]);
+      std::vector<util::DateTime> record_dts(1, datetimes[0]);
+      record_counts.resize(1);
+      record_starts.resize(1);
+      int r = 0;
+      n_obs = 0;
+      for (int l=0; l<n_locs; ++l) {
+        record_counts[r]++;
+        if ((std::abs(coords.lats[l] - record_lats[r]) > 1e-6) &&
+            (std::abs(coords.lons[l] - record_lons[r]) > 1e-6) &&
+            (std::abs((datetimes[l] - record_dts[r]).toSeconds() > 1e-6))) {
+          record_lats.push_back(coords.lats[l]);
+          record_lons.push_back(coords.lons[l]);
+          record_dts.push_back(datetimes[l]);
+          record_counts.push_back(0);
+          record_starts.push_back(l+1);
+          r++;
+          n_obs++;
+        }
+      }
+      // n_levels is equal to largest number of levels across an entire
+      // profile data.
+      size_t n_levels = *std::max_element(record_counts.begin(),
+          record_counts.end());
+      coords.lats.resize(n_obs);
+      coords.lats.assign(record_lats.begin(), record_lats.end());
+      coords.lons.resize(n_obs);
+      coords.lons.assign(record_lons.begin(), record_lons.end());
+      datetimes.resize(n_obs);
+      datetimes.assign(record_dts.begin(), record_dts.end());
+      coords.depths.resize(n_locs);
+      // TODO: Figure out where to get depth info
+      obsdb_.get_db("MetaData", "depth_m", coords.depths);
+    } else {
+      coords.depths.resize(n_obs);
+      std::fill(coords.depths.begin(), coords.depths.end(), 0);
+    }
+
+    coords.julian_days.resize(n_locs);
     for (int i=0; i < n_obs; ++i) {
       util::Duration duration = static_cast<util::DateTime>(datetimes[i])
-          - juld_reference;
-      julian_days[i] = duration.toSeconds() / 86400.0;
+          - coords.juld_reference;
+      coords.julian_days[i] = duration.toSeconds() / 86400.0;
     }
 }
 
@@ -354,8 +406,8 @@ void NemoFeedback::setupSurfaceIds(const size_t n_obs,
     std::vector<std::string>& station_ids,
     std::vector<std::string>& station_types) const {
     if (n_obs != obsdb_.nlocs())
-      throw eckit::BadValue(std::string("n_obs != nlocs. ")
-          + "Surface observations don't have depth!",
+      throw eckit::BadValue(std::string("NemoFeedback::setupSurfaceIds ")
+          + "n_obs != nlocs. Surface observations don't have depth",
           Here());
     // Define the station type variable. This may not always be defined in
     // obsdb_.
@@ -401,7 +453,8 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     std::vector<std::string>& station_types,
     std::vector<bool>& to_write) const {
     if (n_obs != obsdb_.nlocs())
-      throw eckit::BadValue("n_obs != nlocs. Altimeters don't have depth!",
+      throw eckit::BadValue(std::string("NemoFeedback::setupAltimeterIds ")
+          + "n_obs != nlocs. Altimeter observations don't have depth",
           Here());
 
     std::vector<util::DateTime> datetimes(n_obs);
