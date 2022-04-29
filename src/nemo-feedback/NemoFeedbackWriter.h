@@ -62,7 +62,9 @@ class NemoFeedbackWriter {
   void write_variable_profile(
       const size_t & n_obs,
       const std::string & variable_name,
-      const std::vector<double>& data) {};
+      const std::vector<double>& data,
+      const std::vector<size_t>& record_starts,
+      const std::vector<size_t>& record_counts);
 
   void write_variable_surf_qc(
       const size_t & n_obs,

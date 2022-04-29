@@ -62,6 +62,8 @@ CASE("test creating test file ") {
         juld_reference,
         station_types,
         station_ids);
+
+    EXPECT(test_data_path.exists());
   }
 
   netCDF::NcFile ncFile(test_data_path.fullName().asString(),
@@ -139,27 +141,28 @@ CASE("test creating test file ") {
 CASE("test creating test profile file ") {
   eckit::PathName test_data_path("../testoutput/simple_nemo_profile_out.nc");
 
-  size_t n_obs = 1;
-  size_t n_levels = 5;
-  std::vector<double> lats{1.0};
-  std::vector<double> lons{6.0};
-  std::vector<double> depths(n_obs*n_levels, 0);
-  std::vector<double> times{11.0};
-  std::vector<std::string> variable_names{"POTM", "PSAL"};
-  std::vector<std::string> long_names{"this is a long name",
-                                      "this is another long name"};
-  std::vector<std::string> unit_names{"this is a unit", "this is another unit"};
-  std::vector<std::string> additional_variables{"Hx", "SuperOb"};
-  std::vector<bool> extra_variables{false, true};
-  util::DateTime juld_reference("2021-08-31T15:26:00Z");
-  std::vector<std::string> station_types{" 401"};
-  std::vector<std::string> station_ids{ "123     "};
+  const size_t n_obs = 2;
+  const size_t n_levels = 5;
+  const size_t n_locs = 7;
+  const std::vector<double> lats(n_obs, 1.0);
+  const std::vector<double> lons(n_obs, 6.0);
+  const std::vector<double> depths(n_locs, 0);
+  const std::vector<double> times(n_obs, 11.0);
+  const std::vector<std::string> variable_names{"POTM", "PSAL"};
+  const std::vector<std::string> long_names{"this is a long name",
+                                            "this is another long name"};
+  const std::vector<std::string> unit_names{"this is a unit", "this is another unit"};
+  const std::vector<std::string> additional_variables{"Hx", "SuperOb"};
+  const std::vector<bool> extra_variables{false, true};
+  const util::DateTime juld_reference("2021-08-31T15:26:00Z");
+  const std::vector<std::string> station_types{" 401", " 401"};
+  const std::vector<std::string> station_ids{"123     ", "123     "};
 
   SECTION("file writes") {
     NemoFeedbackWriter fdbk_writer(
         test_data_path,
         n_obs,
-        {true},
+        {true, true},
         lons,
         lats,
         depths,
@@ -173,10 +176,38 @@ CASE("test creating test profile file ") {
         juld_reference,
         station_types,
         station_ids);
+
+    std::vector<double> data(n_locs, 0);
+    for (int i = 0; i < n_locs; ++i) data[i] = i;
+    const std::vector<size_t> record_starts{0, 2}, record_counts{2, n_levels};
+    fdbk_writer.write_variable_profile(n_obs, variable_names[0] + "_OBS",
+        data, record_starts, record_counts);
+
+    EXPECT(test_data_path.exists());
   }
 
   netCDF::NcFile ncFile(test_data_path.fullName().asString(),
       netCDF::NcFile::read);
+
+  SECTION("Profile data is ordered correctly") {
+    netCDF::NcVar ncVar = ncFile.getVar(variable_names[0] + "_OBS");
+    std::vector<double> data(n_obs*n_levels, 12345);
+    ncVar.getVar({0, 0}, {n_obs, n_levels}, data.data());
+
+    EXPECT_EQUAL(0, data[0]);
+    EXPECT_EQUAL(1, data[1]);
+    EXPECT_EQUAL(99999, data[2]);
+    EXPECT_EQUAL(99999, data[3]);
+    EXPECT_EQUAL(99999, data[4]);
+
+    EXPECT_EQUAL(2, data[n_levels]);
+    EXPECT_EQUAL(3, data[n_levels+1]);
+    EXPECT_EQUAL(4, data[n_levels+2]);
+    EXPECT_EQUAL(5, data[n_levels+3]);
+    EXPECT_EQUAL(6, data[n_levels+4]);
+
+  }
+
 }
 
 }  // namespace test

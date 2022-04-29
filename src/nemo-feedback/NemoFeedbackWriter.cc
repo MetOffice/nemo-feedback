@@ -88,6 +88,10 @@ NemoFeedbackWriter::NemoFeedbackWriter(
   const size_t n_obs_vars = variable_names.size() - n_extra;
   const size_t max_n_add_entries = additional_variables.size();
 
+  if (to_write.size() != n_obs)
+    throw eckit::BadValue(std::string("NemoFeedbackWriter::") +
+        " to_write  not defined for some observations", Here());
+
   define_coord_variables(
       n_obs_to_write,
       n_levels,
@@ -347,12 +351,14 @@ void NemoFeedbackWriter::define_variable(
       netCDF::ncDouble, dims);
   obs_var.putAtt("long_name", longName);
   obs_var.putAtt("units", units);
+  obs_var.setFill(true, double_fillvalue);
 
   for (const auto &name : additional_names) {
     netCDF::NcVar add_var = ncFile->addVar(variable_name + "_" + name,
         netCDF::ncDouble, dims);
     add_var.putAtt("long_name", longName + " " + name);
     add_var.putAtt("units", units);
+    add_var.setFill(true, double_fillvalue);
   }
 
   {
@@ -482,6 +488,12 @@ void NemoFeedbackWriter::write_whole_report_variables(
     const std::vector<std::string> & station_types,
     const std::vector<std::string> & station_ids) {
 
+  if (station_ids.size() != n_obs ||
+      station_types.size() != n_obs )
+    throw eckit::BadValue(std::string("NemoFeedbackWriter::") +
+        "write_whole_report_variables: station_ids or station_types " +
+        "not defined for some observations", Here());
+
   // Write station type.
   {
     size_t nchars = (ncFile->getDim(STRINGTYP)).getSize();
@@ -567,6 +579,28 @@ void NemoFeedbackWriter::write_variable_surf_qc(
                                                   to_write,
                                                   data);
   surf_var.putVar({0, flag_index}, {n_obs_to_write, 1}, reduced_data.data());
+}
+
+void NemoFeedbackWriter::write_variable_profile(
+    const size_t & n_obs,
+    const std::string & variable_name,
+    const std::vector<double>& data,
+    const std::vector<size_t>& record_starts,
+    const std::vector<size_t>& record_counts) {
+  oops::Log::trace() << "NemoFeedbackWriter::write_variable_profile: writing "
+                     << variable_name << std::endl;
+  auto var = ncFile->getVar(variable_name);
+
+  double* buffer = new double[n_levels_];
+  for (size_t n = 0; n < n_obs; ++n) {
+      for (size_t i = 0; i < record_counts[n]; ++i)
+        buffer[i] = data[record_starts[n] + i];
+    var.putVar({n, 0},
+              {1, record_counts[n]},
+              buffer);
+  }
+
+  delete[] buffer;
 }
 
 }  // namespace nemo_feedback

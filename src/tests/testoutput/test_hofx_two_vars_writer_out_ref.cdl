@@ -63,9 +63,11 @@ variables:
 	double ICECONC_OBS(N_OBS, N_LEVELS) ;
 		ICECONC_OBS:long_name = "ice area fraction" ;
 		ICECONC_OBS:units = "Fraction" ;
+		ICECONC_OBS:_FillValue = 99999. ;
 	double ICECONC_Hx(N_OBS, N_LEVELS) ;
 		ICECONC_Hx:long_name = "ice area fraction Hx" ;
 		ICECONC_Hx:units = "Fraction" ;
+		ICECONC_Hx:_FillValue = 99999. ;
 	int ICECONC_QC_FLAGS(N_OBS, N_QCF) ;
 	int ICECONC_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
 	int ICECONC_QC(N_OBS) ;
@@ -83,9 +85,11 @@ variables:
 	double SST_OBS(N_OBS, N_LEVELS) ;
 		SST_OBS:long_name = "sea_surface_temperature" ;
 		SST_OBS:units = "Fraction" ;
+		SST_OBS:_FillValue = 99999. ;
 	double SST_Hx(N_OBS, N_LEVELS) ;
 		SST_Hx:long_name = "sea_surface_temperature Hx" ;
 		SST_Hx:units = "Fraction" ;
+		SST_Hx:_FillValue = 99999. ;
 	int SST_QC_FLAGS(N_OBS, N_QCF) ;
 	int SST_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
 	int SST_QC(N_OBS) ;
@@ -239,7 +243,7 @@ data:
 
  ICECONC_OBS =
   0,
-  99999,
+  _,
   0.996299982070923,
   0,
   0,
@@ -252,16 +256,16 @@ data:
 
  ICECONC_Hx =
   0,
-  99999,
+  _,
   0,
   0,
-  99999,
+  _,
   0,
-  99999,
+  _,
   0,
   0,
   0,
-  99999 ;
+  _ ;
 
  ICECONC_QC_FLAGS =
   64, _,
@@ -325,7 +329,7 @@ data:
 
  SST_OBS =
   18,
-  99999,
+  _,
   18,
   18,
   18,
@@ -338,16 +342,16 @@ data:
 
  SST_Hx =
   18.1823740047895,
-  99999,
+  _,
   17.6473218000851,
   17.7217961661792,
-  99999,
+  _,
   18.1258351199711,
-  99999,
+  _,
   17.9115855857058,
   17.804222153134,
   17.6973345847551,
-  99999 ;
+  _ ;
 
  SST_QC_FLAGS =
   _, _,

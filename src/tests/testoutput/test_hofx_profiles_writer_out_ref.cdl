@@ -1,0 +1,226 @@
+netcdf tmp {
+dimensions:
+	N_OBS = 1 ;
+	N_LEVELS = 10 ;
+	N_QCF = 2 ;
+	N_ENTRIES = 2 ;
+	STRINGNAM = 8 ;
+	N_EXTRA = 1 ;
+	STRINGJULD = 14 ;
+	STRINGGRID = 1 ;
+	STRINGWMO = 8 ;
+	STRINGTYP = 4 ;
+	N_VARS = 2 ;
+variables:
+	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:long_name = "Depth" ;
+		DEPTH:units = "metre" ;
+		DEPTH:_Fillvalue = 99999.f ;
+	int DEPTH_QC(N_OBS, N_LEVELS) ;
+		DEPTH_QC:long_name = "Quality on depth" ;
+		DEPTH_QC:Conventions = "q where q =[0,9]" ;
+		DEPTH_QC:_Fillvalue = 0 ;
+	int DEPTH_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		DEPTH_QC_FLAGS:long_name = "Quality flags on depth" ;
+		DEPTH_QC_FLAGS:Conventions = "NEMOVAR flag conventions" ;
+	char ENTRIES(N_ENTRIES, STRINGNAM) ;
+		ENTRIES:long_name = "List of additional entries for each variable in feedback files" ;
+	char EXTRA(N_EXTRA, STRINGNAM) ;
+		EXTRA:long_name = "List of extra variables" ;
+	double JULD(N_OBS) ;
+		JULD:long_name = "Julian day" ;
+		JULD:units = "days since JULD_REFERENCE" ;
+		JULD:Conventions = "relative julian days with decimal part (as parts of day)" ;
+		JULD:_Fillvalue = 99999.f ;
+	int JULD_QC(N_OBS) ;
+		JULD_QC:long_name = "Quality on date and time" ;
+		JULD_QC:Conventions = "q where q =[0,9]" ;
+		JULD_QC:_Fillvalue = 0 ;
+	int JULD_QC_FLAGS(N_OBS, N_QCF) ;
+		JULD_QC_FLAGS:long_name = "Quality flags on date and time" ;
+		JULD_QC_FLAGS:Conventions = "NEMOVAR flag conventions" ;
+		JULD_QC_FLAGS:_Fillvalue = 0 ;
+	char JULD_REFERENCE(STRINGJULD) ;
+		JULD_REFERENCE:long_name = "Date of reference for julian days" ;
+		JULD_REFERENCE:Conventions = "YYYYMMDDHHMMSS" ;
+	double LATITUDE(N_OBS) ;
+		LATITUDE:long_name = "Latitude" ;
+		LATITUDE:units = "degrees_north" ;
+		LATITUDE:_Fillvalue = 99999.f ;
+	double LONGITUDE(N_OBS) ;
+		LONGITUDE:long_name = "Longitude" ;
+		LONGITUDE:units = "degrees_east" ;
+		LONGITUDE:_Fillvalue = 99999.f ;
+	int OBSERVATION_QC(N_OBS) ;
+		OBSERVATION_QC:long_name = "Quality on observation" ;
+		OBSERVATION_QC:Conventions = "q where q =[0,9]" ;
+		OBSERVATION_QC:_Fillvalue = 0 ;
+	int OBSERVATION_QC_FLAGS(N_OBS, N_QCF) ;
+		OBSERVATION_QC_FLAGS:long_name = "Quality flags on observation" ;
+		OBSERVATION_QC_FLAGS:Conventions = "NEMOVAR flag conventions" ;
+		OBSERVATION_QC_FLAGS:_Fillvalue = 0 ;
+	int ORIGINAL_FILE_INDEX(N_OBS) ;
+		ORIGINAL_FILE_INDEX:long_name = "Index in original data file" ;
+		ORIGINAL_FILE_INDEX:_Fillvalue = -99999 ;
+	int POSITION_QC(N_OBS) ;
+		POSITION_QC:long_name = "Quality on position (latitude and longitude)" ;
+		POSITION_QC:Conventions = "q where q =[0,9]" ;
+		POSITION_QC:_Fillvalue = 0 ;
+	int POSITION_QC_FLAGS(N_OBS, N_QCF) ;
+		POSITION_QC_FLAGS:long_name = "Quality flags on position" ;
+		POSITION_QC_FLAGS:Conventions = "NEMOVAR flag conventions" ;
+		POSITION_QC_FLAGS:_Fillvalue = 0 ;
+	char POTM_GRID(STRINGGRID) ;
+		POTM_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+	float POTM_Hx(N_OBS, N_LEVELS) ;
+		POTM_Hx:long_name = "Model interpolated potential temperature" ;
+		POTM_Hx:units = "Degrees Celsius" ;
+		POTM_Hx:_Fillvalue = 99999.f ;
+	int POTM_IOBSI(N_OBS) ;
+		POTM_IOBSI:long_name = "ORCA grid search I coordinate" ;
+	int POTM_IOBSJ(N_OBS) ;
+		POTM_IOBSJ:long_name = "ORCA grid search J coordinate" ;
+	int POTM_IOBSK(N_OBS, N_LEVELS) ;
+		POTM_IOBSK:long_name = "ORCA grid search K coordinate" ;
+	int POTM_LEVEL_QC(N_OBS, N_LEVELS) ;
+		POTM_LEVEL_QC:long_name = "Quality for each level on potential temperature" ;
+		POTM_LEVEL_QC:Conventions = "q where q =[0,9]" ;
+		POTM_LEVEL_QC:_Fillvalue = 0 ;
+	int POTM_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		POTM_LEVEL_QC_FLAGS:long_name = "Quality flags for each level on potential temperature" ;
+		POTM_LEVEL_QC_FLAGS:Conventions = "NEMOVAR flag conventions" ;
+		POTM_LEVEL_QC_FLAGS:_Fillvalue = 0 ;
+	float POTM_OBS(N_OBS, N_LEVELS) ;
+		POTM_OBS:long_name = "Potential temperature" ;
+		POTM_OBS:units = "Degrees Celsius" ;
+		POTM_OBS:_Fillvalue = 99999.f ;
+	int POTM_QC(N_OBS) ;
+		POTM_QC:long_name = "Quality on potential temperature" ;
+		POTM_QC:Conventions = "q where q =[0,9]" ;
+		POTM_QC:_Fillvalue = 0 ;
+	int POTM_QC_FLAGS(N_OBS, N_QCF) ;
+		POTM_QC_FLAGS:long_name = "Quality flags on potential temperature" ;
+		POTM_QC_FLAGS:Conventions = "NEMOVAR flag conventions" ;
+		POTM_QC_FLAGS:_Fillvalue = 0 ;
+	float POTM_SuperOb(N_OBS, N_LEVELS) ;
+		POTM_SuperOb:long_name = "SuperOb indicater: 0 - not superOb, 1 - SuperOb" ;
+		POTM_SuperOb:units = "" ;
+		POTM_SuperOb:_Fillvalue = 99999.f ;
+	char STATION_IDENTIFIER(N_OBS, STRINGWMO) ;
+		STATION_IDENTIFIER:long_name = "Station identifier" ;
+	char STATION_TYPE(N_OBS, STRINGTYP) ;
+		STATION_TYPE:long_name = "Code instrument type" ;
+	float TEMP(N_OBS, N_LEVELS) ;
+		TEMP:long_name = "Insitu temperature" ;
+		TEMP:units = "Degrees Celsius" ;
+		TEMP:_Fillvalue = 99999.f ;
+	char VARIABLES(N_VARS, STRINGNAM) ;
+		VARIABLES:long_name = "List of variables in feedback files" ;
+
+// global attributes:
+		:title = "NEMO observation operator output" ;
+		:Convention = "NEMO unified observation operator output" ;
+		:history = "Wed Apr 27 15:30:01 2022: ncks -d N_OBS,0,2,1 profile.obs.daym1.nc tmp.nc" ;
+		:NCO = "netCDF Operators version 4.7.5 (Homepage = http://nco.sf.net, Code = http://github.com/nco/nco)" ;
+data:
+
+ DEPTH =
+  0, 1, 2, 3, 4, 5, 10, 100, 200, 1000;
+
+ DEPTH_QC =
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+
+ DEPTH_QC_FLAGS =
+  0, 0,
+  0, 0,
+  0, 0,
+  0, 0,
+  0, 0,
+  0, 0,
+  0, 0,
+  0, 0,
+  0, 0,
+  0, 0;
+
+ ENTRIES =
+  "Hx      ",
+  "SuperOb " ;
+
+ EXTRA =
+  "TEMP    " ;
+
+ JULD = 26413.0263888889 ;
+
+ JULD_QC = -99999 ;
+
+ JULD_QC_FLAGS =
+  -99999, -99999 ;
+
+ JULD_REFERENCE = "19500101000000" ;
+
+ LATITUDE = 35 ;
+
+ LONGITUDE = -40 ;
+
+ OBSERVATION_QC = 1 ;
+
+ OBSERVATION_QC_FLAGS =
+  0, -99999 ;
+
+ ORIGINAL_FILE_INDEX = -99999 ;
+
+ POSITION_QC = 1 ;
+
+ POSITION_QC_FLAGS =
+  0, -99999 ;
+
+ POTM_GRID = "X" ;
+
+ POTM_Hx =12.3, 12.4, 12.9, 99999, 11.7, 10.3, 10.7, 
+      9.3, 9.1, 99999 ;
+
+ POTM_IOBSI = -99999 ;
+
+ POTM_IOBSJ = -99999 ;
+
+ POTM_IOBSK =
+  -99999, -99999, -99999, -99999, -99999, -99999, -99999, -99999, -99999, 
+  -99999 ;
+
+ POTM_LEVEL_QC = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+
+ POTM_LEVEL_QC_FLAGS =
+  64, -99999,
+  64, -99999,
+  64, -99999,
+  64, -99999,
+  64, -99999,
+  64, -99999,
+  64, -99999,
+  64, -99999,
+  64, -99999,
+  64, -99999,
+  64, -99999 ;
+
+ POTM_OBS = 12.3, 12.4, 12.9, 99999, 11.7, 10.3, 10.7, 
+      9.3, 9.1, 99999 ;
+
+ POTM_QC =  1 ;
+
+ POTM_QC_FLAGS =
+  64, -99999 ;
+
+ POTM_SuperOb = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ STATION_IDENTIFIER =
+  "9V8503  " ;
+
+ STATION_TYPE =
+  " 401" ;
+
+ TEMP =
+  99999, 99999, 99999, 99999, 99999, 99999, 99999, 99999, 99999, 99999 ;
+
+ VARIABLES =
+   "POTM    " ;
+}
