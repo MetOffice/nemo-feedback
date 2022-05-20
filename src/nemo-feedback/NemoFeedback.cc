@@ -89,10 +89,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   eckit::PathName test_data_path(parameters_.Filename);
 
   // Generate lists of the variable names to setup the file
-  std::vector<std::string> additional_names;
-  std::vector<std::string> variable_names;
-  std::vector<std::string> long_names;
-  std::vector<std::string> unit_names;
+  NemoFeedbackWriter::NameData name_data;
   std::vector<bool> extra_vars;
   bool is_altimeter = false;
   bool is_profile = false;
@@ -105,17 +102,17 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         nemoVariableParams.nemoName.value() == "PSAL") {
       is_profile = true;
     }
-    variable_names.push_back(nemoVariableParams.nemoName.value());
-    long_names.push_back(nemoVariableParams.longName.value());
-    unit_names.push_back(nemoVariableParams.units.value());
+    name_data.variable_names.push_back(nemoVariableParams.nemoName.value());
+    name_data.long_names.push_back(nemoVariableParams.longName.value());
+    name_data.unit_names.push_back(nemoVariableParams.units.value());
     extra_vars.push_back(nemoVariableParams.extravar.value().value_or(false));
     auto additionalVariablesParams = nemoVariableParams.variables.value();
     for (const NemoFeedbackAddVariableParameters& addVariableParams :
         additionalVariablesParams) {
       auto add_suffix = addVariableParams.feedbackSuffix.value();
-      if (std::find(additional_names.begin(), additional_names.end(),
-            add_suffix) == additional_names.end()) {
-        additional_names.push_back(add_suffix);
+      if (std::find(name_data.additional_names.begin(), name_data.additional_names.end(),
+            add_suffix) == name_data.additional_names.end()) {
+        name_data.additional_names.push_back(add_suffix);
       }
     }
   }
@@ -171,17 +168,9 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       test_data_path,
       n_obs_to_write,
       to_write,
-      coords.lons,
-      coords.lats,
-      coords.depths,
-      coords.julian_days,
-      variable_names,
-      long_names,
-      unit_names,
-      additional_names,
+      coords,
+      name_data,
       extra_vars,
-      coords.n_levels,
-      coords.juld_reference,
       station_types,
       station_ids);
 
@@ -206,9 +195,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     auto extra_var = nemoVariableParams.extravar.value().value_or(false);
     if (extra_var) {
       fdbk_writer.write_variable_surf(
-          n_obs,
-          n_obs_to_write,
-          to_write,
           nemo_name,
           variable_data);
       // If this is an extra variable we do not want to write any of the
@@ -218,16 +204,12 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 
     if (is_profile) {
       fdbk_writer.write_variable_profile(
-          n_obs,
           nemo_name + "_OBS",
           variable_data,
           record_starts,
           record_counts);
     } else {
       fdbk_writer.write_variable_surf(
-          n_obs,
-          n_obs_to_write,
-          to_write,
           nemo_name + "_OBS",
           variable_data);
     }
@@ -239,7 +221,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       // To the first qc flag index location
       if (is_profile) {
         fdbk_writer.write_variable_level_qc(
-            n_obs,
             nemo_name + "_LEVEL_QC_FLAGS",
             variable_qcFlags,
             0,
@@ -247,9 +228,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
             record_counts);
       } else {
         fdbk_writer.write_variable_surf_qc(
-            n_obs,
-            n_obs_to_write,
-            to_write,
             nemo_name + "_QC_FLAGS",
             variable_qcFlags, 0);
       }
@@ -263,9 +241,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       } else {variable_qc[i] = 0;}
     }
     fdbk_writer.write_variable_surf_qc(
-        n_obs,
-        n_obs_to_write,
-        to_write,
         "OBSERVATION_QC",
         variable_qc);
 
@@ -299,23 +274,16 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       }
     }
     fdbk_writer.write_variable_surf_qc(
-        n_obs,
-        n_obs_to_write,
-        to_write,
         nemo_name + "_QC",
         variable_qc);
     if (is_profile) {
       fdbk_writer.write_variable_level_qc(
-          n_obs,
           nemo_name + "_LEVEL_QC",
           variable_level_qc,
           record_starts,
           record_counts);
     } else {
       fdbk_writer.write_variable_surf_qc(
-          n_obs,
-          n_obs_to_write,
-          to_write,
           nemo_name + "_LEVEL_QC",
           variable_level_qc);
     }
@@ -353,16 +321,12 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           }
           if (is_profile) {
             fdbk_writer.write_variable_profile(
-                n_obs,
                 add_name,
                 variable_data,
                 record_starts,
                 record_counts);
           } else {
             fdbk_writer.write_variable_surf(
-                n_obs,
-                n_obs_to_write,
-                to_write,
                 add_name,
                 variable_data);
           }
@@ -380,16 +344,12 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         }
         if (is_profile) {
           fdbk_writer.write_variable_profile(
-                n_obs,
                 add_name,
                 variable_data,
                 record_starts,
                 record_counts);
         } else {
           fdbk_writer.write_variable_surf(
-              n_obs,
-              n_obs_to_write,
-              to_write,
               add_name,
               variable_data);
         }

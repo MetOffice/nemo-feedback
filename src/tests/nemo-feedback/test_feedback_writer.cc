@@ -24,18 +24,25 @@ CASE("test creating test file ") {
   eckit::PathName test_data_path("../testoutput/simple_nemo_out.nc");
 
   size_t n_obs = 5;
-  size_t n_levels = 1;
-  std::vector<double> lats{1.0, 2.0, 3.0, 4.0, 5.0};
-  std::vector<double> lons{6.0, 7.0, 8.0, 9.0, 10.0};
-  std::vector<double> depths(n_obs*n_levels, 0);
-  std::vector<double> times{11.0, 12.0, 13.0, 14.0, 15.0};
-  std::vector<std::string> variable_names{"SST", "MDT"};
-  std::vector<std::string> long_names{"this is a long name",
-                                      "this is another long name"};
-  std::vector<std::string> unit_names{"this is a unit", "this is another unit"};
-  std::vector<std::string> additional_variables{"Hx", "DW_FLAGS", "STD"};
+
+  NemoFeedbackWriter::CoordData coords;
+  coords.n_levels = 1;
+  coords.lats = std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0};
+  coords.lons = std::vector<double>{6.0, 7.0, 8.0, 9.0, 10.0};
+  coords.depths = std::vector<double>(n_obs*coords.n_levels, 0);
+  coords.julian_days = std::vector<double>{11.0, 12.0, 13.0, 14.0, 15.0};
+  coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
+
+  NemoFeedbackWriter::NameData name_data;
+  name_data.variable_names = std::vector<std::string>{"SST", "MDT"};
+  name_data.long_names = std::vector<std::string>{"this is a long name",
+                                                  "this is another long name"};
+  name_data.unit_names = std::vector<std::string>{"this is a unit",
+                                                  "this is another unit"};
+  name_data.additional_names = std::vector<std::string>{"Hx", "DW_FLAGS",
+                                                       "STD"};
+
   std::vector<bool> extra_variables{false, true};
-  util::DateTime juld_reference("2021-08-31T15:26:00Z");
   std::vector<std::string> station_types{"  44", "  45", "  46", "  47",
                                          "  48"};
   std::vector<std::string> station_ids{"12345678",
@@ -49,17 +56,9 @@ CASE("test creating test file ") {
         test_data_path,
         4,
         {true, false, true, true, true},
-        lons,
-        lats,
-        depths,
-        times,
-        variable_names,
-        long_names,
-        unit_names,
-        additional_variables,
+        coords,
+        name_data,
         extra_variables,
-        n_levels,
-        juld_reference,
         station_types,
         station_ids);
 
@@ -141,20 +140,25 @@ CASE("test creating test file ") {
 CASE("test creating test profile file ") {
   eckit::PathName test_data_path("../testoutput/simple_nemo_profile_out.nc");
 
-  const size_t n_obs = 2;
-  const size_t n_levels = 5;
   const size_t n_locs = 7;
-  const std::vector<double> lats(n_obs, 1.0);
-  const std::vector<double> lons(n_obs, 6.0);
-  const std::vector<double> depths(n_locs, 0);
-  const std::vector<double> times(n_obs, 11.0);
-  const std::vector<std::string> variable_names{"POTM", "PSAL"};
-  const std::vector<std::string> long_names{"this is a long name",
-                                            "this is another long name"};
-  const std::vector<std::string> unit_names{"this is a unit", "this is another unit"};
-  const std::vector<std::string> additional_variables{"Hx", "SuperOb"};
+  const size_t n_obs = 2;
+  NemoFeedbackWriter::CoordData coords;
+  coords.n_levels = 5;
+  coords.lats = std::vector<double>(n_obs, 1.0);
+  coords.lons = std::vector<double>(n_obs, 6.0);
+  coords.depths = std::vector<double>(n_locs, 0);
+  coords.julian_days = std::vector<double>(n_obs, 11.0);
+  coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
+
+  NemoFeedbackWriter::NameData name_data;
+  name_data.variable_names = std::vector<std::string>{"POTM", "PSAL"};
+  name_data.long_names = std::vector<std::string>{"this is a long name",
+                                                  "this is another long name"};
+  name_data.unit_names = std::vector<std::string>{"this is a unit",
+                                                  "this is another unit"};
+  name_data.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
+
   const std::vector<bool> extra_variables{false, false};
-  const util::DateTime juld_reference("2021-08-31T15:26:00Z");
   const std::vector<std::string> station_types{" 401", " 401"};
   const std::vector<std::string> station_ids{"123     ", "123     "};
 
@@ -163,46 +167,38 @@ CASE("test creating test profile file ") {
         test_data_path,
         n_obs,
         {true, true},
-        lons,
-        lats,
-        depths,
-        times,
-        variable_names,
-        long_names,
-        unit_names,
-        additional_variables,
+        coords,
+        name_data,
         extra_variables,
-        n_levels,
-        juld_reference,
         station_types,
         station_ids);
 
-    const std::vector<size_t> record_starts{0, 2}, record_counts{2, n_levels};
+    const std::vector<size_t> record_starts{0, 2}, record_counts{2, coords.n_levels};
 
     std::vector<double> data(n_locs, 0);
     for (int i = 0; i < n_locs; ++i) data[i] = i;
-    fdbk_writer.write_variable_profile(n_obs, variable_names[0] + "_OBS",
+    fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
         data, record_starts, record_counts);
-    fdbk_writer.write_variable_profile(n_obs, variable_names[0] + "_Hx",
+    fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
         data, record_starts, record_counts);
-    fdbk_writer.write_variable_profile(n_obs, variable_names[1] + "_OBS",
+    fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_OBS",
         data, record_starts, record_counts);
-    fdbk_writer.write_variable_profile(n_obs, variable_names[1] + "_Hx",
+    fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_Hx",
         data, record_starts, record_counts);
 
     std::vector<int32_t> int_data(n_locs, 0);
     for (int i = 0; i < n_locs; ++i) int_data[i] = 10+i;
-    fdbk_writer.write_variable_level_qc(n_obs,
-        variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0,
+    fdbk_writer.write_variable_level_qc(
+        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0,
         record_starts, record_counts);
-    fdbk_writer.write_variable_level_qc(n_obs,
-        variable_names[1] + "_LEVEL_QC_FLAGS", int_data, 0,
+    fdbk_writer.write_variable_level_qc(
+        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", int_data, 0,
         record_starts, record_counts);
-    fdbk_writer.write_variable_level_qc(n_obs,
-        variable_names[0] + "_LEVEL_QC", int_data,
+    fdbk_writer.write_variable_level_qc(
+        name_data.variable_names[0] + "_LEVEL_QC", int_data,
         record_starts, record_counts);
-    fdbk_writer.write_variable_level_qc(n_obs,
-        variable_names[1] + "_LEVEL_QC", int_data,
+    fdbk_writer.write_variable_level_qc(
+        name_data.variable_names[1] + "_LEVEL_QC", int_data,
         record_starts, record_counts);
 
     EXPECT(test_data_path.exists());
@@ -212,11 +208,11 @@ CASE("test creating test profile file ") {
       netCDF::NcFile::read);
 
   for (const std::string& v_type : std::vector<std::string>{"_OBS", "_Hx"}) {
-    for (const std::string& v_name : variable_names) {
+    for (const std::string& v_name : name_data.variable_names) {
       SECTION(std::string("Profile ") + v_name + v_type + " data is correct") {
         netCDF::NcVar ncVar = ncFile.getVar(v_name + v_type);
-        std::vector<double> data(n_obs*n_levels, 12345);
-        ncVar.getVar({0, 0}, {n_obs, n_levels}, data.data());
+        std::vector<double> data(n_obs*coords.n_levels, 12345);
+        ncVar.getVar({0, 0}, {n_obs, coords.n_levels}, data.data());
 
         EXPECT_EQUAL(0, data[0]);
         EXPECT_EQUAL(1, data[1]);
@@ -224,20 +220,20 @@ CASE("test creating test profile file ") {
         EXPECT_EQUAL(99999, data[3]);
         EXPECT_EQUAL(99999, data[4]);
 
-        EXPECT_EQUAL(2, data[n_levels]);
-        EXPECT_EQUAL(3, data[n_levels+1]);
-        EXPECT_EQUAL(4, data[n_levels+2]);
-        EXPECT_EQUAL(5, data[n_levels+3]);
-        EXPECT_EQUAL(6, data[n_levels+4]);
+        EXPECT_EQUAL(2, data[coords.n_levels]);
+        EXPECT_EQUAL(3, data[coords.n_levels+1]);
+        EXPECT_EQUAL(4, data[coords.n_levels+2]);
+        EXPECT_EQUAL(5, data[coords.n_levels+3]);
+        EXPECT_EQUAL(6, data[coords.n_levels+4]);
       }
     }
   }
 
-  for (const std::string& v_name : variable_names) {
+  for (const std::string& v_name : name_data.variable_names) {
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC_FLAGS is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC_FLAGS");
-      std::vector<int> data(n_obs*n_levels, 12345);
-      ncVar.getVar({0, 0, 0}, {n_obs, n_levels, 1}, data.data());
+      std::vector<int> data(n_obs*coords.n_levels, 12345);
+      ncVar.getVar({0, 0, 0}, {n_obs, coords.n_levels, 1}, data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(11, data[1]);
@@ -245,17 +241,17 @@ CASE("test creating test profile file ") {
       EXPECT_EQUAL(0, data[3]);
       EXPECT_EQUAL(0, data[4]);
 
-      EXPECT_EQUAL(12, data[n_levels]);
-      EXPECT_EQUAL(13, data[n_levels+1]);
-      EXPECT_EQUAL(14, data[n_levels+2]);
-      EXPECT_EQUAL(15, data[n_levels+3]);
-      EXPECT_EQUAL(16, data[n_levels+4]);
+      EXPECT_EQUAL(12, data[coords.n_levels]);
+      EXPECT_EQUAL(13, data[coords.n_levels+1]);
+      EXPECT_EQUAL(14, data[coords.n_levels+2]);
+      EXPECT_EQUAL(15, data[coords.n_levels+3]);
+      EXPECT_EQUAL(16, data[coords.n_levels+4]);
     }
 
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC");
-      std::vector<int> data(n_obs*n_levels, 12345);
-      ncVar.getVar({0, 0}, {n_obs, n_levels}, data.data());
+      std::vector<int> data(n_obs*coords.n_levels, 12345);
+      ncVar.getVar({0, 0}, {n_obs, coords.n_levels}, data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(11, data[1]);
@@ -263,11 +259,11 @@ CASE("test creating test profile file ") {
       EXPECT_EQUAL(0, data[3]);
       EXPECT_EQUAL(0, data[4]);
 
-      EXPECT_EQUAL(12, data[n_levels]);
-      EXPECT_EQUAL(13, data[n_levels+1]);
-      EXPECT_EQUAL(14, data[n_levels+2]);
-      EXPECT_EQUAL(15, data[n_levels+3]);
-      EXPECT_EQUAL(16, data[n_levels+4]);
+      EXPECT_EQUAL(12, data[coords.n_levels]);
+      EXPECT_EQUAL(13, data[coords.n_levels+1]);
+      EXPECT_EQUAL(14, data[coords.n_levels+2]);
+      EXPECT_EQUAL(15, data[coords.n_levels+3]);
+      EXPECT_EQUAL(16, data[coords.n_levels+4]);
     }
   }
 
