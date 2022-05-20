@@ -365,6 +365,9 @@ void NemoFeedbackWriter::define_variable(
     const std::vector<netCDF::NcDim> qcf_dims{*nobs_dim, *nqcf_dim};
     netCDF::NcVar qc_flags_var = ncFile->addVar(variable_name + "_QC_FLAGS",
         netCDF::ncInt, qcf_dims);
+    qc_flags_var.setFill(true, 0);
+    qc_flags_var.putAtt("long_name", std::string("quality flags on ") + longName);
+    qc_flags_var.putAtt("Conventions", "OPS flag conventions");
   }
 
   {
@@ -372,14 +375,22 @@ void NemoFeedbackWriter::define_variable(
         *nqcf_dim};
     netCDF::NcVar level_qc_flags_var = ncFile->addVar(variable_name
         + "_LEVEL_QC_FLAGS", netCDF::ncInt, lvl_qcf_dims);
+    level_qc_flags_var.setFill(true, 0);
+    level_qc_flags_var.putAtt("long_name",
+        std::string("quality flags for each level on ") + longName);
+    level_qc_flags_var.putAtt("Conventions", "OPS flag conventions");
   }
 
   netCDF::NcVar qc_var = ncFile->addVar(variable_name + "_QC", netCDF::ncInt,
       *nobs_dim);
+  qc_var.putAtt("long_name", std::string("quality on ") + longName);
   qc_var.putAtt("Conventions", QC_CONVENTIONS);
 
   netCDF::NcVar level_qc_var = ncFile->addVar(variable_name + "_LEVEL_QC",
       netCDF::ncInt, dims);
+  level_qc_var.setFill(true, 0);
+  level_qc_var.putAtt("long_name", std::string("quality for each level on ")
+                      + longName);
   level_qc_var.putAtt("Conventions", QC_CONVENTIONS);
 
   {
@@ -465,11 +476,7 @@ void NemoFeedbackWriter::write_coord_variables(
       dims);
   depth_var.putAtt("units", "metre");
   depth_var.putAtt("long_name", "Depth");
-  std::vector<double> reduced_levels = reduce_data(n_obs,
-                                                   n_obs_to_write,
-                                                   to_write,
-                                                   levels);
-  depth_var.putVar(reduced_levels.data());
+  depth_var.putVar(levels.data());
 
   netCDF::NcVar juld_var = ncFile->addVar("JULD", netCDF::ncDouble, *nobs_dim);
   juld_var.putAtt("units", "days since JULD_REFERENCE");
@@ -590,17 +597,69 @@ void NemoFeedbackWriter::write_variable_profile(
   oops::Log::trace() << "NemoFeedbackWriter::write_variable_profile: writing "
                      << variable_name << std::endl;
   auto var = ncFile->getVar(variable_name);
+  if (var.isNull()) {
+      std::ostringstream err_stream;
+      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_profile "
+                 << "ncVar '" << variable_name << "' is not present in "
+                 <<"NetCDF file";
+      throw eckit::BadValue(err_stream.str(), Here());
+    }
 
-  double* buffer = new double[n_levels_];
   for (size_t n = 0; n < n_obs; ++n) {
-      for (size_t i = 0; i < record_counts[n]; ++i)
-        buffer[i] = data[record_starts[n] + i];
     var.putVar({n, 0},
-              {1, record_counts[n]},
-              buffer);
+               {1, record_counts[n]},
+               data.data()+record_starts[n]);
   }
+}
 
-  delete[] buffer;
+void NemoFeedbackWriter::write_variable_level_qc(
+    const size_t & n_obs,
+    const std::string & variable_name,
+    const std::vector<int32_t>& data,
+    const std::vector<size_t>& record_starts,
+    const std::vector<size_t>& record_counts) {
+  oops::Log::trace() << "NemoFeedbackWriter::write_variable_level_qc: writing "
+                     << variable_name << std::endl;
+  auto var = ncFile->getVar(variable_name);
+  if (var.isNull()) {
+      std::ostringstream err_stream;
+      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+                 << "ncVar '" << variable_name << "' is not present in "
+                 <<"NetCDF file";
+      throw eckit::BadValue(err_stream.str(), Here());
+    }
+
+  for (size_t n = 0; n < n_obs; ++n) {
+    var.putVar({n, 0},
+               {1, record_counts[n]},
+               data.data()+record_starts[n]);
+  }
+}
+
+void NemoFeedbackWriter::write_variable_level_qc(
+    const size_t & n_obs,
+    const std::string & variable_name,
+    const std::vector<int32_t>& data,
+    const size_t flag_index,
+    const std::vector<size_t>& record_starts,
+    const std::vector<size_t>& record_counts) {
+  oops::Log::trace() << "NemoFeedbackWriter::write_variable_level_qc: writing "
+                     << "flag_index: " << flag_index << " of " << variable_name
+                     << std::endl;
+  auto var = ncFile->getVar(variable_name);
+  if (var.isNull()) {
+      std::ostringstream err_stream;
+      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+                 << "ncVar '" << variable_name << "' is not present in "
+                 <<"NetCDF file";
+      throw eckit::BadValue(err_stream.str(), Here());
+    }
+
+  for (size_t n = 0; n < n_obs; ++n) {
+    var.putVar({n, 0, flag_index},
+               {1, record_counts[n], 1},
+               data.data()+record_starts[n]);
+  }
 }
 
 }  // namespace nemo_feedback

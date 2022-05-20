@@ -32,6 +32,7 @@ class NemoFeedbackWriter {
     std::vector<double> depths;
     std::vector<double> julian_days;
     util::DateTime juld_reference;
+    int n_levels;
   };
 
   NemoFeedbackWriter(
@@ -86,14 +87,24 @@ class NemoFeedbackWriter {
       const size_t & n_obs_to_write,
       const std::vector<bool> & to_write,
       const std::string & variable_name,
-      const std::array<double, 2>& data) {}
+      const std::vector<double>& data) {
+    write_variable_surf(n_obs, n_obs_to_write, to_write, variable_name, data);
+  }
 
   void write_variable_level_qc(
       const size_t & n_obs,
-      const size_t & n_obs_to_write,
-      const std::vector<bool> & to_write,
       const std::string & variable_name,
-      const std::array<int32_t, 2>& data) {}
+      const std::vector<int32_t>& data,
+      const std::vector<size_t>& record_starts,
+      const std::vector<size_t>& record_counts);
+
+  void write_variable_level_qc(
+      const size_t & n_obs,
+      const std::string & variable_name,
+      const std::vector<int32_t>& data,
+      const size_t flag_index,
+      const std::vector<size_t>& record_starts,
+      const std::vector<size_t>& record_counts);
 
   static constexpr double double_fillvalue = 99999.0;
 

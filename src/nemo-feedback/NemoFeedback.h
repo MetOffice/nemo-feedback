@@ -50,17 +50,18 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
  private:
   void groupCoordsByRecord(size_t n_obs,
                           NemoFeedbackWriter::CoordData& coords,
-                          size_t n_levels,
-                          std::vector<int>& record_starts,
-                          std::vector<int>& record_counts,
+                          std::vector<size_t>& record_starts,
+                          std::vector<size_t>& record_counts,
                           bool is_profile) const;
   void setupAltimeterIds(const size_t n_obs,
                         std::vector<std::string>& station_ids,
                         std::vector<std::string>& station_types,
                         std::vector<bool>& to_write) const;
-  void setupSurfaceIds(const size_t n_obs,
-                       std::vector<std::string>& station_ids,
-                       std::vector<std::string>& station_types) const;
+  void setupIds(const size_t n_obs,
+                const std::vector<size_t>& record_starts,
+                const std::vector<size_t>& record_counts,
+                std::vector<std::string>& station_ids,
+                std::vector<std::string>& station_types) const;
   void print(std::ostream &) const override;
 
   ioda::ObsSpace & obsdb_;

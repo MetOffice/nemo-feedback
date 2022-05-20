@@ -153,7 +153,7 @@ CASE("test creating test profile file ") {
                                             "this is another long name"};
   const std::vector<std::string> unit_names{"this is a unit", "this is another unit"};
   const std::vector<std::string> additional_variables{"Hx", "SuperOb"};
-  const std::vector<bool> extra_variables{false, true};
+  const std::vector<bool> extra_variables{false, false};
   const util::DateTime juld_reference("2021-08-31T15:26:00Z");
   const std::vector<std::string> station_types{" 401", " 401"};
   const std::vector<std::string> station_ids{"123     ", "123     "};
@@ -177,11 +177,33 @@ CASE("test creating test profile file ") {
         station_types,
         station_ids);
 
+    const std::vector<size_t> record_starts{0, 2}, record_counts{2, n_levels};
+
     std::vector<double> data(n_locs, 0);
     for (int i = 0; i < n_locs; ++i) data[i] = i;
-    const std::vector<size_t> record_starts{0, 2}, record_counts{2, n_levels};
     fdbk_writer.write_variable_profile(n_obs, variable_names[0] + "_OBS",
         data, record_starts, record_counts);
+    fdbk_writer.write_variable_profile(n_obs, variable_names[0] + "_Hx",
+        data, record_starts, record_counts);
+    fdbk_writer.write_variable_profile(n_obs, variable_names[1] + "_OBS",
+        data, record_starts, record_counts);
+    fdbk_writer.write_variable_profile(n_obs, variable_names[1] + "_Hx",
+        data, record_starts, record_counts);
+
+    std::vector<int32_t> int_data(n_locs, 0);
+    for (int i = 0; i < n_locs; ++i) int_data[i] = 10+i;
+    fdbk_writer.write_variable_level_qc(n_obs,
+        variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0,
+        record_starts, record_counts);
+    fdbk_writer.write_variable_level_qc(n_obs,
+        variable_names[1] + "_LEVEL_QC_FLAGS", int_data, 0,
+        record_starts, record_counts);
+    fdbk_writer.write_variable_level_qc(n_obs,
+        variable_names[0] + "_LEVEL_QC", int_data,
+        record_starts, record_counts);
+    fdbk_writer.write_variable_level_qc(n_obs,
+        variable_names[1] + "_LEVEL_QC", int_data,
+        record_starts, record_counts);
 
     EXPECT(test_data_path.exists());
   }
@@ -189,23 +211,64 @@ CASE("test creating test profile file ") {
   netCDF::NcFile ncFile(test_data_path.fullName().asString(),
       netCDF::NcFile::read);
 
-  SECTION("Profile data is ordered correctly") {
-    netCDF::NcVar ncVar = ncFile.getVar(variable_names[0] + "_OBS");
-    std::vector<double> data(n_obs*n_levels, 12345);
-    ncVar.getVar({0, 0}, {n_obs, n_levels}, data.data());
+  for (const std::string& v_type : std::vector<std::string>{"_OBS", "_Hx"}) {
+    for (const std::string& v_name : variable_names) {
+      SECTION(std::string("Profile ") + v_name + v_type + " data is correct") {
+        netCDF::NcVar ncVar = ncFile.getVar(v_name + v_type);
+        std::vector<double> data(n_obs*n_levels, 12345);
+        ncVar.getVar({0, 0}, {n_obs, n_levels}, data.data());
 
-    EXPECT_EQUAL(0, data[0]);
-    EXPECT_EQUAL(1, data[1]);
-    EXPECT_EQUAL(99999, data[2]);
-    EXPECT_EQUAL(99999, data[3]);
-    EXPECT_EQUAL(99999, data[4]);
+        EXPECT_EQUAL(0, data[0]);
+        EXPECT_EQUAL(1, data[1]);
+        EXPECT_EQUAL(99999, data[2]);
+        EXPECT_EQUAL(99999, data[3]);
+        EXPECT_EQUAL(99999, data[4]);
 
-    EXPECT_EQUAL(2, data[n_levels]);
-    EXPECT_EQUAL(3, data[n_levels+1]);
-    EXPECT_EQUAL(4, data[n_levels+2]);
-    EXPECT_EQUAL(5, data[n_levels+3]);
-    EXPECT_EQUAL(6, data[n_levels+4]);
+        EXPECT_EQUAL(2, data[n_levels]);
+        EXPECT_EQUAL(3, data[n_levels+1]);
+        EXPECT_EQUAL(4, data[n_levels+2]);
+        EXPECT_EQUAL(5, data[n_levels+3]);
+        EXPECT_EQUAL(6, data[n_levels+4]);
+      }
+    }
+  }
 
+  for (const std::string& v_name : variable_names) {
+    SECTION(std::string("Profile ") + v_name + "_LEVEL_QC_FLAGS is correct") {
+      netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC_FLAGS");
+      std::vector<int> data(n_obs*n_levels, 12345);
+      ncVar.getVar({0, 0, 0}, {n_obs, n_levels, 1}, data.data());
+
+      EXPECT_EQUAL(10, data[0]);
+      EXPECT_EQUAL(11, data[1]);
+      EXPECT_EQUAL(0, data[2]);
+      EXPECT_EQUAL(0, data[3]);
+      EXPECT_EQUAL(0, data[4]);
+
+      EXPECT_EQUAL(12, data[n_levels]);
+      EXPECT_EQUAL(13, data[n_levels+1]);
+      EXPECT_EQUAL(14, data[n_levels+2]);
+      EXPECT_EQUAL(15, data[n_levels+3]);
+      EXPECT_EQUAL(16, data[n_levels+4]);
+    }
+
+    SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
+      netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC");
+      std::vector<int> data(n_obs*n_levels, 12345);
+      ncVar.getVar({0, 0}, {n_obs, n_levels}, data.data());
+
+      EXPECT_EQUAL(10, data[0]);
+      EXPECT_EQUAL(11, data[1]);
+      EXPECT_EQUAL(0, data[2]);
+      EXPECT_EQUAL(0, data[3]);
+      EXPECT_EQUAL(0, data[4]);
+
+      EXPECT_EQUAL(12, data[n_levels]);
+      EXPECT_EQUAL(13, data[n_levels+1]);
+      EXPECT_EQUAL(14, data[n_levels+2]);
+      EXPECT_EQUAL(15, data[n_levels+3]);
+      EXPECT_EQUAL(16, data[n_levels+4]);
+    }
   }
 
 }

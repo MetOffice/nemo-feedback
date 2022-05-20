@@ -2,6 +2,7 @@
 list( APPEND fdbk_writer_test_input
   seaice_obs_writer.yaml
   hofx_two_vars_writer.yaml
+  hofx_profiles_writer.yaml
 )
 
 foreach(FILENAME ${fdbk_writer_test_input})
