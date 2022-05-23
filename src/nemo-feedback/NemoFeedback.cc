@@ -31,6 +31,7 @@
 #include "ufo/ObsDiagnostics.h"
 #include "ufo/filters/DiagnosticFlag.h"
 #include "ufo/filters/processWhere.h"
+#include "ufo/filters/ObsAccessor.h"
 #include "ufo/utils/metoffice/MetOfficeQCFlags.h"
 
 
@@ -132,9 +133,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   std::vector<size_t> record_counts;
   coords.n_levels = 1;
 
-  groupCoordsByRecord(obsdb_.nlocs(), coords, record_starts,
-      record_counts, is_profile);
-
+  groupCoordsByRecord(coords, record_starts, record_counts, is_profile);
   size_t n_locs = obsdb_.nlocs();
   size_t n_obs = obsdb_.nlocs();
   if (is_profile) {
@@ -150,7 +149,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   // Calculate total number of obs to actually write.
   const size_t n_obs_to_write = std::count(to_write.begin(), to_write.end(),
       true);
-
 
   // Set up the station type and identifier variables. The way to do this
   // depends on the data type. Also modify which obs to write if this is
@@ -358,17 +356,12 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   }
 }
 
-void NemoFeedback::groupCoordsByRecord(size_t n_obs,
-                                       NemoFeedbackWriter::CoordData& coords,
+void NemoFeedback::groupCoordsByRecord(NemoFeedbackWriter::CoordData& coords,
                                        std::vector<size_t>& record_starts,
                                        std::vector<size_t>& record_counts,
                                        bool is_profile) const {
     size_t n_locs = obsdb_.nlocs();
-    if (n_obs != n_locs)
-      throw eckit::BadValue(std::string("NemoFeedback::setupJulianDay: ")
-          + "n_obs != nlocs (doesn't support observations at depth)",
-          Here());
-
+    size_t n_obs = n_locs;
     std::vector<util::DateTime> datetimes(n_locs);
     obsdb_.get_db("MetaData", "dateTime", datetimes);
     coords.lats.resize(n_locs);
@@ -380,32 +373,81 @@ void NemoFeedback::groupCoordsByRecord(size_t n_obs,
     coords.juld_reference = parameters_.refDate.value().value_or(datetimes[0]);
 
     if (is_profile) {
-      std::vector<double> record_lats(1, coords.lats[0]);
-      std::vector<double> record_lons(1, coords.lons[0]);
-      std::vector<util::DateTime> record_dts(1, datetimes[0]);
-      record_counts.resize(1);
-      record_starts.resize(1);
-      int r = 0;
-      n_obs = 1;
-      for (int l=0; l<n_locs; ++l) {
-        if ((std::abs(coords.lats[l] - record_lats[r]) > 1e-6) ||
-            (std::abs(coords.lons[l] - record_lons[r]) > 1e-6) ||
-            (std::abs((datetimes[l] - record_dts[r]).toSeconds()) > 0)) {
-          record_lats.push_back(coords.lats[l]);
-          record_lons.push_back(coords.lons[l]);
-          record_dts.push_back(datetimes[l]);
-          record_counts.push_back(1);
-          record_starts.push_back(l);
-          r++;
-          n_obs++;
-        } else {
-          record_counts[r]++;
-        }
+      ufo::ObsAccessor obsAccessor =
+        ufo::ObsAccessor::toObservationsSplitIntoIndependentGroupsByRecordId(
+            obsdb_);
+      std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_,
+                                       ufo::WhereOperator::AND);
+      if (to_write.size() != n_locs) {
+        to_write.assign(n_locs, true);
       }
+
+      //if to_write all true set pruneProfiles false
+      bool all_obs_valid =
+           std::all_of(to_write.begin(), to_write.end(),
+               [](bool v) { return v; });
+      bool prune_profiles = !all_obs_valid;
+
+      const std::vector<size_t> validObsIds =
+          obsAccessor.getValidObservationIds(to_write);
+      std::vector<size_t> recnums = obsdb_.recidx_all_recnums();
+      coords.n_levels = 0;
+      std::vector<double> record_lats;
+      std::vector<double> record_lons;
+      std::vector<util::DateTime> record_dts;
+      // guess average number of depths per profile to lessen reallocation
+      size_t reclen_guess = 10;
+      record_counts.reserve(n_locs/reclen_guess);
+      record_starts.reserve(n_locs/reclen_guess);
+      record_lats.reserve(n_locs/reclen_guess);
+      record_lons.reserve(n_locs/reclen_guess);
+      record_dts.reserve(n_locs/reclen_guess);
+      for (size_t iprof : recnums) {
+        const std::vector<size_t> & obs_indices = obsdb_.recidx_vector(iprof);
+        size_t n_levels_prof = 0;
+        size_t reclen = 0;
+        for (size_t jobs: obs_indices) {
+          ++reclen;
+          if (prune_profiles) {
+            if (validObsIds[jobs]) ++n_levels_prof;
+          } else {
+            ++n_levels_prof;
+          }
+        }
+        if (n_levels_prof != 0) {
+          // we cannot guarantee profiles are stored in increasing depth order
+          // (i.e "sort order: ascending") so we calculate the likely start with a
+          // hack:
+          size_t start = *std::min_element(obs_indices.begin(), obs_indices.end());
+          record_starts.push_back(start);
+          record_counts.push_back(reclen);
+          record_lats.push_back(coords.lats[start]);
+          record_lons.push_back(coords.lons[start]);
+          record_dts.push_back(datetimes[start]);
+        }
+        if (n_levels_prof > coords.n_levels)
+          coords.n_levels = n_levels_prof;
+      }
+
+      n_obs = record_counts.size();
+      if (!prune_profiles && (recnums.size() != n_obs)) {
+        throw eckit::BadValue(std::string("NemoFeedback::groupCoordsByRecord ")
+            + "recnums.size() != record_counts.size()",
+            Here());
+      }
+
       // n_levels is equal to largest number of levels across an entire
       // profile data.
-      coords.n_levels = *std::max_element(record_counts.begin(),
+      size_t n_levels_check = *std::max_element(record_counts.begin(),
           record_counts.end());
+      if (n_levels_check != coords.n_levels) {
+          throw eckit::BadValue(std::string("NemoFeedback::groupCoordsByRecord ")
+              + "n_levels_check != coords.n_levels "
+              + std::to_string(n_levels_check) + " "
+              + std::to_string(coords.n_levels),
+              Here());
+      }
+
       coords.lats.resize(n_obs);
       coords.lats.assign(record_lats.begin(), record_lats.end());
       coords.lons.resize(n_obs);
@@ -417,15 +459,16 @@ void NemoFeedback::groupCoordsByRecord(size_t n_obs,
                     parameters_.depthVariable.value().value_or("depth_m"),
                     coords.depths);
     } else {
-      coords.depths.resize(n_obs);
+      n_obs = n_locs;
+      coords.depths.resize(n_locs);
       std::fill(coords.depths.begin(), coords.depths.end(), 0);
-      record_counts.assign(n_obs, 1);
-      record_starts.resize(n_obs);
+      record_counts.assign(n_locs, 1);
+      record_starts.resize(n_locs);
       for (int l=0; l<n_locs; ++l)
         record_starts[l] = l;
     }
 
-    coords.julian_days.resize(n_locs);
+    coords.julian_days.resize(n_obs);
     for (int i=0; i < n_obs; ++i) {
       util::Duration duration = static_cast<util::DateTime>(datetimes[i])
           - coords.juld_reference;

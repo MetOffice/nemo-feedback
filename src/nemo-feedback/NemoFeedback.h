@@ -48,8 +48,7 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   oops::Variables requiredHdiagnostics() const override {return extradiagvars_;}
 
  private:
-  void groupCoordsByRecord(size_t n_obs,
-                          NemoFeedbackWriter::CoordData& coords,
+  void groupCoordsByRecord(NemoFeedbackWriter::CoordData& coords,
                           std::vector<size_t>& record_starts,
                           std::vector<size_t>& record_counts,
                           bool is_profile) const;

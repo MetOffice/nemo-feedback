@@ -26,7 +26,7 @@ observations:
       obsdatain:
         obsfile: ../../../orca-jedi/src/tests/Data/hofx_potm_obs.nc
         obsgrouping:
-          group variables: [ "station_id" ]
+          group variables: [ "station_id", "dateTime"]
           sort variable: depth
           sort group: ObsValue
           sort order: descending
