@@ -8,6 +8,7 @@
 
 #include <string.h>
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 #include <bitset>
@@ -111,8 +112,9 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     for (const NemoFeedbackAddVariableParameters& addVariableParams :
         additionalVariablesParams) {
       auto add_suffix = addVariableParams.feedbackSuffix.value();
-      if (std::find(name_data.additional_names.begin(), name_data.additional_names.end(),
-            add_suffix) == name_data.additional_names.end()) {
+      if (std::find(name_data.additional_names.begin(),
+                    name_data.additional_names.end(), add_suffix)
+          == name_data.additional_names.end()) {
         name_data.additional_names.push_back(add_suffix);
       }
     }
@@ -138,11 +140,13 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                                    ufo::WhereOperator::AND);
   if (to_write.size() != n_locs) to_write.assign(n_locs, true);
 
-  groupCoordsByRecord(to_write, coords, record_starts, record_counts, is_profile);
+  groupCoordsByRecord(to_write, coords, record_starts, record_counts,
+                      is_profile);
 
   // Calculate total number of obs to actually write.
   // This is already handled in the construction of record_counts/sizes above
-  // for profiles, but for surface fields n_obs == n_locs, and we can look at to_write
+  // for profiles, but for surface fields n_obs == n_locs, and we can look at
+  // to_write
   const size_t n_obs_to_write = is_profile ?
       record_starts.size()
       : std::count(to_write.begin(), to_write.end(), true);
@@ -156,7 +160,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   if (is_altimeter) {
     setupAltimeterIds(coords.n_obs, station_ids, station_types, to_write);
   } else {
-    setupIds(coords.n_obs, record_starts, record_counts, station_ids, station_types);
+    setupIds(coords.n_obs, record_starts, record_counts, station_ids,
+        station_types);
   }
 
   NemoFeedbackWriter fdbk_writer(
@@ -376,7 +381,7 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
         ufo::ObsAccessor::toObservationsSplitIntoIndependentGroupsByRecordId(
             obsdb_);
 
-      //if to_write all true set prune_profiles false
+      // if to_write all true set prune_profiles false
       bool all_obs_valid =
            std::all_of(to_write.begin(), to_write.end(),
                [](bool v) { return v; });
@@ -400,7 +405,7 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
         const std::vector<size_t> & obs_indices = obsdb_.recidx_vector(iprof);
         size_t n_levels_prof = 0;
         size_t reclen = 0;
-        for (size_t jobs: obs_indices) {
+        for (size_t jobs : obs_indices) {
           ++reclen;
           if (prune_profiles) {
             if (validObsIds[jobs]) ++n_levels_prof;
@@ -410,9 +415,10 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
         }
         if (n_levels_prof != 0) {
           // we cannot guarantee profiles are stored in increasing depth order
-          // (i.e "sort order: ascending") so we calculate the likely start with a
-          // hack:
-          size_t start = *std::min_element(obs_indices.begin(), obs_indices.end());
+          // (i.e "sort order: ascending") so we calculate the likely start
+          // with a hack:
+          size_t start = *std::min_element(obs_indices.begin(),
+                                           obs_indices.end());
           record_starts.push_back(start);
           record_counts.push_back(reclen);
           record_lats.push_back(coords.lats[start]);
@@ -435,7 +441,8 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       size_t n_levels_check = *std::max_element(record_counts.begin(),
           record_counts.end());
       if (n_levels_check != coords.n_levels) {
-          throw eckit::BadValue(std::string("NemoFeedback::groupCoordsByRecord ")
+          throw eckit::BadValue(
+              std::string("NemoFeedback::groupCoordsByRecord ")
               + "n_levels_check != coords.n_levels "
               + std::to_string(n_levels_check) + " "
               + std::to_string(coords.n_levels),
@@ -458,7 +465,7 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       std::fill(coords.depths.begin(), coords.depths.end(), 0);
       record_counts.assign(coords.n_locs, 1);
       record_starts.resize(coords.n_locs);
-      for (int l=0; l<coords.n_locs; ++l)
+      for (int l = 0; l < coords.n_locs; ++l)
         record_starts[l] = l;
     }
 
@@ -475,10 +482,6 @@ void NemoFeedback::setupIds(const size_t n_obs,
     const std::vector<size_t>& record_counts,
     std::vector<std::string>& station_ids,
     std::vector<std::string>& station_types) const {
-    //if (n_obs != obsdb_.nlocs())
-    //  throw eckit::BadValue(std::string("NemoFeedback::setupIds ")
-    //      + "n_obs != nlocs. Surface observations don't have depth",
-    //      Here());
     // Define the station type variable. This may not always be defined in
     // obsdb_.
     if (obsdb_.has("MetaData", "fdbk_station_type")) {

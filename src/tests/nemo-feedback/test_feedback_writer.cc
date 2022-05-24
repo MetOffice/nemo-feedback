@@ -172,7 +172,8 @@ CASE("test creating profile file ") {
   const std::vector<bool> to_write(n_locs, true);
 
   SECTION("file writes") {
-    const std::vector<size_t> record_starts{0, 2}, record_counts{2, coords.n_levels};
+    const std::vector<size_t> record_starts{0, 2};
+    const std::vector<size_t> record_counts{2, coords.n_levels};
 
     NemoFeedbackWriter fdbk_writer(
         test_data_path,
@@ -280,7 +281,8 @@ CASE("test creating profile file ") {
 }
 
 CASE("test creating reduced profile file ") {
-  eckit::PathName test_data_path("../testoutput/simple_nemo_reduced_profile_out.nc");
+  eckit::PathName test_data_path(
+      "../testoutput/simple_nemo_reduced_profile_out.nc");
 
   const size_t n_locs = 7;
   const size_t n_obs = 2;
@@ -310,7 +312,8 @@ CASE("test creating reduced profile file ") {
   const std::vector<bool> to_write{true, false, true, true, true, false, true};
 
   SECTION("file writes") {
-    const std::vector<size_t> record_starts{0, 2}, record_counts{2, n_levels_unreduced};
+    const std::vector<size_t> record_starts{0, 2};
+    const std::vector<size_t> record_counts{2, n_levels_unreduced};
 
     NemoFeedbackWriter fdbk_writer(
         test_data_path,

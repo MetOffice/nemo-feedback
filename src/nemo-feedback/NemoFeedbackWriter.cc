@@ -341,7 +341,8 @@ void NemoFeedbackWriter::define_variable(
     netCDF::NcVar qc_flags_var = ncFile->addVar(variable_name + "_QC_FLAGS",
         netCDF::ncInt, qcf_dims);
     qc_flags_var.setFill(true, 0);
-    qc_flags_var.putAtt("long_name", std::string("quality flags on ") + longName);
+    qc_flags_var.putAtt("long_name", std::string("quality flags on ")
+                        + longName);
     qc_flags_var.putAtt("Conventions", "OPS flag conventions");
   }
 
@@ -425,9 +426,8 @@ void NemoFeedbackWriter::reduce_profile_data(
     std::vector<size_t> & record_counts_out,
     std::vector<T> & data_out
     ) {
-
-  // with profile data n_obs != n_locs, and so we setup new record_starts and counts
-  // based on the new data vector.
+  // with profile data n_obs != n_locs, and so we setup new record_starts and
+  // counts based on the new data vector.
   data_out.reserve((std::count(to_write_.begin(), to_write_.end(), true)));
   record_starts_out.reserve(n_obs_);
   record_counts_out.reserve(n_obs_);
@@ -439,7 +439,8 @@ void NemoFeedbackWriter::reduce_profile_data(
           if (i == 0) {
             record_starts_out.push_back(l);
           } else {
-            record_starts_out.push_back(record_starts_out[i-1]+record_counts_out[i-1]);
+            record_starts_out.push_back(
+                record_starts_out[i-1]+record_counts_out[i-1]);
           }
         }
         data_out.push_back(data_in[l]);

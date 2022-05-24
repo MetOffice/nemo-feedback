@@ -9,6 +9,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "ioda/ObsDataVector.h"
 #include "oops/base/Variables.h"

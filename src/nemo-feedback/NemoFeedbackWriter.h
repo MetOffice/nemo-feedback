@@ -25,7 +25,6 @@ namespace nemo_feedback {
 
 class NemoFeedbackWriter {
  public:
-
   struct CoordData {
     std::vector<double> lats;
     std::vector<double> lons;
