@@ -526,7 +526,9 @@ void NemoFeedbackWriter::write_whole_report_variables(
     // +1 is for the null-terminator of a cstring
     char* buffer = new char[n_obs_to_write_*nchars+1];
     for (int i = 0; i < n_obs_; ++i) {
-      if (to_write_[i]) {
+      if (n_obs_ == coords_.n_locs) {
+        if (to_write_[i]) strcpy(buffer + nchars*j++, station_types[i].c_str());
+      } else {
         strcpy(buffer + nchars*j++, station_types[i].c_str());
       }
     }
@@ -544,7 +546,9 @@ void NemoFeedbackWriter::write_whole_report_variables(
     // +1 is for the null-terminator of a cstring
     char* buffer = new char[n_obs_to_write_*nchars+1];
     for (int i = 0; i < n_obs_; ++i) {
-      if (to_write_[i]) {
+      if (n_obs_ == coords_.n_locs) {
+        if (to_write_[i]) strcpy(buffer + nchars*j++, station_ids[i].c_str());
+      } else {
         strcpy(buffer + nchars*j++, station_ids[i].c_str());
       }
     }
