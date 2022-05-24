@@ -33,6 +33,8 @@ class NemoFeedbackWriter {
     std::vector<double> julian_days;
     util::DateTime juld_reference;
     size_t n_levels;
+    size_t n_obs;
+    size_t n_locs;
   };
 
   struct NameData {
@@ -50,7 +52,9 @@ class NemoFeedbackWriter {
       const NameData & name_data,
       const std::vector<bool> & extra_vars,
       const std::vector<std::string>& station_types,
-      const std::vector<std::string>& station_ids);
+      const std::vector<std::string>& station_ids,
+      const std::vector<size_t>& record_starts,
+      const std::vector<size_t>& record_counts);
 
   void write_variable_surf(
       const std::string & variable_name,
@@ -101,12 +105,23 @@ class NemoFeedbackWriter {
   std::vector<T> reduce_data(
       const std::vector<T> & data_in);
 
+  template <typename T>
+  void reduce_profile_data(
+    const std::vector<size_t> & record_starts,
+    const std::vector<size_t> & record_counts,
+    const std::vector<T> & data_in,
+    std::vector<size_t> & record_starts_out,
+    std::vector<size_t> & record_counts_out,
+    std::vector<T> & data_out);
+
   void define_coord_variables(
       const size_t n_obs_vars,
       const size_t n_add_entries,
       const size_t n_extra);
 
-  void write_coord_variables();
+  void write_coord_variables(
+      const std::vector<size_t>& record_starts,
+      const std::vector<size_t>& record_counts);
 
   void write_metadata_variables(
       const std::vector<bool>& extra_vars);
