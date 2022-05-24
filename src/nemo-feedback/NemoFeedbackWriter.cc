@@ -490,7 +490,11 @@ void NemoFeedbackWriter::write_coord_variables(
     std::vector<double> reduced_depths;
     reduce_profile_data(record_starts, record_counts, coords_.depths,
         reduced_record_starts, reduced_record_counts, reduced_depths);
-    depth_var.putVar(reduced_depths.data());
+    for (size_t n = 0; n < n_obs_; ++n) {
+      depth_var.putVar({n, 0},
+                       {1, reduced_record_counts[n]},
+                       reduced_depths.data()+reduced_record_starts[n]);
+    }
   }
 
   netCDF::NcVar juld_var = ncFile->addVar("JULD", netCDF::ncDouble, *nobs_dim);
