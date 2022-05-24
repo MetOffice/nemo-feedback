@@ -377,18 +377,12 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
     coords.juld_reference = parameters_.refDate.value().value_or(datetimes[0]);
 
     if (is_profile) {
-      ufo::ObsAccessor obsAccessor =
-        ufo::ObsAccessor::toObservationsSplitIntoIndependentGroupsByRecordId(
-            obsdb_);
-
       // if to_write all true set prune_profiles false
       bool all_obs_valid =
            std::all_of(to_write.begin(), to_write.end(),
                [](bool v) { return v; });
       bool prune_profiles = !all_obs_valid;
 
-      const std::vector<size_t> validObsIds =
-          obsAccessor.getValidObservationIds(to_write);
       std::vector<size_t> recnums = obsdb_.recidx_all_recnums();
       coords.n_levels = 0;
       std::vector<double> record_lats;
@@ -408,7 +402,7 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
         for (size_t jobs : obs_indices) {
           ++reclen;
           if (prune_profiles) {
-            if (validObsIds[jobs]) ++n_levels_prof;
+            if (to_write[jobs]) ++n_levels_prof;
           } else {
             ++n_levels_prof;
           }
