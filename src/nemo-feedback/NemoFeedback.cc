@@ -459,8 +459,8 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       std::fill(coords.depths.begin(), coords.depths.end(), 0);
       record_counts.assign(coords.n_locs, 1);
       record_starts.resize(coords.n_locs);
-      for (int l = 0; l < coords.n_locs; ++l)
-        record_starts[l] = l;
+      for (int iLoc = 0; iLoc < coords.n_locs; ++iLoc)
+        record_starts[iLoc] = iLoc;
     }
 
     coords.julian_days.resize(coords.n_obs);

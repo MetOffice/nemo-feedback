@@ -340,7 +340,7 @@ void NemoFeedbackWriter::define_variable(
     const std::vector<netCDF::NcDim> qcf_dims{*nobs_dim, *nqcf_dim};
     netCDF::NcVar qc_flags_var = ncFile->addVar(variable_name + "_QC_FLAGS",
         netCDF::ncInt, qcf_dims);
-    qc_flags_var.setFill(true, 0);
+    qc_flags_var.setFill(true, int32_fillvalue);
     qc_flags_var.putAtt("long_name", std::string("quality flags on ")
                         + longName);
     qc_flags_var.putAtt("Conventions", "OPS flag conventions");
@@ -351,7 +351,7 @@ void NemoFeedbackWriter::define_variable(
         *nqcf_dim};
     netCDF::NcVar level_qc_flags_var = ncFile->addVar(variable_name
         + "_LEVEL_QC_FLAGS", netCDF::ncInt, lvl_qcf_dims);
-    level_qc_flags_var.setFill(true, 0);
+    level_qc_flags_var.setFill(true, int32_fillvalue);
     level_qc_flags_var.putAtt("long_name",
         std::string("quality flags for each level on ") + longName);
     level_qc_flags_var.putAtt("Conventions", "OPS flag conventions");
@@ -364,7 +364,7 @@ void NemoFeedbackWriter::define_variable(
 
   netCDF::NcVar level_qc_var = ncFile->addVar(variable_name + "_LEVEL_QC",
       netCDF::ncInt, dims);
-  level_qc_var.setFill(true, 0);
+  level_qc_var.setFill(true, int32_fillvalue);
   level_qc_var.putAtt("long_name", std::string("quality for each level on ")
                       + longName);
   level_qc_var.putAtt("Conventions", QC_CONVENTIONS);
