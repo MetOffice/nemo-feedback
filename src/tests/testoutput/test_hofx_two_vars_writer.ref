@@ -17,7 +17,7 @@ Test     :         ice_area_fraction_background_error: 0.00303628
 Test     :         sea_surface_temperature_background_error: 0.000607255
 
 Test     : H(x): 
-Test     : Sea Ice nobs= 14 Min=0, Max=18.1824, RMS=12.6368
+Test     : Sea Ice nobs= 14 Min=0.00000e+00, Max=1.81824e+01, RMS=1.26409e+01
 
 Test     : End H(x)
 

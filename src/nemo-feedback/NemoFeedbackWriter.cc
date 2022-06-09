@@ -54,24 +54,20 @@ typedef char fixed_length_type_type[STRINGTYP_NUM+1];
 
 NemoFeedbackWriter::NemoFeedbackWriter(
     eckit::PathName& filename,
-    const size_t n_obs_to_write,
+    const size_t & n_obs_to_write,
     const std::vector<bool> & to_write,
-    const std::vector<double> & lons,
-    const std::vector<double> & lats,
-    const std::vector<double> & depths,
-    const std::vector<double> & times,
-    const std::vector<std::string> & variable_names,
-    const std::vector<std::string> & long_names,
-    const std::vector<std::string> & unit_names,
-    const std::vector<std::string> & additional_variables,
+    const CoordData & coords,
+    const NameData & name_data,
     const std::vector<bool> & extra_vars,
-    const size_t n_levels,
-    const util::DateTime & juld_reference,
     const std::vector<std::string> & station_types,
-    const std::vector<std::string> & station_ids )
-    : ncFile(nullptr), n_levels_(n_levels) {
-  oops::Log::debug() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
-                     << " filename: " << filename.fullName().asString()
+    const std::vector<std::string> & station_ids,
+    const std::vector<size_t>& record_starts,
+    const std::vector<size_t>& record_counts)
+    : ncFile(nullptr), coords_(coords), n_obs_(coords.n_obs),
+      n_obs_to_write_(n_obs_to_write),
+      to_write_(to_write), name_data_(name_data) {
+  oops::Log::trace() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
+                     << " constructing for: " << filename.fullName().asString()
                      << std::endl;
 
   ncFile = std::make_unique<netCDF::NcFile>(filename.fullName().asString(),
@@ -83,56 +79,42 @@ NemoFeedbackWriter::NemoFeedbackWriter(
     eckit::BadValue(err_stream.str(), Here());
   }
 
-  size_t n_obs = lats.size();
-  size_t n_obs_vars = variable_names.size();
-  size_t n_extra = std::count(extra_vars.begin(), extra_vars.end(), true);
-  n_obs_vars -= n_extra;
-  size_t max_n_add_entries = additional_variables.size();
+  const size_t n_extra = std::count(extra_vars.begin(), extra_vars.end(), true);
+  const size_t n_obs_vars = name_data_.variable_names.size() - n_extra;
+  const size_t max_n_add_entries = name_data_.additional_names.size();
+
+  if (to_write_.size() != coords.n_locs)
+    throw eckit::BadValue(std::string("NemoFeedbackWriter::") +
+        " to_write  not defined for some observations to_write_.size() = "
+        + std::to_string(to_write_.size()) + " n_locs = "
+        + std::to_string(coords.n_locs), Here());
+
   define_coord_variables(
-      n_obs_to_write,
-      n_levels,
       n_obs_vars,
       max_n_add_entries,
       n_extra);
-  write_metadata_variables(
-      variable_names,
-      additional_variables,
-      extra_vars,
-      juld_reference);
-  write_coord_variables(
-      n_obs,
-      n_obs_to_write,
-      to_write,
-      lons,
-      lats,
-      depths,
-      times);
+  write_metadata_variables(extra_vars);
+  write_coord_variables(record_starts, record_counts);
   define_whole_report_variables();
   write_whole_report_variables(
-      n_obs,
-      n_obs_to_write,
-      to_write,
       station_types,
       station_ids);
 
-  for (int i=0; i < variable_names.size(); ++i) {
+  for (int i=0; i < name_data_.variable_names.size(); ++i) {
     if (extra_vars[i]) {
-      define_extra_variable(variable_names[i],
-                            long_names[i],
-                            unit_names[i]);
+      define_extra_variable(name_data_.variable_names[i],
+                            name_data_.long_names[i],
+                            name_data_.unit_names[i]);
     } else {
       define_variable(
-          variable_names[i],
-          long_names[i],
-          unit_names[i],
-          additional_variables);
+          name_data_.variable_names[i],
+          name_data_.long_names[i],
+          name_data_.unit_names[i]);
     }
   }
 }
 
 void NemoFeedbackWriter::define_coord_variables(
-    const size_t n_obs_to_write,
-    const size_t n_levels,
     const size_t n_obs_vars,
     const size_t n_add_entries,
     const size_t n_extra) {
@@ -147,9 +129,9 @@ void NemoFeedbackWriter::define_coord_variables(
   }
 
   nobs_dim = std::make_unique<netCDF::NcDim>(
-      ncFile->addDim(N_OBS, n_obs_to_write));
+      ncFile->addDim(N_OBS, n_obs_to_write_));
   nlevels_dim = std::make_unique<netCDF::NcDim>(ncFile->addDim(N_LEVELS,
-        n_levels));
+        coords_.n_levels));
   tmp_Dim = ncFile->addDim(N_VARS, n_obs_vars);
   tmp_Dim = ncFile->addDim(N_ENTRIES, n_add_entries);
   if (n_extra > 0) {
@@ -158,10 +140,7 @@ void NemoFeedbackWriter::define_coord_variables(
 }
 
 void NemoFeedbackWriter::write_metadata_variables(
-    const std::vector<std::string>& variable_names,
-    const std::vector<std::string>& additional_variables,
-    const std::vector<bool>& extra_vars,
-    const util::DateTime& juld_reference) {
+    const std::vector<bool>& extra_vars) {
   {
     ncFile->putAtt("title", "NEMO observation operator output");
     ncFile->putAtt("Convention", "NEMO unified observation operator output");
@@ -170,7 +149,8 @@ void NemoFeedbackWriter::write_metadata_variables(
     nc_juld_var.putAtt("long_name", "Date of reference for julian days");
     nc_juld_var.putAtt("Conventions", "YYYYMMDDHHMMSS");
     int year, month, day, hour, minute, second;
-    juld_reference.toYYYYMMDDhhmmss(year, month, day, hour, minute, second);
+    coords_.juld_reference.toYYYYMMDDhhmmss(year, month, day, hour, minute,
+                                           second);
     std::ostringstream ref_stream;
     ref_stream << std::setfill('0');
     ref_stream << std::setw(4) << year;
@@ -187,7 +167,7 @@ void NemoFeedbackWriter::write_metadata_variables(
   }
 
   {
-    size_t n_vars = variable_names.size();
+    size_t n_vars = name_data_.variable_names.size();
     int n_extra = std::count(extra_vars.begin(), extra_vars.end(), true);
     n_vars -= n_extra;
 
@@ -210,8 +190,8 @@ void NemoFeedbackWriter::write_metadata_variables(
     // trim and pad string to fit in nc char array
     for (size_t i=0; i < (n_vars + n_extra); ++i) {
       for (size_t j=0; j < STRINGNAM_NUM; ++j) {
-        if (j < variable_names[i].length()) {
-          data[j] = static_cast<char>(variable_names.at(i).at(j));
+        if (j < name_data_.variable_names[i].length()) {
+          data[j] = static_cast<char>(name_data_.variable_names.at(i).at(j));
         } else {data[j] = ' ';}
       }
       if (extra_vars[i]) {
@@ -223,7 +203,7 @@ void NemoFeedbackWriter::write_metadata_variables(
   }
 
   {
-    size_t max_n_add_entries = additional_variables.size();
+    size_t max_n_add_entries = name_data_.additional_names.size();
     std::vector<netCDF::NcDim> dims{ncFile->getDim(N_ENTRIES),
         ncFile->getDim(STRINGNAM)};
     netCDF::NcVar nc_entries_var = ncFile->addVar("ENTRIES",
@@ -234,8 +214,8 @@ void NemoFeedbackWriter::write_metadata_variables(
     // trim and pad string to fit in nc char array
     for (size_t i=0; i < max_n_add_entries; ++i) {
       for (size_t j=0; j < STRINGNAM_NUM; ++j) {
-        if (j < additional_variables[i].length()) {
-          data[j] = static_cast<char>(additional_variables.at(i).at(j));
+        if (j < name_data_.additional_names[i].length()) {
+          data[j] = static_cast<char>(name_data_.additional_names.at(i).at(j));
         } else {data[j] = ' ';}
       }
       nc_entries_var.putVar({i, 0}, {1, STRINGNAM_NUM}, data);
@@ -338,8 +318,7 @@ void NemoFeedbackWriter::define_whole_report_variables() {
 void NemoFeedbackWriter::define_variable(
     const std::string & variable_name,
     const std::string & longName,
-    const std::string & units,
-    const std::vector<std::string> & additional_names ) {
+    const std::string & units) {
 
   const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
 
@@ -347,18 +326,24 @@ void NemoFeedbackWriter::define_variable(
       netCDF::ncDouble, dims);
   obs_var.putAtt("long_name", longName);
   obs_var.putAtt("units", units);
+  obs_var.setFill(true, double_fillvalue);
 
-  for (const auto &name : additional_names) {
+  for (const auto &name : name_data_.additional_names) {
     netCDF::NcVar add_var = ncFile->addVar(variable_name + "_" + name,
         netCDF::ncDouble, dims);
     add_var.putAtt("long_name", longName + " " + name);
     add_var.putAtt("units", units);
+    add_var.setFill(true, double_fillvalue);
   }
 
   {
     const std::vector<netCDF::NcDim> qcf_dims{*nobs_dim, *nqcf_dim};
     netCDF::NcVar qc_flags_var = ncFile->addVar(variable_name + "_QC_FLAGS",
         netCDF::ncInt, qcf_dims);
+    qc_flags_var.setFill(true, int32_fillvalue);
+    qc_flags_var.putAtt("long_name", std::string("quality flags on ")
+                        + longName);
+    qc_flags_var.putAtt("Conventions", "OPS flag conventions");
   }
 
   {
@@ -366,14 +351,22 @@ void NemoFeedbackWriter::define_variable(
         *nqcf_dim};
     netCDF::NcVar level_qc_flags_var = ncFile->addVar(variable_name
         + "_LEVEL_QC_FLAGS", netCDF::ncInt, lvl_qcf_dims);
+    level_qc_flags_var.setFill(true, int32_fillvalue);
+    level_qc_flags_var.putAtt("long_name",
+        std::string("quality flags for each level on ") + longName);
+    level_qc_flags_var.putAtt("Conventions", "OPS flag conventions");
   }
 
   netCDF::NcVar qc_var = ncFile->addVar(variable_name + "_QC", netCDF::ncInt,
       *nobs_dim);
+  qc_var.putAtt("long_name", std::string("quality on ") + longName);
   qc_var.putAtt("Conventions", QC_CONVENTIONS);
 
   netCDF::NcVar level_qc_var = ncFile->addVar(variable_name + "_LEVEL_QC",
       netCDF::ncInt, dims);
+  level_qc_var.setFill(true, int32_fillvalue);
+  level_qc_var.putAtt("long_name", std::string("quality for each level on ")
+                      + longName);
   level_qc_var.putAtt("Conventions", QC_CONVENTIONS);
 
   {
@@ -408,79 +401,122 @@ void NemoFeedbackWriter::define_extra_variable(
   var.putAtt("units", units);
 }
 
-// Routine to subset data before writing.
 template <typename T>
 std::vector<T> NemoFeedbackWriter::reduce_data(
-    const size_t & n_obs,
-    const size_t & n_obs_to_write,
-    const std::vector<bool> & to_write,
     const std::vector<T> & data_in) {
-  std::vector<T> data_out(n_obs_to_write);
+  // profile data, n_obs dimension var - using the n_obs should be fine
+  // surface data, n_locs/n_obs dimension var, n_locs = n_obs
+  // so using n_obs should be fine
+  std::vector<T> data_out(n_obs_to_write_);
   int j = 0;
-  for (int i = 0; i < n_obs; ++i) {
-    if (to_write[i]) {
+  for (int i = 0; i < n_obs_; ++i) {
+    if (to_write_[i]) {
       data_out[j++] = data_in[i];
     }
   }
   return data_out;
 }
 
+template <typename T>
+void NemoFeedbackWriter::reduce_profile_data(
+    const std::vector<size_t> & record_starts,
+    const std::vector<size_t> & record_counts,
+    const std::vector<T> & data_in,
+    std::vector<size_t> & record_starts_out,
+    std::vector<size_t> & record_counts_out,
+    std::vector<T> & data_out
+    ) {
+  // with profile data n_obs != n_locs, and so we setup new record_starts and
+  // counts based on the new data vector.
+  data_out.reserve((std::count(to_write_.begin(), to_write_.end(), true)));
+  record_starts_out.reserve(n_obs_);
+  record_counts_out.reserve(n_obs_);
+  for (int i = 0; i < n_obs_; ++i) {
+    size_t reclen = 0;
+    for (int l = record_starts[i]; l < record_starts[i]+record_counts[i]; ++l) {
+      if (to_write_[l]) {
+        if (i >= record_starts_out.size()) {
+          if (i == 0) {
+            record_starts_out.push_back(l);
+          } else {
+            record_starts_out.push_back(
+                record_starts_out[i-1]+record_counts_out[i-1]);
+          }
+        }
+        data_out.push_back(data_in[l]);
+        reclen++;
+      }
+    }
+    record_counts_out.push_back(reclen);
+  }
+}
+
 void NemoFeedbackWriter::write_coord_variables(
-    const size_t & n_obs,
-    const size_t & n_obs_to_write,
-    const std::vector<bool> & to_write,
-    const std::vector<double> & lons,
-    const std::vector<double> & lats,
-    const std::vector<double> & levels,
-    const std::vector<double> & times) {
+    const std::vector<size_t>& record_starts,
+    const std::vector<size_t>& record_counts) {
 
   netCDF::NcVar lat_var = ncFile->addVar("LATITUDE", netCDF::ncDouble,
       *nobs_dim);
   lat_var.putAtt("units", "degrees_north");
   lat_var.putAtt("long_name", "latitude");
-  std::vector<double> reduced_lats = reduce_data(n_obs,
-                                                 n_obs_to_write,
-                                                 to_write,
-                                                 lats);
-  lat_var.putVar(reduced_lats.data());
+  if (n_obs_ == coords_.n_locs) {
+    std::vector<double> reduced_lats = reduce_data(coords_.lats);
+    lat_var.putVar(reduced_lats.data());
+  } else {
+    lat_var.putVar(coords_.lats.data());
+  }
 
   netCDF::NcVar lon_var = ncFile->addVar("LONGITUDE", netCDF::ncDouble,
       *nobs_dim);
   lon_var.putAtt("units", "degrees_east");
   lon_var.putAtt("long_name", "longitude");
-  std::vector<double> reduced_lons = reduce_data(n_obs,
-                                                 n_obs_to_write,
-                                                 to_write,
-                                                 lons);
-  lon_var.putVar(reduced_lons.data());
+  if (n_obs_ == coords_.n_locs) {
+      std::vector<double> reduced_lons = reduce_data(coords_.lons);
+      lon_var.putVar(reduced_lons.data());
+  } else {
+      lon_var.putVar(coords_.lons.data());
+  }
 
   const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
   netCDF::NcVar depth_var = ncFile->addVar("DEPTH", netCDF::ncDouble,
       dims);
   depth_var.putAtt("units", "metre");
   depth_var.putAtt("long_name", "Depth");
-  std::vector<double> reduced_levels = reduce_data(n_obs,
-                                                   n_obs_to_write,
-                                                   to_write,
-                                                   levels);
-  depth_var.putVar(reduced_levels.data());
+  if (n_obs_ == coords_.n_locs) {
+    std::vector<double> reduced_depths = reduce_data(coords_.depths);
+    depth_var.putVar(reduced_depths.data());
+  } else {
+    std::vector<size_t> reduced_record_starts, reduced_record_counts;
+    std::vector<double> reduced_depths;
+    reduce_profile_data(record_starts, record_counts, coords_.depths,
+        reduced_record_starts, reduced_record_counts, reduced_depths);
+    for (size_t n = 0; n < n_obs_; ++n) {
+      depth_var.putVar({n, 0},
+                       {1, reduced_record_counts[n]},
+                       reduced_depths.data()+reduced_record_starts[n]);
+    }
+  }
 
   netCDF::NcVar juld_var = ncFile->addVar("JULD", netCDF::ncDouble, *nobs_dim);
   juld_var.putAtt("units", "days since JULD_REFERENCE");
   juld_var.putAtt("long_name", "Julian day");
-  std::vector<double> reduced_times = reduce_data(n_obs,
-                                                  n_obs_to_write,
-                                                  to_write,
-                                                  times);
-  juld_var.putVar(reduced_times.data());
+  if (n_obs_ == coords_.n_locs) {
+    std::vector<double> reduced_times = reduce_data(coords_.julian_days);
+    juld_var.putVar(reduced_times.data());
+  } else {
+    juld_var.putVar(coords_.julian_days.data());
+  }
 }
 
 void NemoFeedbackWriter::write_whole_report_variables(
-    const size_t & n_obs,
-    const size_t & n_obs_to_write,
-    const std::vector<bool> & to_write,
     const std::vector<std::string> & station_types,
     const std::vector<std::string> & station_ids) {
+
+  if (station_ids.size() != n_obs_ ||
+      station_types.size() != n_obs_ )
+    throw eckit::BadValue(std::string("NemoFeedbackWriter::") +
+        "write_whole_report_variables: station_ids or station_types " +
+        "not defined for some observations", Here());
 
   // Write station type.
   {
@@ -488,14 +524,16 @@ void NemoFeedbackWriter::write_whole_report_variables(
     auto station_type_var = ncFile->getVar("STATION_TYPE");
     int j = 0;
     // +1 is for the null-terminator of a cstring
-    char* buffer = new char[n_obs_to_write*nchars+1];
-    for (int i = 0; i < n_obs; ++i) {
-      if (to_write[i]) {
+    char* buffer = new char[n_obs_to_write_*nchars+1];
+    for (int i = 0; i < n_obs_; ++i) {
+      if (n_obs_ == coords_.n_locs) {
+        if (to_write_[i]) strcpy(buffer + nchars*j++, station_types[i].c_str());
+      } else {
         strcpy(buffer + nchars*j++, station_types[i].c_str());
       }
     }
     station_type_var.putVar({0, 0},
-                            {n_obs_to_write, nchars},
+                            {n_obs_to_write_, nchars},
                             buffer);
     delete[] buffer;
   }
@@ -506,55 +544,42 @@ void NemoFeedbackWriter::write_whole_report_variables(
     auto station_id_var = ncFile->getVar("STATION_IDENTIFIER");
     int j = 0;
     // +1 is for the null-terminator of a cstring
-    char* buffer = new char[n_obs_to_write*nchars+1];
-    for (int i = 0; i < n_obs; ++i) {
-      if (to_write[i]) {
+    char* buffer = new char[n_obs_to_write_*nchars+1];
+    for (int i = 0; i < n_obs_; ++i) {
+      if (n_obs_ == coords_.n_locs) {
+        if (to_write_[i]) strcpy(buffer + nchars*j++, station_ids[i].c_str());
+      } else {
         strcpy(buffer + nchars*j++, station_ids[i].c_str());
       }
     }
     station_id_var.putVar({0, 0},
-                          {n_obs_to_write, nchars},
+                          {n_obs_to_write_, nchars},
                           buffer);
     delete[] buffer;
   }
 }
 
 void NemoFeedbackWriter::write_variable_surf(
-    const size_t & n_obs,
-    const size_t & n_obs_to_write,
-    const std::vector<bool> & to_write,
     const std::string & variable_name,
     const std::vector<double>& data) {
   oops::Log::trace() << "NemoFeedbackWriter::write_variable_surf: writing "
                      << variable_name << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
-  std::vector<double> reduced_data = reduce_data(n_obs,
-                                                 n_obs_to_write,
-                                                 to_write,
-                                                 data);
+  std::vector<double> reduced_data = reduce_data(data);
   surf_var.putVar(reduced_data.data());
 }
 
 void NemoFeedbackWriter::write_variable_surf_qc(
-    const size_t & n_obs,
-    const size_t & n_obs_to_write,
-    const std::vector<bool> & to_write,
     const std::string & variable_name,
     const std::vector<int32_t>& data) {
   oops::Log::trace() << "NemoFeedbackWriter::write_variable_surf_qc: writing "
                      << variable_name << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
-  std::vector<int32_t> reduced_data = reduce_data(n_obs,
-                                                  n_obs_to_write,
-                                                  to_write,
-                                                  data);
+  std::vector<int32_t> reduced_data = reduce_data(data);
   surf_var.putVar(reduced_data.data());
 }
 
 void NemoFeedbackWriter::write_variable_surf_qc(
-    const size_t & n_obs,
-    const size_t & n_obs_to_write,
-    const std::vector<bool> & to_write,
     const std::string& variable_name,
     const std::vector<int32_t>& data,
     const size_t flag_index) {
@@ -562,11 +587,94 @@ void NemoFeedbackWriter::write_variable_surf_qc(
                      << "flag_index: " << flag_index << " of " << variable_name
                      << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
-  std::vector<int32_t> reduced_data = reduce_data(n_obs,
-                                                  n_obs_to_write,
-                                                  to_write,
-                                                  data);
-  surf_var.putVar({0, flag_index}, {n_obs_to_write, 1}, reduced_data.data());
+  std::vector<int32_t> reduced_data = reduce_data(data);
+  surf_var.putVar({0, flag_index}, {n_obs_to_write_, 1}, reduced_data.data());
+}
+
+void NemoFeedbackWriter::write_variable_profile(
+    const std::string & variable_name,
+    const std::vector<double>& data,
+    const std::vector<size_t>& record_starts,
+    const std::vector<size_t>& record_counts) {
+  oops::Log::trace() << "NemoFeedbackWriter::write_variable_profile: writing "
+                     << variable_name << std::endl;
+  auto var = ncFile->getVar(variable_name);
+  if (var.isNull()) {
+      std::ostringstream err_stream;
+      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_profile "
+                 << "ncVar '" << variable_name << "' is not present in "
+                 <<"NetCDF file";
+      throw eckit::BadValue(err_stream.str(), Here());
+    }
+
+  std::vector<size_t> reduced_record_starts, reduced_record_counts;
+  std::vector<double> reduced_data;
+  reduce_profile_data(record_starts, record_counts, data, reduced_record_starts,
+      reduced_record_counts, reduced_data);
+
+  for (size_t n = 0; n < n_obs_; ++n) {
+    var.putVar({n, 0},
+               {1, reduced_record_counts[n]},
+               reduced_data.data()+reduced_record_starts[n]);
+  }
+}
+
+void NemoFeedbackWriter::write_variable_level_qc(
+    const std::string & variable_name,
+    const std::vector<int32_t>& data,
+    const std::vector<size_t>& record_starts,
+    const std::vector<size_t>& record_counts) {
+  oops::Log::trace() << "NemoFeedbackWriter::write_variable_level_qc: writing "
+                     << variable_name << std::endl;
+  auto var = ncFile->getVar(variable_name);
+  if (var.isNull()) {
+      std::ostringstream err_stream;
+      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+                 << "ncVar '" << variable_name << "' is not present in "
+                 <<"NetCDF file";
+      throw eckit::BadValue(err_stream.str(), Here());
+    }
+
+  std::vector<size_t> reduced_record_starts, reduced_record_counts;
+  std::vector<int32_t> reduced_data;
+  reduce_profile_data(record_starts, record_counts, data, reduced_record_starts,
+      reduced_record_counts, reduced_data);
+
+  for (size_t n = 0; n < n_obs_; ++n) {
+    var.putVar({n, 0},
+               {1, reduced_record_counts[n]},
+               reduced_data.data()+reduced_record_starts[n]);
+  }
+}
+
+void NemoFeedbackWriter::write_variable_level_qc(
+    const std::string & variable_name,
+    const std::vector<int32_t>& data,
+    const size_t flag_index,
+    const std::vector<size_t>& record_starts,
+    const std::vector<size_t>& record_counts) {
+  oops::Log::trace() << "NemoFeedbackWriter::write_variable_level_qc: writing "
+                     << "flag_index: " << flag_index << " of " << variable_name
+                     << std::endl;
+  auto var = ncFile->getVar(variable_name);
+  if (var.isNull()) {
+      std::ostringstream err_stream;
+      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+                 << "ncVar '" << variable_name << "' is not present in "
+                 <<"NetCDF file";
+      throw eckit::BadValue(err_stream.str(), Here());
+    }
+
+  std::vector<size_t> reduced_record_starts, reduced_record_counts;
+  std::vector<int32_t> reduced_data;
+  reduce_profile_data(record_starts, record_counts, data, reduced_record_starts,
+      reduced_record_counts, reduced_data);
+
+  for (size_t n = 0; n < n_obs_; ++n) {
+    var.putVar({n, 0, flag_index},
+               {1, reduced_record_counts[n], 1},
+               reduced_data.data()+reduced_record_starts[n]);
+  }
 }
 
 }  // namespace nemo_feedback
