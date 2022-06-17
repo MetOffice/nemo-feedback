@@ -1,18 +1,18 @@
 Test     : Initial state: 
-Test     :  Model state valid at time: 2021-06-29T21:00:00Z
+Test     :  Model state valid at time: 2021-06-28T00:00:00Z
 Test     :     2 variables: ice_area_fraction, ice_area_fraction_background_error
 Test     :     atlas field norms:
-Test     :         ice_area_fraction: 0.00323467
+Test     :         ice_area_fraction: 0.0
 Test     :         ice_area_fraction_background_error: 0.00303628
 
 Test     : Final state: 
-Test     :  Model state valid at time: 2021-06-30T21:00:00Z
+Test     :  Model state valid at time: 2021-07-01T00:00:00Z
 Test     :     2 variables: ice_area_fraction, ice_area_fraction_background_error
 Test     :     atlas field norms:
 Test     :         ice_area_fraction: 0.00320233
 Test     :         ice_area_fraction_background_error: 0.00303628
 
 Test     : H(x): 
-Test     : Sea Ice nobs= 7 Min=0, Max=0, RMS=0
+Test     : Sea Ice nobs= 7 Min=0.00000e+00, Max=4.95000e-01, RMS=1.87092e-01
 
 Test     : End H(x)

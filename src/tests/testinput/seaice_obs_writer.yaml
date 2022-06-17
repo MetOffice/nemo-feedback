@@ -1,6 +1,4 @@
-forecast length : P1D
-window begin: 2021-06-29T21:00:00Z
-window length: P1D
+forecast length : P3D
 geometry :
   nemo variables:
     - name: ice_area_fraction
@@ -17,21 +15,27 @@ geometry :
       model space: surface
       variable type: background variance
   grid name: ORCA2_T
-  number levels: 10
+  number levels: 2
 initial condition :
-  date: 2021-06-29T21:00:00Z
+  date: 2021-06-28T00:00:00Z
   state variables: [ ice_area_fraction, ice_area_fraction_background_error ]
   nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
   variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
 model :
   name: PseudoModel
-  tstep: P1D
+  tstep: P3D
   state variables: [ ice_area_fraction ]
   states:
-    - date: 2021-06-30T09:00:00Z
-      state variables: [ ice_area_fraction ]
+    - date: 2021-06-28T00:00:00Z
       nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
       variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
+      state variables: [ ice_area_fraction ]
+    - date: 2021-07-01T00:00:00Z
+      nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
+      variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
+      state variables: [ ice_area_fraction ]
+window begin: 2021-06-28T12:00:00Z
+window length: P2D
 observations:
   observers:
   - obs space:
@@ -42,6 +46,7 @@ observations:
         obsfile: test_out.nc
       simulated variables: [ice_area_fraction]
     get values:
+      time interpolation: linear
       atlas-interpolator:
         type: finite-element
         non_linear: missing-if-all-missing
@@ -115,6 +120,7 @@ observations:
       - name: ObsToWrite
         initial value: true
     - filter: NEMO Feedback Writer
+      reference date: 2021-06-30T12:00:00Z
       filename: testoutput/test_hofx_feedback_writer_out.nc
       where:
       - variable:
