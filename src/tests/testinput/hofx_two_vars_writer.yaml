@@ -1,4 +1,4 @@
-forecast length : P1D
+forecast length : P2D
 geometry :
   nemo variables:
     - name: ice_area_fraction
@@ -19,7 +19,7 @@ geometry :
       model space: surface
       variable type: background variance
   grid name: ORCA2_T
-  number levels: 10
+  number levels: 2
 initial condition :
   date: 2021-06-29T21:00:00Z
   state variables: [ ice_area_fraction, sea_surface_temperature, ice_area_fraction_background_error, sea_surface_temperature_background_error ]
@@ -27,10 +27,14 @@ initial condition :
   variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
 model :
   name: PseudoModel
-  tstep: P1D
+  tstep: P2D
   state variables: [ ice_area_fraction, sea_surface_temperature ]
   states:
-    - date: 2021-06-30T09:00:00Z
+    - date: 2021-06-29T21:00:00Z
+      nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
+      variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
+      state variables: [ ice_area_fraction, sea_surface_temperature ]
+    - date: 2021-07-01T21:00:00Z
       nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
       variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
       state variables: [ ice_area_fraction, sea_surface_temperature ]
