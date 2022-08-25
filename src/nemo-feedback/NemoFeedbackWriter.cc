@@ -460,8 +460,7 @@ void NemoFeedbackWriter::write_coord_variables(
   lat_var.putAtt("units", "degrees_north");
   lat_var.putAtt("long_name", "latitude");
   if (n_obs_ == coords_.n_locs) {
-    std::vector<double> reduced_lats = reduce_data(coords_.lats);
-    lat_var.putVar(reduced_lats.data());
+    lat_var.putVar(coords_.lats.data());
   } else {
     lat_var.putVar(coords_.lats.data());
   }
@@ -471,8 +470,7 @@ void NemoFeedbackWriter::write_coord_variables(
   lon_var.putAtt("units", "degrees_east");
   lon_var.putAtt("long_name", "longitude");
   if (n_obs_ == coords_.n_locs) {
-      std::vector<double> reduced_lons = reduce_data(coords_.lons);
-      lon_var.putVar(reduced_lons.data());
+      lon_var.putVar(coords_.lons.data());
   } else {
       lon_var.putVar(coords_.lons.data());
   }
@@ -483,8 +481,7 @@ void NemoFeedbackWriter::write_coord_variables(
   depth_var.putAtt("units", "metre");
   depth_var.putAtt("long_name", "Depth");
   if (n_obs_ == coords_.n_locs) {
-    std::vector<double> reduced_depths = reduce_data(coords_.depths);
-    depth_var.putVar(reduced_depths.data());
+    depth_var.putVar(coords_.depths.data());
   } else {
     std::vector<size_t> reduced_record_starts, reduced_record_counts;
     std::vector<double> reduced_depths;
@@ -501,8 +498,7 @@ void NemoFeedbackWriter::write_coord_variables(
   juld_var.putAtt("units", "days since JULD_REFERENCE");
   juld_var.putAtt("long_name", "Julian day");
   if (n_obs_ == coords_.n_locs) {
-    std::vector<double> reduced_times = reduce_data(coords_.julian_days);
-    juld_var.putVar(reduced_times.data());
+    juld_var.putVar(coords_.julian_days.data());
   } else {
     juld_var.putVar(coords_.julian_days.data());
   }
@@ -565,8 +561,7 @@ void NemoFeedbackWriter::write_variable_surf(
   oops::Log::trace() << "NemoFeedbackWriter::write_variable_surf: writing "
                      << variable_name << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
-  std::vector<double> reduced_data = reduce_data(data);
-  surf_var.putVar(reduced_data.data());
+  surf_var.putVar(data.data());
 }
 
 void NemoFeedbackWriter::write_variable_surf_qc(
@@ -575,8 +570,7 @@ void NemoFeedbackWriter::write_variable_surf_qc(
   oops::Log::trace() << "NemoFeedbackWriter::write_variable_surf_qc: writing "
                      << variable_name << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
-  std::vector<int32_t> reduced_data = reduce_data(data);
-  surf_var.putVar(reduced_data.data());
+  surf_var.putVar(data.data());
 }
 
 void NemoFeedbackWriter::write_variable_surf_qc(
@@ -587,8 +581,7 @@ void NemoFeedbackWriter::write_variable_surf_qc(
                      << "flag_index: " << flag_index << " of " << variable_name
                      << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
-  std::vector<int32_t> reduced_data = reduce_data(data);
-  surf_var.putVar({0, flag_index}, {n_obs_to_write_, 1}, reduced_data.data());
+  surf_var.putVar({0, flag_index}, {n_obs_to_write_, 1}, data.data());
 }
 
 void NemoFeedbackWriter::write_variable_profile(
