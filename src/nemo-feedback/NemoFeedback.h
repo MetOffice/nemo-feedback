@@ -54,8 +54,6 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   ///        observations to write to the file
   void groupCoordsByRecord(const std::vector<bool>& to_write,
                           NemoFeedbackWriter::CoordData& coords,
-                          std::vector<size_t>& record_starts,
-                          std::vector<size_t>& record_counts,
                           bool is_profile) const;
   /// \brief Setup the NEMO STATION_TYPES and STATION_IDS netCDF variables for
   ///        altimeter observations.  Filter observations based on the latest

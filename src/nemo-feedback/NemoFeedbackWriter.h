@@ -35,6 +35,8 @@ class NemoFeedbackWriter {
     std::vector<double> lons;
     std::vector<double> julian_days;
     std::vector<double> depths;
+    std::vector<size_t> record_starts;
+    std::vector<size_t> record_counts;
     util::DateTime juld_reference;
     size_t n_levels;
     size_t n_obs;
@@ -57,9 +59,7 @@ class NemoFeedbackWriter {
       const NameData & name_data,
       const std::vector<bool> & extra_vars,
       const std::vector<std::string>& station_types,
-      const std::vector<std::string>& station_ids,
-      const std::vector<size_t>& record_starts,
-      const std::vector<size_t>& record_counts);
+      const std::vector<std::string>& station_ids);
 
   /// \brief Write surface variable data
   void write_variable_surf(
@@ -69,9 +69,7 @@ class NemoFeedbackWriter {
   /// \brief Write profile variable data
   void write_variable_profile(
       const std::string & variable_name,
-      const std::vector<double>& data,
-      const std::vector<size_t>& record_starts,
-      const std::vector<size_t>& record_counts);
+      const std::vector<double>& data);
 
   /// \brief Write surface QC data variable
   void write_variable_surf_qc(
@@ -87,17 +85,13 @@ class NemoFeedbackWriter {
   /// \brief Write level QC data variable
   void write_variable_level_qc(
       const std::string & variable_name,
-      const std::vector<int32_t>& data,
-      const std::vector<size_t>& record_starts,
-      const std::vector<size_t>& record_counts);
+      const std::vector<int32_t>& data);
 
   /// \brief Write level QC data variable with specified flag
   void write_variable_level_qc(
       const std::string & variable_name,
       const std::vector<int32_t>& data,
-      const size_t flag_index,
-      const std::vector<size_t>& record_starts,
-      const std::vector<size_t>& record_counts);
+      const size_t flag_index);
 
   static constexpr double double_fillvalue = 99999.0;
   static constexpr int32_t int32_fillvalue = 0;
@@ -105,23 +99,7 @@ class NemoFeedbackWriter {
  private:
   NemoFeedbackWriter() : ncFile(), nobs_dim(), nlevels_dim(), coords_(),
                          name_data_(), n_obs_(), n_obs_to_write_(), to_write_()
-                       {}
-
-  /// \brief remove unwanted data according to the `to_write_` vector
-  template <typename T>
-  std::vector<T> reduce_data(
-      const std::vector<T> & data_in);
-
-  /// \brief remove unwanted data according to the `to_write_` vector for
-  ///        profile data
-  template <typename T>
-  void reduce_profile_data(
-    const std::vector<size_t> & record_starts,
-    const std::vector<size_t> & record_counts,
-    const std::vector<T> & data_in,
-    std::vector<size_t> & record_starts_out,
-    std::vector<size_t> & record_counts_out,
-    std::vector<T> & data_out);
+                       {};
 
   /// \brief Define the coordinate variables in the NetCDF file
   void define_coord_variables(
@@ -130,9 +108,7 @@ class NemoFeedbackWriter {
       const size_t n_extra);
 
   /// \brief Write the coordinate variables to the NetCDF file
-  void write_coord_variables(
-      const std::vector<size_t>& record_starts,
-      const std::vector<size_t>& record_counts);
+  void write_coord_variables();
 
   /// \brief Write the required feedback file metadata to the NetCDF file
   void write_metadata_variables(
