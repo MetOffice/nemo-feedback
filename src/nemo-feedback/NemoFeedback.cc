@@ -132,6 +132,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   //  Fill out lats, lons, depths, julian_days
 
   NemoFeedbackWriter::CoordData coords;
+  coords.n_obs = n_locs;
   coords.n_levels = 1;
 
   // Handle the where option.
@@ -189,8 +190,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       extra_vars,
       station_types,
       station_ids);
-
-  if (n_locs == 0) return;
 
   // Write the data
   std::vector<double> variable_data;
@@ -335,7 +334,10 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           oops::Log::trace() << "NemoFeedback::iterator distance is "
                              << var_it_dist << " ov.nvars: " << ov.nvars()
                              << std::endl;
-          const auto missing_value_add = util::missingValue(ov[var_it_dist]);
+          // Awkward hack to assign a value for the missing value in the case
+          // of no observations
+          auto missing_value_add = util::missingValue(double(0));
+          if (coords.n_locs > 0) missing_value_add = util::missingValue(ov[var_it_dist]);
           auto ov_indexer = [&]( size_t iOb ) -> int {
               return iOb * ov.nvars() + var_it_dist;
           };

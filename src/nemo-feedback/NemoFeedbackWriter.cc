@@ -488,6 +488,7 @@ void NemoFeedbackWriter::write_variable_surf(
   oops::Log::trace() << "NemoFeedbackWriter::write_variable_surf: writing "
                      << variable_name << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
+  if (data.size() == 0) return;
   surf_var.putVar(data.data());
 }
 
@@ -497,6 +498,7 @@ void NemoFeedbackWriter::write_variable_surf_qc(
   oops::Log::trace() << "NemoFeedbackWriter::write_variable_surf_qc: writing "
                      << variable_name << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
+  if (data.size() == 0) return;
   surf_var.putVar(data.data());
 }
 
@@ -508,6 +510,7 @@ void NemoFeedbackWriter::write_variable_surf_qc(
                      << "flag_index: " << flag_index << " of " << variable_name
                      << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
+  if (data.size() == 0) return;
   surf_var.putVar({0, flag_index}, {coords_.n_obs, 1}, data.data());
 }
 
@@ -524,6 +527,8 @@ void NemoFeedbackWriter::write_variable_profile(
                  <<"NetCDF file";
       throw eckit::BadValue(err_stream.str(), Here());
     }
+
+  if (data.size() == 0) return;
 
   if (coords_.record_counts[coords_.n_obs-1]
       + coords_.record_starts[coords_.n_obs-1] > data.size()) {
@@ -555,6 +560,8 @@ void NemoFeedbackWriter::write_variable_level_qc(
                  <<"NetCDF file";
       throw eckit::BadValue(err_stream.str(), Here());
     }
+
+  if (data.size() == 0) return;
 
   if (coords_.record_counts[coords_.n_obs-1]
       + coords_.record_starts[coords_.n_obs-1] > data.size()) {
@@ -588,6 +595,8 @@ void NemoFeedbackWriter::write_variable_level_qc(
                  <<"NetCDF file";
       throw eckit::BadValue(err_stream.str(), Here());
     }
+
+  if (data.size() == 0) return;
 
   if (coords_.record_counts[coords_.n_obs-1]
       + coords_.record_starts[coords_.n_obs-1] > data.size()) {
