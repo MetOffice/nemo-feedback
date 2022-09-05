@@ -141,12 +141,14 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 
   groupCoordsByRecord(to_write, coords, is_profile);
 
+  // sync n_levels and juld_reference across files if multi-processing
+  mpi_sync_coordinates(coords, obsdb_.comm());
+
   // Calculate total number of obs to actually write.
   // This is already handled in the construction of record_counts/sizes above
   // for profiles, but for surface fields n_obs == n_locs, and we can look at
   // to_write
-  const size_t n_obs_to_write = is_profile ?
-      coords.n_obs
+  const size_t n_obs_to_write = is_profile ? coords.n_obs
       : std::count(to_write.begin(), to_write.end(), true);
 
   // Set up the station type and identifier variables. The way to do this
@@ -155,7 +157,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   std::vector<std::string> station_types(coords.n_obs, "    ");
   std::vector<std::string> station_ids(coords.n_obs, "        ");
 
-  std::cout << "[" << obsdb_.comm().rank() << "] reached setup ids" << std::endl;
   if (is_altimeter) {
     setupAltimeterIds(coords.n_obs, station_ids, station_types, to_write);
   } else {
@@ -163,58 +164,38 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         station_types);
   }
 
-  // ufo::ObsAccessor obsAccessor = ufo::ObsAccessor::toAllObservations(obsdb_);
-  // std::vector<size_t> validObs = obsAccessor.getValidObservationIds(to_write);
-  std::vector<size_t> validObs;
-  validObs.reserve(n_locs);
-  for (size_t iOb = 0; iOb < to_write.size(); ++iOb) {
-      if (to_write[iOb]) validObs.push_back(iOb);
-  }
-  if (validObs.size() != n_locs)
-    throw eckit::BadValue("NemoFeedback:: validObs.size() != n_locs "
-        + std::to_string(validObs.size()) + " " + std::to_string(n_locs), Here());
-
   NemoFeedbackReduce reducer(coords.n_obs, n_obs_to_write, to_write,
                              coords.record_starts, coords.record_counts);
 
-  if (coords.n_obs != coords.n_locs) {
-    coords.lats = reducer.reduce_via_accessor(coords.lats, validObs);
-    coords.lons = reducer.reduce_via_accessor(coords.lons, validObs);
-    coords.depths = reducer.reduce_via_accessor(coords.depths, validObs);
-    coords.julian_days = reducer.reduce_via_accessor(coords.julian_days, validObs);
-
-    if (is_profile) {
-      coords.record_starts = reducer.reduced_starts;
-      coords.record_counts = reducer.reduced_counts;
-    } else {
-      coords.lats = reducer.reduce_via_accessor(coords.lats, validObs);
-      coords.lons = reducer.reduce_via_accessor(coords.lons, validObs);
-      coords.depths = reducer.reduce_via_accessor(coords.depths, validObs);
-      coords.julian_days = reducer.reduce_via_accessor(coords.julian_days, validObs);
-    }
+  if (is_profile) {
+    coords.record_starts = reducer.reduced_starts;
+    coords.record_counts = reducer.reduced_counts;
+    std::vector<double> reduced_depths;
+    reducer.reduce_profile_data(coords.depths, reduced_depths);
+    coords.depths = reduced_depths;
+  } else {
+    coords.depths = reducer.reduce_data(coords.depths);
+    coords.lats = reducer.reduce_data(coords.lats);
+    coords.lons = reducer.reduce_data(coords.lons);
+    coords.julian_days = reducer.reduce_data(coords.julian_days);
+    station_ids = reducer.reduce_data(station_ids);
+    station_types = reducer.reduce_data(station_types);
   }
 
-  std::cout << "[" << obsdb_.comm().rank() << "] reached fdbk_writer" << std::endl;
   NemoFeedbackWriter fdbk_writer(
       test_data_path,
-      n_obs_to_write,
-      to_write,
       coords,
       name_data,
       extra_vars,
       station_types,
       station_ids);
 
-  std::cout << "[" << obsdb_.comm().rank() << "] reached barrier" << std::endl;
-  obsdb_.comm().barrier();
   if (n_locs == 0) return;
 
   // Write the data
   std::vector<double> variable_data;
-  std::vector<int> variable_qcFlags(coords.n_obs, 0);
+  std::vector<int> variable_qcFlags(coords.n_obs);
   std::vector<int> variable_qc(coords.n_obs);
-  std::vector<int> variable_level_qc(n_locs);
-  std::vector<ufo::DiagnosticFlag> final_qc;
   std::vector<ufo::DiagnosticFlag> do_not_assimilate;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
@@ -225,8 +206,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     obsdb_.get_db(obs_group, ufo_name, variable_data);
     auto missing_value = util::missingValue(decltype(variable_data)::value_type(0));
     oops::Log::trace() << "Missing value OBS: " << missing_value << std::endl;
-    std::vector<double> reduced_data = variable_data;
-    if (!is_profile) reduced_data = reducer.reduce_via_accessor(variable_data, validObs);
+    std::vector<double> reduced_data;
+    if (!is_profile) reduced_data = reducer.reduce_data(variable_data);
     auto extra_var = nemoVariableParams.extravar.value().value_or(false);
     if (extra_var) {
       fdbk_writer.write_variable_surf(nemo_name, reduced_data);
@@ -248,67 +229,91 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       obsdb_.get_db("QCFlags", ufo_name, variable_qcFlags);
 
       // To the first qc flag index location
+      std::vector<int> reduced_qcFlags;
       if (is_profile) {
-        std::vector<int> reduced_qcFlags;
         reducer.reduce_profile_data(variable_qcFlags, reduced_qcFlags);
         fdbk_writer.write_variable_level_qc(
             nemo_name + "_LEVEL_QC_FLAGS", reduced_qcFlags, 0);
       } else {
-        std::vector<int> reduced_qcFlags = reducer.reduce_via_accessor(
-            variable_qcFlags, validObs);
+        std::vector<int> reduced_qcFlags = reducer.reduce_data(
+            variable_qcFlags);
         fdbk_writer.write_variable_surf_qc(
             nemo_name + "_QC_FLAGS", reduced_qcFlags, 0);
       }
-    }
 
-    // Whole Observation report QC flags
-    for (int i=0; i < variable_qc.size(); ++i) {
-      if (variable_qcFlags[i]
-          & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
-        variable_qc[i] = 4;
-      } else {variable_qc[i] = 0;}
+      // Whole Observation report QC flags
+      if (is_profile){
+        std::vector<int> reduced_qc(coords.n_obs, 0);
+        for (size_t iProf=0; iProf < coords.n_obs; ++iProf) {
+          size_t badObs = 0;
+          for (size_t iOb=0; iOb < coords.record_counts[iProf]; ++iOb) {
+            if (reduced_qcFlags[coords.record_starts[iProf] + iOb]
+                & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
+              ++badObs;
+            }
+          }
+          reduced_qc[iProf] = (badObs == coords.record_counts[iProf] ? 4 : 1);
+        }
+        if (coords.record_counts.size() != coords.n_obs) {
+          throw eckit::BadValue("NemoFeedback::postFilter : sizes don't match "
+              + std::to_string(coords.record_counts.size()) + " != "
+              + std::to_string(coords.n_obs), Here());
+        }
+        fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
+      } else {
+        for (int i=0; i < variable_qc.size(); ++i) {
+          if (variable_qcFlags[i]
+              & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
+            variable_qc[i] = 4;
+          } else {variable_qc[i] = 0;}
+        }
+        std::vector<int> reduced_qc = reducer.reduce_data(variable_qc);
+        fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
+      }
     }
-    std::vector<int> reduced_qc = reducer.reduce_via_accessor(variable_qc,
-        validObs);
-    fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
 
     // Overall quality control flags
-    obsdb_.get_db("DiagnosticFlags/FinalReject", ufo_name, final_qc);
-    for (int i=0; i < n_locs; ++i) {
-      if (final_qc[i]) {
-        variable_level_qc[i] = 4;
-      } else {variable_level_qc[i] = 1;}
-    }
-    for (int i=0; i < coords.n_obs; ++i) {
-      int j = reducer.reduced_starts[i];
-      if (final_qc[j]) {
-        variable_qc[j] = 4;
-      } else {variable_qc[j] = 1;}
-    }
-    // Add do not assimilate flag if required.
-    if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
-      obsdb_.get_db("DiagnosticFlags/DoNotAssimilate", ufo_name,
-          do_not_assimilate);
+    if (obsdb_.has("DiagnosticFlags/FinalReject", ufo_name)) {
+      std::vector<ufo::DiagnosticFlag> final_qc;
+      obsdb_.get_db("DiagnosticFlags/FinalReject", ufo_name, final_qc);
+
+      std::vector<int> variable_level_qc(n_locs);
       for (int i=0; i < n_locs; ++i) {
-        if (do_not_assimilate[i]) {
-          variable_level_qc[i] += 128;
-        }
+        if (final_qc[i]) {
+          variable_level_qc[i] = 4;
+        } else {variable_level_qc[i] = 1;}
       }
       for (int i=0; i < coords.n_obs; ++i) {
         int j = reducer.reduced_starts[i];
-        if (do_not_assimilate[j]) {
-          variable_qc[j] += 128;
+        if (final_qc[j]) {
+          variable_qc[j] = 4;
+        } else {variable_qc[j] = 1;}
+      }
+      // Add do not assimilate flag if required.
+      if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
+        obsdb_.get_db("DiagnosticFlags/DoNotAssimilate", ufo_name,
+            do_not_assimilate);
+        for (int i=0; i < n_locs; ++i) {
+          if (do_not_assimilate[i]) {
+            variable_level_qc[i] += 128;
+          }
+        }
+        for (int i=0; i < coords.n_obs; ++i) {
+          int j = reducer.reduced_starts[i];
+          if (do_not_assimilate[j]) {
+            variable_qc[j] += 128;
+          }
         }
       }
-    }
-    reduced_qc = reducer.reduce_via_accessor(variable_qc, validObs);
-    fdbk_writer.write_variable_surf_qc(nemo_name + "_QC", reduced_qc);
-    if (is_profile) {
-      reducer.reduce_profile_data(variable_level_qc, reduced_qc);
-      fdbk_writer.write_variable_level_qc(nemo_name + "_LEVEL_QC", reduced_qc);
-    } else {
-      reduced_qc = reducer.reduce_via_accessor(variable_level_qc, validObs);
-      fdbk_writer.write_variable_surf_qc(nemo_name + "_LEVEL_QC", reduced_qc);
+      std::vector<int> reduced_qc = reducer.reduce_data(variable_qc);
+      fdbk_writer.write_variable_surf_qc(nemo_name + "_QC", reduced_qc);
+      if (is_profile) {
+        reducer.reduce_profile_data(variable_level_qc, reduced_qc);
+        fdbk_writer.write_variable_level_qc(nemo_name + "_LEVEL_QC", reduced_qc);
+      } else {
+        reduced_qc = reducer.reduce_data(variable_level_qc);
+        fdbk_writer.write_variable_surf_qc(nemo_name + "_LEVEL_QC", reduced_qc);
+      }
     }
 
     // Write additional variables for this variable
@@ -318,7 +323,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       auto add_name = nemo_name + "_" + addParams.feedbackSuffix.value();
       std::string ioda_group = addParams.iodaGroup.value();
       if (ioda_group == "HofX") {
-        oops::Log::trace() << ov << std::endl;
+        oops::Log::trace() << "NemoFeedback::HofX " << ov << std::endl;
         if (ov.has(ufo_name)) {
           std::vector<std::string> ov_varnames = ov.varnames().variables();
           auto var_it = std::find(ov_varnames.begin(), ov_varnames.end(),
@@ -328,18 +333,20 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           std::size_t var_it_dist = static_cast<std::size_t>(
                                     std::distance(ov_varnames.begin(), var_it));
           oops::Log::trace() << "NemoFeedback::iterator distance is "
-                             << var_it_dist
-                             << " ov.nvars: " << ov.nvars()
+                             << var_it_dist << " ov.nvars: " << ov.nvars()
                              << std::endl;
           const auto missing_value_add = util::missingValue(ov[var_it_dist]);
-          oops::Log::trace() << "NemoFeedback::Missing value: "
-                             << missing_value_add << std::endl;
-          for (int i=0; i < coords.n_obs; ++i) {
-            const size_t indx = i * ov.nvars() + var_it_dist;
-            if (ov[indx] == missing_value_add) {
-              variable_data[i] = NemoFeedbackWriter::double_fillvalue;
-            } else {
-              variable_data[i] = ov[indx];
+          auto ov_indexer = [&]( size_t iOb ) -> int {
+              return iOb * ov.nvars() + var_it_dist;
+          };
+          for (size_t sIndx = 0; sIndx < coords.n_obs; ++sIndx) {
+            for (size_t rOb = 0; rOb < coords.record_counts[sIndx]; ++rOb){
+              const size_t obIdx = coords.record_starts[sIndx] + rOb;
+              if (ov[ov_indexer(obIdx)] == missing_value_add) {
+                variable_data[obIdx] = NemoFeedbackWriter::double_fillvalue;
+              } else {
+                variable_data[obIdx] = ov[ov_indexer(obIdx)];
+              }
             }
           }
           if (is_profile) {
@@ -347,8 +354,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
             reducer.reduce_profile_data(variable_data, reduced_data);
             fdbk_writer.write_variable_profile(add_name, reduced_data);
           } else {
-            std::vector<double> reduced_data = reducer.reduce_via_accessor(
-                variable_data, validObs);
+            std::vector<double> reduced_data = reducer.reduce_data(
+                variable_data);
             fdbk_writer.write_variable_surf(add_name, reduced_data);
           }
         }
@@ -368,8 +375,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           reducer.reduce_profile_data(variable_data, reduced_data);
           fdbk_writer.write_variable_profile(add_name, reduced_data);
         } else {
-          std::vector<double> reduced_data = reducer.reduce_via_accessor(
-              variable_data, validObs);
+          std::vector<double> reduced_data = reducer.reduce_data(
+              variable_data);
           fdbk_writer.write_variable_surf(add_name, reduced_data);
         }
       }
@@ -391,7 +398,8 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
     if (coords.n_locs == 0) {
       coords.record_counts = std::vector<size_t>{0};
       coords.record_starts = std::vector<size_t>{0};
-    //coords.depths??
+      coords.juld_reference = parameters_.refDate.value().value_or(
+          util::DateTime{"1950-01-01T00:00:00Z"});
       return;
     }
 
@@ -614,6 +622,22 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
         }
       }
     }
+}
+  void NemoFeedback::mpi_sync_coordinates(NemoFeedbackWriter::CoordData& coords,
+                                          const eckit::mpi::Comm& comm) {
+  if (comm.size() > 0) {
+    std::vector<size_t> all_nlevs(comm.size(), 0);
+    comm.allGather(coords.n_levels, all_nlevs.begin(),
+        all_nlevs.end());
+    size_t max_nlev = *std::max_element(all_nlevs.begin(), all_nlevs.end());
+    if (coords.n_levels < max_nlev) { coords.n_levels = max_nlev; }
+
+    std::vector<double> juld_ref;
+    coords.juld_reference.serialize(juld_ref);
+    comm.broadcast(juld_ref.begin(), juld_ref.end(), 0);
+    size_t index_0 = 0;
+    coords.juld_reference.deserialize(juld_ref, index_0);
+  }
 }
 
 void NemoFeedback::print(std::ostream & os) const {

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "eckit/mpi/Comm.h"
 #include "ioda/ObsDataVector.h"
 #include "oops/base/Variables.h"
 #include "oops/interface/ObsFilterBase.h"
@@ -68,6 +69,9 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
                 const std::vector<size_t>& record_counts,
                 std::vector<std::string>& station_ids,
                 std::vector<std::string>& station_types) const;
+  /// \brief Sync relevent coordinate data across MPI processes
+  void mpi_sync_coordinates(NemoFeedbackWriter::CoordData& coords,
+                            const eckit::mpi::Comm& comm);
   void print(std::ostream &) const override;
 
   ioda::ObsSpace & obsdb_;

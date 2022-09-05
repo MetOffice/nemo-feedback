@@ -36,6 +36,10 @@ CASE("test creating test file ") {
   coords.depths = std::vector<double>(n_obs*coords.n_levels, 0);
   coords.julian_days = std::vector<double>{11.0, 12.0, 13.0, 14.0, 15.0};
   coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
+  coords.record_counts.assign(coords.n_locs, 1);
+  coords.record_starts.resize(coords.n_locs);
+  for (int iLoc = 0; iLoc < coords.n_locs; ++iLoc)
+      coords.record_starts[iLoc] = iLoc;
 
   NemoFeedbackWriter::NameData name_data;
   name_data.variable_names = std::vector<std::string>{"SST", "MDT"};
@@ -55,11 +59,19 @@ CASE("test creating test file ") {
                                        " 3456789",
                                        "123     "};
 
+  NemoFeedbackReduce reducer(coords.n_obs, 4, {true, false, true, true, true},
+        coords.record_starts, coords.record_counts);
+  coords.lats = reducer.reduce_data(coords.lats);
+  coords.lons = reducer.reduce_data(coords.lons);
+  coords.depths = reducer.reduce_data(coords.depths);
+  coords.julian_days = reducer.reduce_data(coords.julian_days);
+  station_types = reducer.reduce_data(station_types);
+  station_ids = reducer.reduce_data(station_ids);
+  coords.n_obs = 4;
+
   SECTION("file writes") {
     NemoFeedbackWriter fdbk_writer(
         test_data_path,
-        4,
-        {true, false, true, true, true},
         coords,
         name_data,
         extra_variables,
@@ -176,8 +188,6 @@ CASE("test creating profile file ") {
 
     NemoFeedbackWriter fdbk_writer(
         test_data_path,
-        2,
-        to_write,
         coords,
         name_data,
         extra_variables,
@@ -315,8 +325,6 @@ CASE("test creating reduced profile file ") {
 
     NemoFeedbackWriter fdbk_writer(
         test_data_path,
-        2,
-        to_write,
         coords,
         name_data,
         extra_variables,

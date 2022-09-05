@@ -53,8 +53,6 @@ class NemoFeedbackWriter {
 
   NemoFeedbackWriter(
       eckit::PathName& filename,
-      const size_t & n_obs_to_write,
-      const std::vector<bool> & to_write,
       const CoordData & coords,
       const NameData & name_data,
       const std::vector<bool> & extra_vars,
@@ -98,8 +96,7 @@ class NemoFeedbackWriter {
 
  private:
   NemoFeedbackWriter() : ncFile(), nobs_dim(), nlevels_dim(), coords_(),
-                         name_data_(), n_obs_(), n_obs_to_write_(), to_write_()
-                       {};
+                         name_data_() {};
 
   /// \brief Define the coordinate variables in the NetCDF file
   void define_coord_variables(
@@ -142,9 +139,6 @@ class NemoFeedbackWriter {
   std::unique_ptr<netCDF::NcDim> nqcf_dim;
   const CoordData coords_;
   const NameData name_data_;
-  const size_t n_obs_;
-  const size_t n_obs_to_write_;
-  const std::vector<bool> to_write_;
   static const std::map<std::string, size_t> coord_sizes;
 };
 }  // namespace nemo_feedback

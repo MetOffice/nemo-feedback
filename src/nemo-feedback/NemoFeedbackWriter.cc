@@ -54,16 +54,13 @@ typedef char fixed_length_type_type[STRINGTYP_NUM+1];
 
 NemoFeedbackWriter::NemoFeedbackWriter(
     eckit::PathName& filename,
-    const size_t & n_obs_to_write,
-    const std::vector<bool> & to_write,
     const CoordData & coords,
     const NameData & name_data,
     const std::vector<bool> & extra_vars,
     const std::vector<std::string> & station_types,
     const std::vector<std::string> & station_ids)
-    : ncFile(nullptr), coords_(coords), n_obs_(coords.n_obs),
-      n_obs_to_write_(n_obs_to_write),
-      to_write_(to_write), name_data_(name_data) {
+    : ncFile(nullptr), coords_(coords),
+      name_data_(name_data) {
   oops::Log::trace() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
                      << " constructing for: " << filename.fullName().asString()
                      << std::endl;
@@ -81,12 +78,6 @@ NemoFeedbackWriter::NemoFeedbackWriter(
   const size_t n_obs_vars = name_data_.variable_names.size() - n_extra;
   const size_t max_n_add_entries = name_data_.additional_names.size();
 
-  if (to_write_.size() != coords.n_locs)
-    throw eckit::BadValue(std::string("NemoFeedbackWriter::") +
-        " to_write  not defined for some observations to_write_.size() = "
-        + std::to_string(to_write_.size()) + " n_locs = "
-        + std::to_string(coords.n_locs), Here());
-
   define_coord_variables(
       n_obs_vars,
       max_n_add_entries,
@@ -94,7 +85,7 @@ NemoFeedbackWriter::NemoFeedbackWriter(
   write_metadata_variables(extra_vars);
   write_coord_variables();
   define_whole_report_variables();
-  if (coords.n_locs != 0) {
+  if (coords_.n_obs != 0) {
     write_whole_report_variables(station_types, station_ids);
   }
 
@@ -127,7 +118,7 @@ void NemoFeedbackWriter::define_coord_variables(
   }
 
   nobs_dim = std::make_unique<netCDF::NcDim>(
-      ncFile->addDim(N_OBS, n_obs_to_write_));
+      ncFile->addDim(N_OBS, coords_.n_obs));
   nlevels_dim = std::make_unique<netCDF::NcDim>(ncFile->addDim(N_LEVELS,
         coords_.n_levels));
   tmp_Dim = ncFile->addDim(N_VARS, n_obs_vars);
@@ -146,8 +137,6 @@ void NemoFeedbackWriter::write_metadata_variables(
         ncFile->getDim(STRINGJULD));
     nc_juld_var.putAtt("long_name", "Date of reference for julian days");
     nc_juld_var.putAtt("Conventions", "YYYYMMDDHHMMSS");
-
-    if (coords_.n_obs == 0) return;
 
     int year, month, day, hour, minute, second;
     coords_.juld_reference.toYYYYMMDDhhmmss(year, month, day, hour, minute,
@@ -429,10 +418,10 @@ void NemoFeedbackWriter::write_coord_variables() {
 
   lon_var.putVar(coords_.lons.data());
 
-  if (n_obs_ == coords_.n_locs) {
+  if (coords_.n_obs == coords_.n_locs) {
     depth_var.putVar(coords_.depths.data());
   } else {
-    for (size_t n = 0; n < n_obs_; ++n) {
+    for (size_t n = 0; n < coords_.n_obs; ++n) {
       depth_var.putVar({n, 0},
                        {1, coords_.record_counts[n]},
                        coords_.depths.data() + coords_.record_starts[n]);
@@ -446,8 +435,8 @@ void NemoFeedbackWriter::write_whole_report_variables(
     const std::vector<std::string> & station_types,
     const std::vector<std::string> & station_ids) {
 
-  if (station_ids.size() != n_obs_ ||
-      station_types.size() != n_obs_ )
+  if (station_ids.size() != coords_.n_obs ||
+      station_types.size() != coords_.n_obs )
     throw eckit::BadValue(std::string("NemoFeedbackWriter::") +
         "write_whole_report_variables: station_ids or station_types " +
         "not defined for some observations", Here());
@@ -458,16 +447,16 @@ void NemoFeedbackWriter::write_whole_report_variables(
     auto station_type_var = ncFile->getVar("STATION_TYPE");
     int j = 0;
     // +1 is for the null-terminator of a cstring
-    char* buffer = new char[n_obs_to_write_*nchars+1];
-    for (int i = 0; i < n_obs_; ++i) {
-      if (n_obs_ == coords_.n_locs) {
-        if (to_write_[i]) strcpy(buffer + nchars*j++, station_types[i].c_str());
+    char* buffer = new char[coords_.n_obs*nchars+1];
+    for (int i = 0; i < coords_.n_obs; ++i) {
+      if (coords_.n_obs == coords_.n_locs) {
+        strcpy(buffer + nchars*j++, station_types[i].c_str());
       } else {
         strcpy(buffer + nchars*j++, station_types[i].c_str());
       }
     }
     station_type_var.putVar({0, 0},
-                            {n_obs_to_write_, nchars},
+                            {coords_.n_obs, nchars},
                             buffer);
     delete[] buffer;
   }
@@ -478,16 +467,16 @@ void NemoFeedbackWriter::write_whole_report_variables(
     auto station_id_var = ncFile->getVar("STATION_IDENTIFIER");
     int j = 0;
     // +1 is for the null-terminator of a cstring
-    char* buffer = new char[n_obs_to_write_*nchars+1];
-    for (int i = 0; i < n_obs_; ++i) {
-      if (n_obs_ == coords_.n_locs) {
-        if (to_write_[i]) strcpy(buffer + nchars*j++, station_ids[i].c_str());
+    char* buffer = new char[coords_.n_obs*nchars+1];
+    for (int i = 0; i < coords_.n_obs; ++i) {
+      if (coords_.n_obs == coords_.n_locs) {
+        strcpy(buffer + nchars*j++, station_ids[i].c_str());
       } else {
         strcpy(buffer + nchars*j++, station_ids[i].c_str());
       }
     }
     station_id_var.putVar({0, 0},
-                          {n_obs_to_write_, nchars},
+                          {coords_.n_obs, nchars},
                           buffer);
     delete[] buffer;
   }
@@ -519,7 +508,7 @@ void NemoFeedbackWriter::write_variable_surf_qc(
                      << "flag_index: " << flag_index << " of " << variable_name
                      << std::endl;
   auto surf_var = ncFile->getVar(variable_name);
-  surf_var.putVar({0, flag_index}, {n_obs_to_write_, 1}, data.data());
+  surf_var.putVar({0, flag_index}, {coords_.n_obs, 1}, data.data());
 }
 
 void NemoFeedbackWriter::write_variable_profile(
@@ -536,7 +525,17 @@ void NemoFeedbackWriter::write_variable_profile(
       throw eckit::BadValue(err_stream.str(), Here());
     }
 
-  for (size_t n = 0; n < n_obs_; ++n) {
+  if (coords_.record_counts[coords_.n_obs-1]
+      + coords_.record_starts[coords_.n_obs-1] > data.size()) {
+      std::ostringstream err_stream;
+      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_profile "
+                 << "index range out of bounds '" << variable_name << "' "
+                 << coords_.record_counts[coords_.n_obs-1]
+                  + coords_.record_starts[coords_.n_obs-1]
+                 << " >= " << data.size();
+      throw eckit::BadValue(err_stream.str(), Here());
+  }
+  for (size_t n = 0; n < coords_.n_obs; ++n) {
     var.putVar({n, 0},
                {1, coords_.record_counts[n]},
                data.data()+coords_.record_starts[n]);
@@ -557,7 +556,17 @@ void NemoFeedbackWriter::write_variable_level_qc(
       throw eckit::BadValue(err_stream.str(), Here());
     }
 
-  for (size_t n = 0; n < n_obs_; ++n) {
+  if (coords_.record_counts[coords_.n_obs-1]
+      + coords_.record_starts[coords_.n_obs-1] > data.size()) {
+    std::ostringstream err_stream;
+    err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+               << "index range out of bounds '" << variable_name << "' "
+               << coords_.record_counts[coords_.n_obs-1]
+                  + coords_.record_starts[coords_.n_obs-1]
+               << " >= " << data.size();
+    throw eckit::BadValue(err_stream.str(), Here());
+  }
+  for (size_t n = 0; n < coords_.n_obs; ++n) {
     var.putVar({n, 0},
                {1, coords_.record_counts[n]},
                data.data()+coords_.record_starts[n]);
@@ -580,7 +589,17 @@ void NemoFeedbackWriter::write_variable_level_qc(
       throw eckit::BadValue(err_stream.str(), Here());
     }
 
-  for (size_t n = 0; n < n_obs_; ++n) {
+  if (coords_.record_counts[coords_.n_obs-1]
+      + coords_.record_starts[coords_.n_obs-1] > data.size()) {
+      std::ostringstream err_stream;
+      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+                 << "index range out of bounds '" << variable_name << "' "
+                 << coords_.record_counts[coords_.n_obs-1]
+                  + coords_.record_starts[coords_.n_obs-1]
+                 << " >= " << data.size();
+      throw eckit::BadValue(err_stream.str(), Here());
+  }
+  for (size_t n = 0; n < coords_.n_obs; ++n) {
     var.putVar({n, 0, flag_index},
                {1, coords_.record_counts[n], 1},
                data.data()+coords_.record_starts[n]);
