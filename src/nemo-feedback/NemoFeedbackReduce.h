@@ -48,4 +48,4 @@ class NemoFeedbackReduce {
   std::vector<size_t> reduced_counts;
 };
 
-}
+}   // namespace nemo_feedback

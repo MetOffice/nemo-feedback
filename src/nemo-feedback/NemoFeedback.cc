@@ -125,7 +125,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     throw eckit::BadValue(std::string("NemoFeedback::postFilter cannot write")
         + " profile and altimeter data to the same file", Here());
 
-  // obsdb_.nlocs is the number of point-observation locations on this processor.
+  // obsdb_.nlocs is the number of point-observation locations on this
+  // processor.
   size_t n_locs = obsdb_.nlocs();
 
   //  Calculate n_obs, n_levels, starts, counts
@@ -161,8 +162,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   if (is_altimeter) {
     setupAltimeterIds(coords.n_obs, station_ids, station_types, to_write);
   } else {
-    setupIds(coords.n_obs, coords.record_starts, coords.record_counts, station_ids,
-        station_types);
+    setupIds(coords.n_obs, coords.record_starts, coords.record_counts,
+        station_ids, station_types);
   }
 
   NemoFeedbackReduce reducer(coords.n_obs, n_obs_to_write, to_write,
@@ -203,7 +204,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     auto obs_group = nemoVariableParams.iodaObsGroup.value()
         .value_or("ObsValue");
     obsdb_.get_db(obs_group, ufo_name, variable_data);
-    auto missing_value = util::missingValue(decltype(variable_data)::value_type(0));
+    auto missing_value = util::missingValue(
+        decltype(variable_data)::value_type(0));
     oops::Log::trace() << "Missing value OBS: " << missing_value << std::endl;
     std::vector<double> reduced_data;
     if (!is_profile) reduced_data = reducer.reduce_data(variable_data);
@@ -241,7 +243,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       }
 
       // Whole Observation report QC flags
-      if (is_profile){
+      if (is_profile) {
         std::vector<int> reduced_qc(coords.n_obs, 0);
         for (size_t iProf=0; iProf < coords.n_obs; ++iProf) {
           size_t badObs = 0;
@@ -308,7 +310,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       fdbk_writer.write_variable_surf_qc(nemo_name + "_QC", reduced_qc);
       if (is_profile) {
         reducer.reduce_profile_data(variable_level_qc, reduced_qc);
-        fdbk_writer.write_variable_level_qc(nemo_name + "_LEVEL_QC", reduced_qc);
+        fdbk_writer.write_variable_level_qc(nemo_name + "_LEVEL_QC",
+            reduced_qc);
       } else {
         reduced_qc = reducer.reduce_data(variable_level_qc);
         fdbk_writer.write_variable_surf_qc(nemo_name + "_LEVEL_QC", reduced_qc);
@@ -336,13 +339,14 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                              << std::endl;
           // Awkward hack to assign a value for the missing value in the case
           // of no observations
-          auto missing_value_add = util::missingValue(double(0));
-          if (coords.n_locs > 0) missing_value_add = util::missingValue(ov[var_it_dist]);
-          auto ov_indexer = [&]( size_t iOb ) -> int {
+          auto missing_value_add = util::missingValue(static_cast<double>(0));
+          if (coords.n_locs > 0)
+              missing_value_add = util::missingValue(ov[var_it_dist]);
+          auto ov_indexer = [&](size_t iOb) -> int {
               return iOb * ov.nvars() + var_it_dist;
           };
           for (size_t sIndx = 0; sIndx < coords.n_obs; ++sIndx) {
-            for (size_t rOb = 0; rOb < coords.record_counts[sIndx]; ++rOb){
+            for (size_t rOb = 0; rOb < coords.record_counts[sIndx]; ++rOb) {
               const size_t obIdx = coords.record_starts[sIndx] + rOb;
               if (ov[ov_indexer(obIdx)] == missing_value_add) {
                 variable_data[obIdx] = NemoFeedbackWriter::double_fillvalue;
@@ -367,7 +371,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
             + ioda_group + "/" + ufo_name, Here());
       } else {
         obsdb_.get_db(ioda_group, ufo_name, variable_data);
-        auto missing_value = util::missingValue(decltype(variable_data)::value_type(0));
+        auto missing_value = util::missingValue(
+            decltype(variable_data)::value_type(0));
         for (int i=0; i < coords.n_obs; ++i) {
           if (variable_data[i] == missing_value)
             variable_data[i] = NemoFeedbackWriter::double_fillvalue;

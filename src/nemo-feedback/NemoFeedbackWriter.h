@@ -96,7 +96,7 @@ class NemoFeedbackWriter {
 
  private:
   NemoFeedbackWriter() : ncFile(), nobs_dim(), nlevels_dim(), coords_(),
-                         name_data_() {};
+                         name_data_() {}
 
   /// \brief Define the coordinate variables in the NetCDF file
   void define_coord_variables(
