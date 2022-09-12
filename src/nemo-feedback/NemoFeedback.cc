@@ -187,7 +187,9 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
         parameters_.variables.value()) {
     auto nemo_name = nemoVariableParams.nemoName.value();
     auto ufo_name = nemoVariableParams.name.value();
-    obsdb_.get_db("ObsValue", ufo_name, variable_data);
+    auto obs_group = nemoVariableParams.iodaObsGroup.value()
+        .value_or("ObsValue");
+    obsdb_.get_db(obs_group, ufo_name, variable_data);
     auto missing_value = util::missingValue(variable_data[0]);
     oops::Log::trace() << "Missing value OBS: " << missing_value << std::endl;
     for (int i=0; i < n_locs; ++i) {
