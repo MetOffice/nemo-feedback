@@ -41,9 +41,13 @@ observations:
   - obs space:
       name: Sea Ice
       obsdatain:
-        obsfile: ../../../orca-jedi/src/tests/Data/ostia_seaice_obs.nc
+        engine:
+          type: H5File
+          obsfile: ../../../orca-jedi/src/tests/Data/ostia_seaice_obs.nc
       obsdataout:
-        obsfile: test_out.nc
+        engine:
+          type: H5File
+          obsfile: test_out.nc
       simulated variables: [ice_area_fraction]
     get values:
       time interpolation: linear
