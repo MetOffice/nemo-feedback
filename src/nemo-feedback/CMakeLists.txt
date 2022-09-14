@@ -9,6 +9,8 @@ list( APPEND nemo_fdbk_src_files
     NemoFeedbackParameters.h
     NemoFeedbackWriter.h
     NemoFeedbackWriter.cc
+    NemoFeedbackReduce.h
+    NemoFeedbackReduce.cc
 )
 
 ecbuild_add_library( TARGET nemo_feedback

@@ -15,6 +15,7 @@
 #include "eckit/testing/Test.h"
 
 #include "nemo-feedback/NemoFeedbackWriter.h"
+#include "nemo-feedback/NemoFeedbackReduce.h"
 
 namespace nemo_feedback {
 namespace test {
@@ -35,6 +36,10 @@ CASE("test creating test file ") {
   coords.depths = std::vector<double>(n_obs*coords.n_levels, 0);
   coords.julian_days = std::vector<double>{11.0, 12.0, 13.0, 14.0, 15.0};
   coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
+  coords.record_counts.assign(coords.n_locs, 1);
+  coords.record_starts.resize(coords.n_locs);
+  for (int iLoc = 0; iLoc < coords.n_locs; ++iLoc)
+      coords.record_starts[iLoc] = iLoc;
 
   NemoFeedbackWriter::NameData name_data;
   name_data.variable_names = std::vector<std::string>{"SST", "MDT"};
@@ -54,18 +59,24 @@ CASE("test creating test file ") {
                                        " 3456789",
                                        "123     "};
 
+  NemoFeedbackReduce reducer(coords.n_obs, 4, {true, false, true, true, true},
+        coords.record_starts, coords.record_counts);
+  coords.lats = reducer.reduce_data(coords.lats);
+  coords.lons = reducer.reduce_data(coords.lons);
+  coords.depths = reducer.reduce_data(coords.depths);
+  coords.julian_days = reducer.reduce_data(coords.julian_days);
+  station_types = reducer.reduce_data(station_types);
+  station_ids = reducer.reduce_data(station_ids);
+  coords.n_obs = 4;
+
   SECTION("file writes") {
     NemoFeedbackWriter fdbk_writer(
         test_data_path,
-        4,
-        {true, false, true, true, true},
         coords,
         name_data,
         extra_variables,
         station_types,
-        station_ids,
-        {},
-        {});
+        station_ids);
 
     EXPECT(test_data_path.exists());
   }
@@ -172,46 +183,38 @@ CASE("test creating profile file ") {
   const std::vector<bool> to_write(n_locs, true);
 
   SECTION("file writes") {
-    const std::vector<size_t> record_starts{0, 2};
-    const std::vector<size_t> record_counts{2, coords.n_levels};
+    coords.record_starts = std::vector<size_t>{0, 2};
+    coords.record_counts = std::vector<size_t>{2, coords.n_levels};
 
     NemoFeedbackWriter fdbk_writer(
         test_data_path,
-        2,
-        to_write,
         coords,
         name_data,
         extra_variables,
         station_types,
-        station_ids,
-        record_starts,
-        record_counts);
+        station_ids);
 
     std::vector<double> data(n_locs, 0);
     for (int i = 0; i < n_locs; ++i) data[i] = i;
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
-        data, record_starts, record_counts);
+        data);
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
-        data, record_starts, record_counts);
+        data);
     fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_OBS",
-        data, record_starts, record_counts);
+        data);
     fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_Hx",
-        data, record_starts, record_counts);
+        data);
 
     std::vector<int32_t> int_data(n_locs, 0);
     for (int i = 0; i < n_locs; ++i) int_data[i] = 10+i;
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0,
-        record_starts, record_counts);
+        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", int_data, 0,
-        record_starts, record_counts);
+        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", int_data, 0);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC", int_data,
-        record_starts, record_counts);
+        name_data.variable_names[0] + "_LEVEL_QC", int_data);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC", int_data,
-        record_starts, record_counts);
+        name_data.variable_names[1] + "_LEVEL_QC", int_data);
 
     EXPECT(test_data_path.exists());
   }
@@ -312,46 +315,48 @@ CASE("test creating reduced profile file ") {
   const std::vector<bool> to_write{true, false, true, true, true, false, true};
 
   SECTION("file writes") {
-    const std::vector<size_t> record_starts{0, 2};
-    const std::vector<size_t> record_counts{2, n_levels_unreduced};
+    coords.record_starts = std::vector<size_t>{0, 2};
+    coords.record_counts = std::vector<size_t>{2, n_levels_unreduced};
+
+    NemoFeedbackReduce reducer(coords.n_obs, 2, to_write,
+        coords.record_starts, coords.record_counts);
+    coords.record_starts = reducer.reduced_starts;
+    coords.record_counts = reducer.reduced_counts;
 
     NemoFeedbackWriter fdbk_writer(
         test_data_path,
-        2,
-        to_write,
         coords,
         name_data,
         extra_variables,
         station_types,
-        station_ids,
-        record_starts,
-        record_counts);
+        station_ids);
 
     std::vector<double> data(n_locs, 0);
+    std::vector<double> reduced_data;
     for (int i = 0; i < n_locs; ++i) data[i] = i;
+    reducer.reduce_profile_data(data, reduced_data);
+
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
-        data, record_starts, record_counts);
+        reduced_data);
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
-        data, record_starts, record_counts);
+        reduced_data);
     fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_OBS",
-        data, record_starts, record_counts);
+        reduced_data);
     fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_Hx",
-        data, record_starts, record_counts);
+        reduced_data);
 
     std::vector<int32_t> int_data(n_locs, 0);
+    std::vector<int32_t> reduced_int_data;
     for (int i = 0; i < n_locs; ++i) int_data[i] = 10+i;
+    reducer.reduce_profile_data(int_data, reduced_int_data);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0,
-        record_starts, record_counts);
+        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", reduced_int_data, 0);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", int_data, 0,
-        record_starts, record_counts);
+        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", reduced_int_data, 0);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC", int_data,
-        record_starts, record_counts);
+        name_data.variable_names[0] + "_LEVEL_QC", reduced_int_data);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC", int_data,
-        record_starts, record_counts);
+        name_data.variable_names[1] + "_LEVEL_QC", reduced_int_data);
 
     EXPECT(test_data_path.exists());
   }
