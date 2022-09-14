@@ -2,22 +2,22 @@ Test     : Initial state:
 Test     :  Model state valid at time: 2021-06-29T21:00:00Z
 Test     :     4 variables: ice_area_fraction, sea_surface_temperature, ice_area_fraction_background_error, sea_surface_temperature_background_error
 Test     :     atlas field norms:
-Test     :         ice_area_fraction: 0.00323467
-Test     :         sea_surface_temperature: 0.136432
-Test     :         ice_area_fraction_background_error: 0.00303628
-Test     :         sea_surface_temperature_background_error: 0.000607255
+Test     :         ice_area_fraction: 3.20183e-03
+Test     :         sea_surface_temperature: 1.37607e-01
+Test     :         ice_area_fraction_background_error: 3.06841e-03
+Test     :         sea_surface_temperature_background_error: 6.13682e-04
 
 Test     : Final state: 
-Test     :  Model state valid at time: 2021-07-02T21:00:00Z
+Test     :  Model state valid at time: 2021-07-01T21:00:00Z
 Test     :     4 variables: ice_area_fraction, sea_surface_temperature, ice_area_fraction_background_error, sea_surface_temperature_background_error
 Test     :     atlas field norms:
-Test     :         ice_area_fraction: 0.00323467
-Test     :         sea_surface_temperature: 0.136432
-Test     :         ice_area_fraction_background_error: 0.00303628
-Test     :         sea_surface_temperature_background_error: 0.000607255
+Test     :         ice_area_fraction: 3.16981e-03
+Test     :         sea_surface_temperature: 1.37683e-01
+Test     :         ice_area_fraction_background_error: 3.06841e-03
+Test     :         sea_surface_temperature_background_error: 6.13682e-04
 
 Test     : H(x): 
-Test     : Sea Ice nobs= 14 Min=0, Max=18.1724, RMS=12.6338
+Test     : Sea Ice nobs= 14 Min=0.00000e+00, Max=1.81824e+01, RMS=1.26409e+01
 
 Test     : End H(x)
 

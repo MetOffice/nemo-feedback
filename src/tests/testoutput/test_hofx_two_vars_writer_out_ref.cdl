@@ -63,14 +63,25 @@ variables:
 	double ICECONC_OBS(N_OBS, N_LEVELS) ;
 		ICECONC_OBS:long_name = "ice area fraction" ;
 		ICECONC_OBS:units = "Fraction" ;
+		ICECONC_OBS:_FillValue = 99999. ;
 	double ICECONC_Hx(N_OBS, N_LEVELS) ;
 		ICECONC_Hx:long_name = "ice area fraction Hx" ;
 		ICECONC_Hx:units = "Fraction" ;
+		ICECONC_Hx:_FillValue = 99999. ;
 	int ICECONC_QC_FLAGS(N_OBS, N_QCF) ;
+		ICECONC_QC_FLAGS:_FillValue = 0 ;
+		ICECONC_QC_FLAGS:long_name = "quality flags on ice area fraction" ;
+		ICECONC_QC_FLAGS:Conventions = "OPS flag conventions" ;
 	int ICECONC_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		ICECONC_LEVEL_QC_FLAGS:_FillValue = 0 ;
+		ICECONC_LEVEL_QC_FLAGS:long_name = "quality flags for each level on ice area fraction" ;
+		ICECONC_LEVEL_QC_FLAGS:Conventions = "OPS flag conventions" ;
 	int ICECONC_QC(N_OBS) ;
+		ICECONC_QC:long_name = "quality on ice area fraction" ;
 		ICECONC_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int ICECONC_LEVEL_QC(N_OBS, N_LEVELS) ;
+		ICECONC_LEVEL_QC:_FillValue = 0 ;
+		ICECONC_LEVEL_QC:long_name = "quality for each level on ice area fraction" ;
 		ICECONC_LEVEL_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int ICECONC_IOBSI(N_OBS) ;
 		ICECONC_IOBSI:long_name = "ORCA grid search I coordinate" ;
@@ -83,14 +94,25 @@ variables:
 	double SST_OBS(N_OBS, N_LEVELS) ;
 		SST_OBS:long_name = "sea_surface_temperature" ;
 		SST_OBS:units = "Fraction" ;
+		SST_OBS:_FillValue = 99999. ;
 	double SST_Hx(N_OBS, N_LEVELS) ;
 		SST_Hx:long_name = "sea_surface_temperature Hx" ;
 		SST_Hx:units = "Fraction" ;
+		SST_Hx:_FillValue = 99999. ;
 	int SST_QC_FLAGS(N_OBS, N_QCF) ;
+		SST_QC_FLAGS:_FillValue = 0 ;
+		SST_QC_FLAGS:long_name = "quality flags on sea_surface_temperature" ;
+		SST_QC_FLAGS:Conventions = "OPS flag conventions" ;
 	int SST_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		SST_LEVEL_QC_FLAGS:_FillValue = 0 ;
+		SST_LEVEL_QC_FLAGS:long_name = "quality flags for each level on sea_surface_temperature" ;
+		SST_LEVEL_QC_FLAGS:Conventions = "OPS flag conventions" ;
 	int SST_QC(N_OBS) ;
+		SST_QC:long_name = "quality on sea_surface_temperature" ;
 		SST_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int SST_LEVEL_QC(N_OBS, N_LEVELS) ;
+		SST_LEVEL_QC:_FillValue = 0 ;
+		SST_LEVEL_QC:long_name = "quality for each level on sea_surface_temperature" ;
 		SST_LEVEL_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int SST_IOBSI(N_OBS) ;
 		SST_IOBSI:long_name = "ORCA grid search I coordinate" ;
@@ -239,7 +261,7 @@ data:
 
  ICECONC_OBS =
   0,
-  99999,
+  _,
   0.996299982070923,
   0,
   0,
@@ -252,29 +274,29 @@ data:
 
  ICECONC_Hx =
   0,
-  99999,
+  _,
   0,
   0,
-  99999,
+  _,
   0,
-  99999,
+  _,
   0,
   0,
   0,
-  99999 ;
+  _ ;
 
  ICECONC_QC_FLAGS =
   64, _,
-  0, _,
+  _, _,
   64, _,
   64, _,
-  0, _,
+  _, _,
   64, _,
-  0, _,
+  _, _,
   64, _,
   64, _,
   64, _,
-  0, _ ;
+  _, _ ;
 
  ICECONC_LEVEL_QC_FLAGS =
   _, _,
@@ -325,7 +347,7 @@ data:
 
  SST_OBS =
   18,
-  99999,
+  _,
   18,
   18,
   18,
@@ -337,17 +359,17 @@ data:
   18 ;
 
  SST_Hx =
-  18.1723740047895,
-  99999,
-  17.6373218000851,
-  17.7117961661792,
-  99999,
-  18.125835119971,
-  99999,
-  17.9115855857058,
-  17.804222153134,
-  17.6973345847552,
-  99999 ;
+  18.1823740047895,
+  _,
+  17.6473218000851,
+  17.7217961661792,
+  _,
+  18.1358351199711,
+  _,
+  17.9215855857058,
+  17.814222153134,
+  17.7073345847551,
+  _ ;
 
  SST_QC_FLAGS =
   _, _,

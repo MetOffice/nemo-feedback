@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-set -e 
+set -euo pipefail
 
-test_file=${1}
-test_cdl="${test_file::-3}.cdl"
-ref_cdl=${2}
+test_file="$1"
+ref_cdl="$2"
 
-ncdump ${test_file} > ${test_cdl}
-
-diff ${test_cdl} ${ref_cdl}
+diff -u "${ref_cdl}" <(ncdump "${test_file}")

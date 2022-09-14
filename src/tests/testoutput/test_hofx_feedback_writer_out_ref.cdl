@@ -65,14 +65,25 @@ variables:
 	double ICECONC_OBS(N_OBS, N_LEVELS) ;
 		ICECONC_OBS:long_name = "ice area fraction" ;
 		ICECONC_OBS:units = "Fraction" ;
+		ICECONC_OBS:_FillValue = 99999. ;
 	double ICECONC_Hx(N_OBS, N_LEVELS) ;
 		ICECONC_Hx:long_name = "ice area fraction Hx" ;
 		ICECONC_Hx:units = "Fraction" ;
+		ICECONC_Hx:_FillValue = 99999. ;
 	int ICECONC_QC_FLAGS(N_OBS, N_QCF) ;
+		ICECONC_QC_FLAGS:_FillValue = 0 ;
+		ICECONC_QC_FLAGS:long_name = "quality flags on ice area fraction" ;
+		ICECONC_QC_FLAGS:Conventions = "OPS flag conventions" ;
 	int ICECONC_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		ICECONC_LEVEL_QC_FLAGS:_FillValue = 0 ;
+		ICECONC_LEVEL_QC_FLAGS:long_name = "quality flags for each level on ice area fraction" ;
+		ICECONC_LEVEL_QC_FLAGS:Conventions = "OPS flag conventions" ;
 	int ICECONC_QC(N_OBS) ;
+		ICECONC_QC:long_name = "quality on ice area fraction" ;
 		ICECONC_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int ICECONC_LEVEL_QC(N_OBS, N_LEVELS) ;
+		ICECONC_LEVEL_QC:_FillValue = 0 ;
+		ICECONC_LEVEL_QC:long_name = "quality for each level on ice area fraction" ;
 		ICECONC_LEVEL_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int ICECONC_IOBSI(N_OBS) ;
 		ICECONC_IOBSI:long_name = "ORCA grid search I coordinate" ;
@@ -102,7 +113,7 @@ data:
  ENTRIES =
   "Hx      " ;
 
- LATITUDE = 31.029390335083, 62.4358901977539, -65.2853622436523, 
+ LATITUDE = 82.0293884277344, 62.4358901977539, -65.2853622436523, 
     -51.8797912597656, 41.8941993713379, 22.6518993377686, 3.32629990577698, 
     -15.9160003662109, -35.2416000366211, -54.4838981628418, -73.7261962890625 ;
 
@@ -123,7 +134,7 @@ data:
   0,
   0 ;
 
- JULD = 0, 0, 0, 0, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5 ;
+ JULD = -1, -1, -1, -1, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5 ;
 
  STATION_IDENTIFIER =
   "        ",
@@ -226,7 +237,7 @@ data:
 
  ICECONC_OBS =
   0,
-  99999,
+  _,
   0.996299982070923,
   0,
   0,
@@ -238,30 +249,30 @@ data:
   0 ;
 
  ICECONC_Hx =
-  0,
-  99999,
-  0,
-  0,
-  99999,
-  0,
-  99999,
+  0.495,
+  _,
   0,
   0,
+  _,
   0,
-  99999 ;
+  _,
+  0,
+  0,
+  0,
+  _ ;
 
  ICECONC_QC_FLAGS =
-  64, _,
-  0, _,
+  68, _,
+  _, _,
   68, _,
   64, _,
-  0, _,
+  _, _,
   64, _,
-  0, _,
+  _, _,
   64, _,
   64, _,
   64, _,
-  0, _ ;
+  _, _ ;
 
  ICECONC_LEVEL_QC_FLAGS =
   _, _,
@@ -276,10 +287,10 @@ data:
   _, _,
   _, _ ;
 
- ICECONC_QC = 1, 4, 4, 1, 4, 1, 4, 1, 1, 1, 4 ;
+ ICECONC_QC = 4, 4, 4, 1, 4, 1, 4, 1, 1, 1, 4 ;
 
  ICECONC_LEVEL_QC =
-  1,
+  4,
   4,
   4,
   1,

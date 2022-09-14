@@ -1,0 +1,283 @@
+netcdf test_hofx3d_nc_prof_2vars_writer_out {
+dimensions:
+	N_QCF = 2 ;
+	STRINGGRID = 1 ;
+	STRINGJULD = 14 ;
+	STRINGNAM = 8 ;
+	STRINGTYP = 4 ;
+	STRINGWMO = 8 ;
+	N_OBS = 2 ;
+	N_LEVELS = 6 ;
+	N_VARS = 2 ;
+	N_ENTRIES = 1 ;
+variables:
+	char JULD_REFERENCE(STRINGJULD) ;
+		JULD_REFERENCE:long_name = "Date of reference for julian days" ;
+		JULD_REFERENCE:Conventions = "YYYYMMDDHHMMSS" ;
+	char VARIABLES(N_VARS, STRINGNAM) ;
+		VARIABLES:long_name = "List of variables in feedback files" ;
+	char ENTRIES(N_ENTRIES, STRINGNAM) ;
+		ENTRIES:long_name = "List of additional entries for each variable in feedback files" ;
+	double LATITUDE(N_OBS) ;
+		LATITUDE:units = "degrees_north" ;
+		LATITUDE:long_name = "latitude" ;
+	double LONGITUDE(N_OBS) ;
+		LONGITUDE:units = "degrees_east" ;
+		LONGITUDE:long_name = "longitude" ;
+	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:units = "metre" ;
+		DEPTH:long_name = "Depth" ;
+	double JULD(N_OBS) ;
+		JULD:units = "days since JULD_REFERENCE" ;
+		JULD:long_name = "Julian day" ;
+	char STATION_IDENTIFIER(N_OBS, STRINGWMO) ;
+		STATION_IDENTIFIER:long_name = "Station identifier" ;
+	char STATION_TYPE(N_OBS, STRINGTYP) ;
+		STATION_TYPE:long_name = "Code instrument type" ;
+	int DEPTH_QC(N_OBS, N_LEVELS) ;
+		DEPTH_QC:long_name = "Quality on depth" ;
+		DEPTH_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int DEPTH_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		DEPTH_QC_FLAGS:long_name = "Quality on depth" ;
+		DEPTH_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int OBSERVATION_QC(N_OBS) ;
+		OBSERVATION_QC:long_name = "Quality on observation" ;
+		OBSERVATION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int OBSERVATION_QC_FLAGS(N_OBS, N_QCF) ;
+		OBSERVATION_QC_FLAGS:long_name = "Quality on observation" ;
+		OBSERVATION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int POSITION_QC(N_OBS) ;
+		POSITION_QC:long_name = "Quality on position" ;
+		POSITION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int POSITION_QC_FLAGS(N_OBS, N_QCF) ;
+		POSITION_QC_FLAGS:long_name = "Quality on position" ;
+		POSITION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int JULD_QC(N_OBS) ;
+		JULD_QC:long_name = "Quality on date and time" ;
+		JULD_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int JULD_QC_FLAGS(N_OBS, N_QCF) ;
+		JULD_QC_FLAGS:long_name = "Quality on date and time" ;
+		JULD_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int ORIGINAL_FILE_INDEX(N_OBS) ;
+		ORIGINAL_FILE_INDEX:long_name = "Index in original data file" ;
+	double POTM_OBS(N_OBS, N_LEVELS) ;
+		POTM_OBS:long_name = "sea water potential temperature" ;
+		POTM_OBS:units = "degrees Celsius" ;
+		POTM_OBS:_FillValue = 99999. ;
+	double POTM_Hx(N_OBS, N_LEVELS) ;
+		POTM_Hx:long_name = "sea water potential temperature Hx" ;
+		POTM_Hx:units = "degrees Celsius" ;
+		POTM_Hx:_FillValue = 99999. ;
+	int POTM_QC_FLAGS(N_OBS, N_QCF) ;
+		POTM_QC_FLAGS:_FillValue = 0 ;
+		POTM_QC_FLAGS:long_name = "quality flags on sea water potential temperature" ;
+		POTM_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int POTM_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		POTM_LEVEL_QC_FLAGS:_FillValue = 0 ;
+		POTM_LEVEL_QC_FLAGS:long_name = "quality flags for each level on sea water potential temperature" ;
+		POTM_LEVEL_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int POTM_QC(N_OBS) ;
+		POTM_QC:long_name = "quality on sea water potential temperature" ;
+		POTM_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int POTM_LEVEL_QC(N_OBS, N_LEVELS) ;
+		POTM_LEVEL_QC:_FillValue = 0 ;
+		POTM_LEVEL_QC:long_name = "quality for each level on sea water potential temperature" ;
+		POTM_LEVEL_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int POTM_IOBSI(N_OBS) ;
+		POTM_IOBSI:long_name = "ORCA grid search I coordinate" ;
+	int POTM_IOBSJ(N_OBS) ;
+		POTM_IOBSJ:long_name = "ORCA grid search J coordinate" ;
+	int POTM_IOBSK(N_OBS, N_LEVELS) ;
+		POTM_IOBSK:long_name = "ORCA grid search K coordinate" ;
+	char POTM_GRID(STRINGGRID) ;
+		POTM_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+	double PSAL_OBS(N_OBS, N_LEVELS) ;
+		PSAL_OBS:long_name = "sea water salinity" ;
+		PSAL_OBS:units = "degrees Celsius" ;
+		PSAL_OBS:_FillValue = 99999. ;
+	double PSAL_Hx(N_OBS, N_LEVELS) ;
+		PSAL_Hx:long_name = "sea water salinity Hx" ;
+		PSAL_Hx:units = "degrees Celsius" ;
+		PSAL_Hx:_FillValue = 99999. ;
+	int PSAL_QC_FLAGS(N_OBS, N_QCF) ;
+		PSAL_QC_FLAGS:_FillValue = 0 ;
+		PSAL_QC_FLAGS:long_name = "quality flags on sea water salinity" ;
+		PSAL_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int PSAL_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		PSAL_LEVEL_QC_FLAGS:_FillValue = 0 ;
+		PSAL_LEVEL_QC_FLAGS:long_name = "quality flags for each level on sea water salinity" ;
+		PSAL_LEVEL_QC_FLAGS:Conventions = "OPS flag conventions" ;
+	int PSAL_QC(N_OBS) ;
+		PSAL_QC:long_name = "quality on sea water salinity" ;
+		PSAL_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int PSAL_LEVEL_QC(N_OBS, N_LEVELS) ;
+		PSAL_LEVEL_QC:_FillValue = 0 ;
+		PSAL_LEVEL_QC:long_name = "quality for each level on sea water salinity" ;
+		PSAL_LEVEL_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int PSAL_IOBSI(N_OBS) ;
+		PSAL_IOBSI:long_name = "ORCA grid search I coordinate" ;
+	int PSAL_IOBSJ(N_OBS) ;
+		PSAL_IOBSJ:long_name = "ORCA grid search J coordinate" ;
+	int PSAL_IOBSK(N_OBS, N_LEVELS) ;
+		PSAL_IOBSK:long_name = "ORCA grid search K coordinate" ;
+	char PSAL_GRID(STRINGGRID) ;
+		PSAL_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+
+// global attributes:
+		:title = "NEMO observation operator output" ;
+		:Convention = "NEMO unified observation operator output" ;
+data:
+
+ JULD_REFERENCE = "19500101000000" ;
+
+ VARIABLES =
+  "POTM    ",
+  "PSAL    " ;
+
+ ENTRIES =
+  "Hx      " ;
+
+ LATITUDE = 35, 36 ;
+
+ LONGITUDE = -40, -41 ;
+
+ DEPTH =
+  0, 1, 3, 10, 50, 1000,
+  0, 1, 3, 10, 50, 1000 ;
+
+ JULD = 26113.5, 26113.5 ;
+
+ STATION_IDENTIFIER =
+  "20190615",
+  "20190615" ;
+
+ STATION_TYPE =
+  "    ",
+  "    " ;
+
+ DEPTH_QC =
+  _, _, _, _, _, _,
+  _, _, _, _, _, _ ;
+
+ DEPTH_QC_FLAGS =
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _ ;
+
+ OBSERVATION_QC = 4, 4 ;
+
+ OBSERVATION_QC_FLAGS =
+  _, _,
+  _, _ ;
+
+ POSITION_QC = _, _ ;
+
+ POSITION_QC_FLAGS =
+  _, _,
+  _, _ ;
+
+ JULD_QC = _, _ ;
+
+ JULD_QC_FLAGS =
+  _, _,
+  _, _ ;
+
+ ORIGINAL_FILE_INDEX = _, _ ;
+
+ POTM_OBS =
+  12.3000001907349, 12.3999996185303, 12.8999996185303, _, 11.6999998092651, 
+    10.3000001907349,
+  13.3000001907349, 13.3999996185303, 13.8999996185303, _, 12.6999998092651, 
+    11.3000001907349 ;
+
+ POTM_Hx =
+  18.1944444613818, 18.1638889034759, 18.1027777876641, _, _, _,
+  18.2000000067484, 18.1686111163633, 18.1058333355931, _, _, _ ;
+
+ POTM_QC_FLAGS =
+  _, _,
+  _, _ ;
+
+ POTM_LEVEL_QC_FLAGS =
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _ ;
+
+ POTM_QC = _, _ ;
+
+ POTM_LEVEL_QC =
+  _, _, _, _, _, _,
+  _, _, _, _, _, _ ;
+
+ POTM_IOBSI = _, _ ;
+
+ POTM_IOBSJ = _, _ ;
+
+ POTM_IOBSK =
+  _, _, _, _, _, _,
+  _, _, _, _, _, _ ;
+
+ POTM_GRID = "T" ;
+
+ PSAL_OBS =
+  35.2999992370605, 35.4000015258789, 35.9000015258789, _, 35.7000007629395, 
+    35.2999992370605,
+  36.2999992370605, 36.4000015258789, 36.9000015258789, _, 36.7000007629395, 
+    36.2999992370605 ;
+
+ PSAL_Hx =
+  35.1944444613818, 35.1638889034759, 35.1027777876641, _, _, _,
+  35.2000000067484, 35.1686111163633, 35.1058333355931, _, _, _ ;
+
+ PSAL_QC_FLAGS =
+  _, _,
+  _, _ ;
+
+ PSAL_LEVEL_QC_FLAGS =
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _,
+  1, _ ;
+
+ PSAL_QC = _, _ ;
+
+ PSAL_LEVEL_QC =
+  _, _, _, _, _, _,
+  _, _, _, _, _, _ ;
+
+ PSAL_IOBSI = _, _ ;
+
+ PSAL_IOBSJ = _, _ ;
+
+ PSAL_IOBSK =
+  _, _, _, _, _, _,
+  _, _, _, _, _, _ ;
+
+ PSAL_GRID = "T" ;
+}

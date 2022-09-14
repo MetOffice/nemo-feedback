@@ -34,6 +34,7 @@ class NemoFeedbackVariableParameters : public oops::Parameters {
  public:
   oops::RequiredParameter<std::string> name{"name", this};
   oops::RequiredParameter<std::string> nemoName{"nemo name", this};
+  oops::OptionalParameter<std::string> iodaObsGroup{"ioda group", this};
   oops::RequiredParameter<std::string> units{"units", this};
   oops::RequiredParameter<std::string> longName{"long name", this};
   oops::OptionalParameter<bool> extravar{"extra variable", this};
@@ -51,6 +52,8 @@ class NemoFeedbackParameters : public oops::ObsFilterParametersBase {
   oops::RequiredParameter<std::vector<NemoFeedbackVariableParameters>>
     variables{"variables", this};
   oops::OptionalParameter<util::DateTime> refDate{"reference date", this};
+  oops::OptionalParameter<std::string> depthGroup{"depth group", this};
+  oops::OptionalParameter<std::string> depthVariable{"depth variable", this};
   /// Logic used to select locations to be written to file.
   /// If not specified, all locations will be written.
   oops::Parameter<std::vector<ufo::WhereParameters>> where{"where", {}, this};
