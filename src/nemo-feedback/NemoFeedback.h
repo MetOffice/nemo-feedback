@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "eckit/mpi/Comm.h"
 #include "ioda/ObsDataVector.h"
 #include "oops/base/Variables.h"
 #include "oops/interface/ObsFilterBase.h"
@@ -54,8 +55,6 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   ///        observations to write to the file
   void groupCoordsByRecord(const std::vector<bool>& to_write,
                           NemoFeedbackWriter::CoordData& coords,
-                          std::vector<size_t>& record_starts,
-                          std::vector<size_t>& record_counts,
                           bool is_profile) const;
   /// \brief Setup the NEMO STATION_TYPES and STATION_IDS netCDF variables for
   ///        altimeter observations.  Filter observations based on the latest
@@ -70,6 +69,9 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
                 const std::vector<size_t>& record_counts,
                 std::vector<std::string>& station_ids,
                 std::vector<std::string>& station_types) const;
+  /// \brief Sync relevent coordinate data across MPI processes
+  void mpi_sync_coordinates(NemoFeedbackWriter::CoordData& coords,
+                            const eckit::mpi::Comm& comm);
   void print(std::ostream &) const override;
 
   ioda::ObsSpace & obsdb_;
