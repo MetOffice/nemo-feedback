@@ -39,11 +39,11 @@ observations:
         engine:
           type: H5File
           obsfile: ../../../orca-jedi/src/tests/Data/hofx_prof_2var_obs.nc
-          obsgrouping:
-            group variables: ["station_id", "dateTime"]
-            sort variable: depth
-            sort group: ObsValue
-            sort order: descending
+        obsgrouping:
+          group variables: ["station_id", "dateTime"]
+          sort variable: depth
+          sort group: ObsValue
+          sort order: descending
       obsdataout:
         engine:
           type: H5File
