@@ -182,6 +182,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     coords.julian_days = reducer.reduce_data(coords.julian_days);
     station_ids = reducer.reduce_data(station_ids);
     station_types = reducer.reduce_data(station_types);
+    coords.n_obs = n_obs_to_write;
   }
 
   NemoFeedbackWriter fdbk_writer(
@@ -194,8 +195,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 
   // Write the data
   std::vector<double> variable_data;
-  std::vector<int> variable_qcFlags(coords.n_obs);
-  std::vector<int> variable_qc(coords.n_obs);
+  std::vector<int> variable_qcFlags(n_locs);
+  std::vector<int> variable_qc(n_locs);
   std::vector<ufo::DiagnosticFlag> do_not_assimilate;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
@@ -279,30 +280,30 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       obsdb_.get_db("DiagnosticFlags/FinalReject", ufo_name, final_qc);
 
       std::vector<int> variable_level_qc(n_locs);
-      for (int i=0; i < n_locs; ++i) {
-        if (final_qc[i]) {
-          variable_level_qc[i] = 4;
-        } else {variable_level_qc[i] = 1;}
+      for (size_t iLoc = 0; iLoc < n_locs; ++iLoc) {
+        if (final_qc[iLoc]) {
+          variable_level_qc[iLoc] = 4;
+        } else {variable_level_qc[iLoc] = 1;}
       }
-      for (int i=0; i < coords.n_obs; ++i) {
-        int j = reducer.reduced_starts[i];
-        if (final_qc[j]) {
-          variable_qc[j] = 4;
-        } else {variable_qc[j] = 1;}
+      for (size_t iStart = 0; iStart < reducer.unreduced_starts.size(); ++iStart) {
+        size_t jLoc = reducer.unreduced_starts[iStart];
+        if (final_qc[jLoc]) {
+          variable_qc[iStart] = 4;
+        } else {variable_qc[iStart] = 1;}
       }
       // Add do not assimilate flag if required.
       if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
         obsdb_.get_db("DiagnosticFlags/DoNotAssimilate", ufo_name,
             do_not_assimilate);
-        for (int i=0; i < n_locs; ++i) {
-          if (do_not_assimilate[i]) {
-            variable_level_qc[i] += 128;
+        for (size_t iLoc = 0; iLoc < n_locs; ++iLoc) {
+          if (do_not_assimilate[iLoc]) {
+            variable_level_qc[iLoc] += 128;
           }
         }
-        for (int i=0; i < coords.n_obs; ++i) {
-          int j = reducer.reduced_starts[i];
-          if (do_not_assimilate[j]) {
-            variable_qc[j] += 128;
+        for (size_t iStart = 0; iStart < reducer.unreduced_starts.size(); ++iStart) {
+          size_t jLoc = reducer.unreduced_starts[iStart];
+          if (do_not_assimilate[jLoc]) {
+            variable_qc[iStart] += 128;
           }
         }
       }
