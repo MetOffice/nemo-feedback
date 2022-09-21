@@ -280,30 +280,30 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       obsdb_.get_db("DiagnosticFlags/FinalReject", ufo_name, final_qc);
 
       std::vector<int> variable_level_qc(n_locs);
-      for (int iLoc = 0; iLoc < n_locs; ++iLoc) {
+      for (size_t iLoc = 0; iLoc < n_locs; ++iLoc) {
         if (final_qc[iLoc]) {
           variable_level_qc[iLoc] = 4;
         } else {variable_level_qc[iLoc] = 1;}
       }
-      for (int iStart = 0; iStart < reducer.unreduced_starts.size(); ++iStart) {
-        int jOb = reducer.unreduced_starts[iStart];
-        if (final_qc[jOb]) {
-          variable_qc[jOb] = 4;
-        } else {variable_qc[jOb] = 1;}
+      for (size_t iStart = 0; iStart < reducer.unreduced_starts.size(); ++iStart) {
+        size_t jLoc = reducer.unreduced_starts[iStart];
+        if (final_qc[jLoc]) {
+          variable_qc[iStart] = 4;
+        } else {variable_qc[iStart] = 1;}
       }
       // Add do not assimilate flag if required.
       if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
         obsdb_.get_db("DiagnosticFlags/DoNotAssimilate", ufo_name,
             do_not_assimilate);
-        for (int iLoc = 0; iLoc < n_locs; ++iLoc) {
+        for (size_t iLoc = 0; iLoc < n_locs; ++iLoc) {
           if (do_not_assimilate[iLoc]) {
             variable_level_qc[iLoc] += 128;
           }
         }
-        for (int iStart = 0; iStart < reducer.unreduced_starts.size(); ++iStart) {
-          int jOb = reducer.unreduced_starts[iStart];
-          if (do_not_assimilate[jOb]) {
-            variable_qc[jOb] += 128;
+        for (size_t iStart = 0; iStart < reducer.unreduced_starts.size(); ++iStart) {
+          size_t jLoc = reducer.unreduced_starts[iStart];
+          if (do_not_assimilate[jLoc]) {
+            variable_qc[iStart] += 128;
           }
         }
       }
