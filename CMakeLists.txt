@@ -18,19 +18,19 @@ set( CMAKE_DIRECTORY_LABELS "nemo-feedback" )
 ################################################################################
 # Required packages
 
-ecbuild_find_package( NAME eckit VERSION 1.16 REQUIRED )
+find_package( eckit 1.16 REQUIRED )
 ecbuild_debug( "   eckit_FEATURES : [${eckit_FEATURES}]" )
 
-ecbuild_find_package( NAME oops )
+find_package( oops REQUIRED )
 ecbuild_debug( "   oops_FEATURES : [${oops_FEATURES}]" )
 
-ecbuild_find_package( NAME ioda )
+find_package( ioda REQUIRED )
 ecbuild_debug( "   ioda_FEATURES : [${ioda_FEATURES}]" )
 
-ecbuild_find_package( NAME ufo )
+find_package( ufo REQUIRED )
 ecbuild_debug( "   ufo_FEATURES : [${ufo_FEATURES}]" )
 
-ecbuild_find_package( NAME orca-jedi )
+find_package( orca-jedi )
 
 #ecbuild_find_package( NAME NetCDF COMPONENTS CXX)
 find_package( NetCDF COMPONENTS CXX)
