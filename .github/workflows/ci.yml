@@ -102,24 +102,6 @@ jobs:
           path: ci/atlas
           repository: ecmwf/atlas
           token: ${{ secrets.GH_PAT }}
-      - name: checkout atlas-orca
-        uses: actions/checkout@v2
-        with:
-          path: ci/atlas-orca
-          repository: wdeconinck/atlas-orca
-          token: ${{ secrets.GH_PAT }}
-      - name: checkout orca-jedi
-        uses: actions/checkout@v2
-        with:
-          path: ci/orca-jedi
-          repository: MetOffice/orca-jedi
-          token: ${{ secrets.GH_PAT }}
-      - name: checkout atlas-orca grids
-        uses: actions/checkout@v2
-        with:
-          path: ci/atlas-data
-          repository: MetOffice/atlas-data
-          token: ${{ secrets.GH_PAT }}
       - name: build and test
         run: |
           docker run --rm \
