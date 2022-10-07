@@ -1,4 +1,4 @@
-netcdf test_hofx_feedback_writer_out {
+netcdf test_hofx_sic_writer_out {
 dimensions:
 	N_QCF = 2 ;
 	STRINGGRID = 1 ;

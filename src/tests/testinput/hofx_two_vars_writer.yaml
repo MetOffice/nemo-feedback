@@ -47,7 +47,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ../../../orca-jedi/src/tests/Data/hofx_two_vars_obs.nc
+          obsfile: Data/hofx_two_vars_obs.nc
       obsdataout:
         engine:
           type: H5File
@@ -102,5 +102,7 @@ observations:
         - name: sea_surface_temperature
           feedback suffix: Hx
           ioda group: HofX
+    - filter: GOMsaver
+      filename: testoutput/test_hofx_two_vars_writer_geovals.nc
 test:
   reference filename: testoutput/test_hofx_two_vars_writer.ref

@@ -26,7 +26,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ../../../orca-jedi/src/tests/Data/hofx_potm_obs.nc
+          obsfile: Data/hofx_potm_obs.nc
         obsgrouping:
           group variables: [ "station_id", "dateTime"]
           sort variable: depth
@@ -94,5 +94,7 @@ observations:
         - name: sea_water_potential_temperature
           feedback suffix: Hx
           ioda group: HofX
+    - filter: GOMsaver
+      filename: testoutput/test_hofx_profiles_writer_geovals.nc
 test:
   reference filename: testoutput/test_hofx_profiles_writer.ref

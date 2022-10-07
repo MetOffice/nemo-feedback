@@ -43,11 +43,11 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ../../../orca-jedi/src/tests/Data/ostia_seaice_obs.nc
+          obsfile: Data/hofx_sic_obs.nc
       obsdataout:
         engine:
           type: H5File
-          obsfile: test_out.nc
+          obsfile: testoutput/test_hofx_sic_jopa_out.nc
       simulated variables: [ice_area_fraction]
     get values:
       time interpolation: linear
@@ -125,7 +125,7 @@ observations:
         initial value: true
     - filter: NEMO Feedback Writer
       reference date: 2021-06-30T12:00:00Z
-      filename: testoutput/test_hofx_feedback_writer_out.nc
+      filename: testoutput/test_hofx_sic_writer_out.nc
       where:
       - variable:
           name: DiagnosticFlags/ObsToWrite/ice_area_fraction
@@ -144,5 +144,7 @@ observations:
         long name: fake MDT
         units: fake metres
         extra variable: true
+    - filter: GOMsaver
+      filename: testoutput/test_hofx_sic_writer_geovals.nc
 test:
-  reference filename: testoutput/test_hofx_feedback_writer.ref
+  reference filename: testoutput/test_hofx_sic_writer.ref

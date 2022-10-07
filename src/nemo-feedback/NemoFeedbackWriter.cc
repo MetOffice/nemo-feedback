@@ -522,7 +522,7 @@ void NemoFeedbackWriter::write_variable_profile(
   auto var = ncFile->getVar(variable_name);
   if (var.isNull()) {
       std::ostringstream err_stream;
-      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_profile "
+      err_stream << "nemo_feedback::NemoFeedbackWriter::write_variable_profile "
                  << "ncVar '" << variable_name << "' is not present in "
                  <<"NetCDF file";
       throw eckit::BadValue(err_stream.str(), Here());
@@ -533,7 +533,7 @@ void NemoFeedbackWriter::write_variable_profile(
   if (coords_.record_counts[coords_.n_obs-1]
       + coords_.record_starts[coords_.n_obs-1] > data.size()) {
       std::ostringstream err_stream;
-      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_profile "
+      err_stream << "nemo_feedback::NemoFeedbackWriter::write_variable_profile "
                  << "index range out of bounds '" << variable_name << "' "
                  << coords_.record_counts[coords_.n_obs-1]
                   + coords_.record_starts[coords_.n_obs-1]
@@ -555,7 +555,7 @@ void NemoFeedbackWriter::write_variable_level_qc(
   auto var = ncFile->getVar(variable_name);
   if (var.isNull()) {
       std::ostringstream err_stream;
-      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+      err_stream << "nemo_feedback::NemoFeedbackWriter::write_variable_level_qc "
                  << "ncVar '" << variable_name << "' is not present in "
                  <<"NetCDF file";
       throw eckit::BadValue(err_stream.str(), Here());
@@ -566,7 +566,7 @@ void NemoFeedbackWriter::write_variable_level_qc(
   if (coords_.record_counts[coords_.n_obs-1]
       + coords_.record_starts[coords_.n_obs-1] > data.size()) {
     std::ostringstream err_stream;
-    err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+    err_stream << "nemo_feedback::NemoFeedbackWriter::write_variable_level_qc "
                << "index range out of bounds '" << variable_name << "' "
                << coords_.record_counts[coords_.n_obs-1]
                   + coords_.record_starts[coords_.n_obs-1]
@@ -590,7 +590,7 @@ void NemoFeedbackWriter::write_variable_level_qc(
   auto var = ncFile->getVar(variable_name);
   if (var.isNull()) {
       std::ostringstream err_stream;
-      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+      err_stream << "nemo_feedback::NemoFeedbackWriter::write_variable_level_qc "
                  << "ncVar '" << variable_name << "' is not present in "
                  <<"NetCDF file";
       throw eckit::BadValue(err_stream.str(), Here());
@@ -601,7 +601,7 @@ void NemoFeedbackWriter::write_variable_level_qc(
   if (coords_.record_counts[coords_.n_obs-1]
       + coords_.record_starts[coords_.n_obs-1] > data.size()) {
       std::ostringstream err_stream;
-      err_stream << "orcamodel::NemoFeedbackWriter::write_variable_level_qc "
+      err_stream << "nemo_feedback::NemoFeedbackWriter::write_variable_level_qc "
                  << "index range out of bounds '" << variable_name << "' "
                  << coords_.record_counts[coords_.n_obs-1]
                   + coords_.record_starts[coords_.n_obs-1]
