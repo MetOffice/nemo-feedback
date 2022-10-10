@@ -1,5 +1,5 @@
 # Container image that runs your code
-FROM jcsda/docker-gnu-openmpi-dev:latest AS base
+FROM jcsda/docker-gnu-openmpi-dev:revert AS base
 
 RUN apt-get update \
     && apt-get -y install libhdf5-serial-dev \
