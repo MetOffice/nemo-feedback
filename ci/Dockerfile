@@ -1,7 +1,7 @@
 # Container image that runs your code
 FROM jcsda/docker-gnu-openmpi-dev:latest AS base
 
-source /etc/profile.d/z10_spack_environment.sh
+. /etc/profile.d/z10_spack_environment.sh
 
 RUN apt-get update \
     && apt-get -y install libhdf5-serial-dev \
