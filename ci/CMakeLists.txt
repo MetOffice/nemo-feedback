@@ -35,6 +35,5 @@ ecbuild_bundle( PROJECT ioda  SOURCE $ENV{CMAKE_CURRENT_SOURCE_DIR}/ioda )
 ecbuild_bundle( PROJECT ufo  SOURCE $ENV{CMAKE_CURRENT_SOURCE_DIR}/ufo )
 ecbuild_bundle( PROJECT atlas-orca SOURCE $ENV{CMAKE_CURRENT_SOURCE_DIR}/atlas-orca )
 ecbuild_bundle( PROJECT nemo-feedback SOURCE /usr/local/src/nemo-feedback )
-ecbuild_bundle( PROJECT orca-jedi SOURCE $ENV{CMAKE_CURRENT_SOURCE_DIR}/orca-jedi )
 
 ecbuild_bundle_finalize()

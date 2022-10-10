@@ -20,16 +20,22 @@ trap finally EXIT
 
 cd "${WORKD}"
 
-export LD_LIBRARY_PATH="${WORKD}/lib:$LD_LIBRARY_PATH"
-export PLUGINS_MANIFEST_PATH="${WORKD}/share/plugins"
-export ATLAS_DATA_PATH=/usr/local/src/nemo-feedback/ci/atlas-data
+# latest JCSDA images use spack to install the environment
+#. /etc/profile.d/z10_spack_environment.sh
 
-ecbuild -S "${HERE}" -DCMAKE_BUILD_TYPE=Debug -DECBUILD_2_COMPAT="ON" -DMPI_ARGS="--oversubscribe"
+if [ -z ${LD_LIBRARY_PATH} ]; then
+  export LD_LIBRARY_PATH="${WORKD}/lib"
+else
+  export LD_LIBRARY_PATH="${WORKD}/lib:${LD_LIBRARY_PATH}"
+fi
+#export PLUGINS_MANIFEST_PATH="${WORKD}/share/plugins"
+
+rm -f "${HERE}/nemo-feedback"
+ln -s '..' "${HERE}/nemo-feedback"
+ecbuild -S "${HERE}" -DCMAKE_BUILD_TYPE=Debug -DMPI_ARGS="--oversubscribe"
 make -j "${NPROC}"
 
-./bin/atlas-grids ORCA2_T --info
-
-#env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
-#    ctest -j "${NPROC}" -V --output-on-failure --test-dir './nemo-feedback'
+env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+   ctest -j "${NPROC}" -V --output-on-failure --test-dir "./nemo-feedback"
 
 exit

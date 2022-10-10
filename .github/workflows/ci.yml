@@ -63,6 +63,7 @@ jobs:
         with:
           path: ci/jedicmake
           repository: JCSDA-internal/jedi-cmake
+          submodules: true
           token: ${{ secrets.GH_PAT }}
       - name: checkout eckit
         uses: actions/checkout@v2
@@ -101,24 +102,6 @@ jobs:
         with:
           path: ci/atlas
           repository: ecmwf/atlas
-          token: ${{ secrets.GH_PAT }}
-      - name: checkout atlas-orca
-        uses: actions/checkout@v2
-        with:
-          path: ci/atlas-orca
-          repository: wdeconinck/atlas-orca
-          token: ${{ secrets.GH_PAT }}
-      - name: checkout orca-jedi
-        uses: actions/checkout@v2
-        with:
-          path: ci/orca-jedi
-          repository: MetOffice/orca-jedi
-          token: ${{ secrets.GH_PAT }}
-      - name: checkout atlas-orca grids
-        uses: actions/checkout@v2
-        with:
-          path: ci/atlas-data
-          repository: MetOffice/atlas-data
           token: ${{ secrets.GH_PAT }}
       - name: build and test
         run: |

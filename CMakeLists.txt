@@ -30,8 +30,6 @@ ecbuild_debug( "   ioda_FEATURES : [${ioda_FEATURES}]" )
 find_package( ufo REQUIRED )
 ecbuild_debug( "   ufo_FEATURES : [${ufo_FEATURES}]" )
 
-find_package( orca-jedi )
-
 #ecbuild_find_package( NAME NetCDF COMPONENTS CXX)
 find_package( NetCDF COMPONENTS CXX)
 ecbuild_debug( "   NetCDF_FEATURES: [${NetCDF_FEATURES}]" )
