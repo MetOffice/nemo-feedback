@@ -20,8 +20,14 @@ trap finally EXIT
 
 cd "${WORKD}"
 
-export LD_LIBRARY_PATH="${WORKD}/lib"
-export PLUGINS_MANIFEST_PATH="${WORKD}/share/plugins"
+. /etc/profile.d/z10_spack_environment.sh
+
+if [ -z ${LD_LIBRARY_PATH} ]; then
+  export LD_LIBRARY_PATH="${WORKD}/lib"
+else
+  export LD_LIBRARY_PATH="${WORKD}/lib:${LD_LIBRARY_PATH}"
+fi
+#export PLUGINS_MANIFEST_PATH="${WORKD}/share/plugins"
 
 rm -f "${HERE}/nemo-feedback"
 ln -s '..' "${HERE}/nemo-feedback"
