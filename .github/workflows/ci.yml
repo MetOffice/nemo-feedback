@@ -19,8 +19,8 @@ jobs:
         run: |
           TAG="latest"
           IMAGE="twsearle/nemo-feedback-ci"
-          echo ::set-output name=tagged_image::${IMAGE}:${TAG}
-          echo ::set-output name=tag::${TAG}
+          echo "tagged_image=${IMAGE}:${TAG}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@master
