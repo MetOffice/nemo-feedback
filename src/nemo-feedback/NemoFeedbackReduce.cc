@@ -107,7 +107,7 @@ void NemoFeedbackReduce::reduce_profile_data(
             + std::to_string(n_unred_prof_obs), Here());
   }
   // with profile data n_obs is the number of profiles and hence is not equal 
-  // n_locs, which is the number of data points, and so we setup new 
+  // to n_locs, which is the number of data points, and so we set up new 
   // record_starts and counts based on the new data vector.
   data_out.clear();
   const size_t n_prof_obs = std::accumulate(reduced_counts.begin(),
