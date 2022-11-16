@@ -489,7 +489,7 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       datetimes.assign(record_dts.begin(), record_dts.end());
       coords.depths.resize(coords.n_locs);
       obsdb_.get_db(parameters_.depthGroup.value().value_or("MetaData"),
-                    parameters_.depthVariable.value().value_or("depth_m"),
+                    parameters_.depthVariable.value().value_or("depthBelowWaterSurface"),
                     coords.depths);
     } else {
       coords.n_obs = coords.n_locs;
@@ -530,9 +530,9 @@ void NemoFeedback::setupIds(const size_t n_obs,
     // Define the station identifier variable. These may not always be defined
     // in odbsb_ and may be contained in either the station_id or
     // buoy_identifier variables, or both.
-    if (obsdb_.has("MetaData", "station_id")) {
+    if (obsdb_.has("MetaData", "stationIdentification")) {
       std::vector<std::string> station_ids_tmp(obsdb_.nlocs());
-      obsdb_.get_db("MetaData", "station_id", station_ids_tmp);
+      obsdb_.get_db("MetaData", "stationIdentification", station_ids_tmp);
       for (int i=0; i< n_obs; ++i) {
         if (station_ids_tmp[i] != "") {
                int j = record_starts[i];
@@ -541,9 +541,9 @@ void NemoFeedback::setupIds(const size_t n_obs,
         }
       }
     }
-    if (obsdb_.has("MetaData", "buoy_identifier")) {
+    if (obsdb_.has("MetaData", "buoyIdentifier")) {
       std::vector<int> buoy_ids(obsdb_.nlocs());
-      obsdb_.get_db("MetaData", "buoy_identifier", buoy_ids);
+      obsdb_.get_db("MetaData", "buoyIdentifier", buoy_ids);
       char buffer[9];
       auto buoy_id_missing_value = util::missingValue(buoy_ids[0]);
       for (int i=0; i < n_obs; ++i) {
@@ -571,12 +571,12 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     // Station type and station identifier are both defined from the
     // satellite_identifier metadata.
     std::vector<int> satellite_ids(n_obs);
-    obsdb_.get_db("MetaData", "satellite_identifier", satellite_ids);
+    obsdb_.get_db("MetaData", "satelliteIdentifier", satellite_ids);
 
     // Get the most recent versions of the data.
     // Read version information.
     std::vector<int> version(n_obs);
-    obsdb_.get_db("MetaData", "instrument_type", version);
+    obsdb_.get_db("MetaData", "instrumentIdentifier", version);
     char buffer9[9];
     char buffer5[5];
     for (int i=0; i < n_obs; ++i) {
