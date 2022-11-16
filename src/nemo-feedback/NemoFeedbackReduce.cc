@@ -93,15 +93,6 @@ void NemoFeedbackReduce::reduce_profile_data(
     std::vector<T> & data_out,
     const bool change_fillvalues
     ) {
-  // check that the size of the input data matches the unreduced_counts
-  const size_t n_unred_prof_obs = std::accumulate(unreduced_counts.begin(),
-      unreduced_counts.end(), decltype(reduced_counts)::value_type(0));
-  if (data_in.size() != n_unred_prof_obs) {
-        throw eckit::BadValue(
-            "NemoFeedbackReduce:: bad counts or input data size: "
-            + std::to_string(data_in.size()) + " with nLocs "
-            + std::to_string(n_unred_prof_obs), Here());
-  }
   // with profile data n_obs != n_locs, and so we setup new record_starts and
   // counts based on the new data vector.
   data_out.clear();
