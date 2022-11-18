@@ -51,6 +51,7 @@ NemoFeedback::NemoFeedback(
     flags_(std::move(flags)),
     obsErrors_(std::move(obsErrors)),
     parameters_(params),
+    nameMap_(params.geoVaLsAliasFile.value()),
     validityTime_(obsdb.windowStart() +
         (obsdb.windowEnd() - obsdb.windowStart()) / 2)
 {
@@ -64,7 +65,8 @@ NemoFeedback::NemoFeedback(
     if (std::find(varnames.begin(), varnames.end(), varname) == varnames.end())
       varnames.push_back(varname);
   }
-  geovars_ = oops::Variables(varnames, channels);
+  const oops::Variables obsVarnames(varnames, channels);
+  geovars_ = nameMap_.convertName(obsVarnames);
 }
 
 NemoFeedback::~NemoFeedback() {

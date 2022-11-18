@@ -21,12 +21,14 @@ observations:
       name: VertInterp
       variables:
       - name: waterPotentialTemperature
+      observation alias file: testinput/test_name_map.yaml
       vertical coordinate: depthBelowWaterSurface
       observation vertical coordinate group: ObsValue
     obs filters:
     - filter: NEMO Feedback Writer
       filename: testoutput/test_hofx_profiles_writer_out.nc
       reference date: 1950-01-01T00:00:00Z
+      observation alias file: testinput/test_name_map.yaml
       variables:
       - name: waterPotentialTemperature
         nemo name: POTM
