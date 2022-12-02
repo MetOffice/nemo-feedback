@@ -1,6 +1,7 @@
 nemo-feedback
 =============
-[![CI](https://github.com/MetOffice/nemo-feedback/actions/workflows/ci.yml/badge.svg)](https://github.com/MetOffice/nemo-feedback/actions/workflows/ci.yml)
+
+![CI](https://github.com/MetOffice/nemo-feedback/actions/workflows/ci.yml/badge.svg)
 
 JEDI UFO filter for writing NEMO ocean model NetCDF feedback file format data from the UK Met Office.
 
