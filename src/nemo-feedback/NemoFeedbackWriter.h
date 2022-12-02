@@ -19,8 +19,6 @@
 
 #include "oops/util/DateTime.h"
 
-#include "atlas/runtime/Exception.h"
-
 #include "nemo-feedback/NemoFeedbackReduce.h"
 
 namespace nemo_feedback {

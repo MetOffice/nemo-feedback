@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: checkout current repo
         uses: actions/checkout@v3
+        with:
+          lfs: true
 
 ### Docker buildx build and push updates ####
       - name: Prepare
