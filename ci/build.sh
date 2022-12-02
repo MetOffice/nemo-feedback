@@ -21,9 +21,9 @@ trap finally EXIT
 cd "${WORKD}"
 
 # latest JCSDA images use spack to install the environment
-#. /etc/profile.d/z10_spack_environment.sh
+source /etc/profile.d/z10_spack_environment.sh
 
-if [ -z ${LD_LIBRARY_PATH} ]; then
+if [ -z ${LD_LIBRARY_PATH:-} ]; then
   export LD_LIBRARY_PATH="${WORKD}/lib"
 else
   export LD_LIBRARY_PATH="${WORKD}/lib:${LD_LIBRARY_PATH}"
