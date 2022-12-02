@@ -70,14 +70,14 @@ jobs:
         with:
           path: ci/eckit
           repository: ecmwf/eckit
-          ref: tags/1.19.0
+          ref: 1.19.0
           token: ${{ secrets.GH_PAT }}
       - name: checkout fckit
         uses: actions/checkout@v3
         with:
           path: ci/fckit
           repository: ecmwf/fckit
-          ref: tags/0.9.5
+          ref: 0.9.5
           token: ${{ secrets.GH_PAT }}
       - name: checkout oops
         uses: actions/checkout@v3
