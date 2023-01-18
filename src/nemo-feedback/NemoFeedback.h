@@ -21,6 +21,7 @@
 #include "nemo-feedback/NemoFeedbackWriter.h"
 #include "ufo/filters/ObsFilterData.h"
 #include "ufo/ObsTraits.h"
+#include "ufo/utils/VariableNameMap.h"
 
 namespace nemo_feedback {
 
@@ -76,6 +77,7 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
 
   ioda::ObsSpace & obsdb_;
   ufo::ObsFilterData data_;
+  ufo::VariableNameMap nameMap_;
   oops::Variables geovars_;
   oops::Variables extradiagvars_;
   std::shared_ptr<ioda::ObsDataVector<int>> flags_;

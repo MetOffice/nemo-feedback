@@ -11,30 +11,33 @@ observations:
         engine:
           type: H5File
           obsfile: testoutput/test_hofx_two_vars_jopa_out.nc
-      simulated variables: [ice_area_fraction, sea_surface_temperature]
+      simulated variables: [seaIceFraction, seaSurfaceTemperature]
     obs operator:
       name: Composite
       components:
       - name: Identity
+        observation alias file: testinput/test_name_map.yaml
       - name: BackgroundErrorIdentity
+        observation alias file: testinput/test_name_map.yaml
     obs filters:
     - filter: NEMO Feedback Writer
       filename: testoutput/test_hofx_two_vars_writer_out.nc
+      observation alias file: testinput/test_name_map.yaml
       variables:
-      - name: ice_area_fraction
+      - name: seaIceFraction
         nemo name: ICECONC
         long name: ice area fraction
         units: Fraction
         additional variables:
-        - name: ice_area_fraction
+        - name: seaIceFraction
           feedback suffix: Hx
           ioda group: HofX
-      - name: sea_surface_temperature
+      - name: seaSurfaceTemperature
         nemo name: SST
         long name: sea_surface_temperature
         units: Fraction
         additional variables:
-        - name: sea_surface_temperature
+        - name: seaSurfaceTemperature
           feedback suffix: Hx
           ioda group: HofX
     benchmarkFlag: 1000 # just to keep the ObsFilters test happy
