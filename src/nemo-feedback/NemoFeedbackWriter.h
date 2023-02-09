@@ -23,32 +23,44 @@
 
 namespace nemo_feedback {
 
+// create a mapping between C++ types and NetCDF type objects
+template <typename T>
+struct NetCDFTypeMap { static const netCDF::NcType ncType; };
+
+// create a mapping between C++ types and Nemo fillvalues
+class typeToFill {
+ public:
+  template <typename T> static const T value();
+};
+
+
+/// \brief Coordinate information for the feedback file, vectors with length
+///        N_OBS, apart from depths which must have dimension N_OBS*N_LEVELS
+struct CoordData {
+  std::vector<double> lats;
+  std::vector<double> lons;
+  std::vector<double> julian_days;
+  std::vector<double> depths;
+  std::vector<size_t> record_starts;
+  std::vector<size_t> record_counts;
+  util::DateTime juld_reference;
+  size_t n_levels;
+  size_t n_obs;
+  size_t n_locs;
+};
+
+/// \brief Naming information for each variable in the feedback file
+struct NameData {
+  std::vector<std::string> variable_names;
+  std::vector<std::string> additional_names;
+  std::vector<std::string> long_names;
+  std::vector<std::string> unit_names;
+};
+
 /// \brief Interface to the NetCDF library to write feedback files
+template <typename ncVarType = double>
 class NemoFeedbackWriter {
  public:
-  /// \brief Coordinate information for the feedback file, vectors with length
-  ///        N_OBS, apart from depths which must have dimension N_OBS*N_LEVELS
-  struct CoordData {
-    std::vector<double> lats;
-    std::vector<double> lons;
-    std::vector<double> julian_days;
-    std::vector<double> depths;
-    std::vector<size_t> record_starts;
-    std::vector<size_t> record_counts;
-    util::DateTime juld_reference;
-    size_t n_levels;
-    size_t n_obs;
-    size_t n_locs;
-  };
-
-  /// \brief Naming information for each variable in the feedback file
-  struct NameData {
-    std::vector<std::string> variable_names;
-    std::vector<std::string> additional_names;
-    std::vector<std::string> long_names;
-    std::vector<std::string> unit_names;
-  };
-
   NemoFeedbackWriter(
       eckit::PathName& filename,
       const CoordData & coords,
@@ -60,12 +72,12 @@ class NemoFeedbackWriter {
   /// \brief Write surface variable data
   void write_variable_surf(
       const std::string & variable_name,
-      const std::vector<double>& data);
+      const std::vector<ncVarType>& data);
 
   /// \brief Write profile variable data
   void write_variable_profile(
       const std::string & variable_name,
-      const std::vector<double>& data);
+      const std::vector<ncVarType>& data);
 
   /// \brief Write surface QC data variable
   void write_variable_surf_qc(
@@ -89,7 +101,12 @@ class NemoFeedbackWriter {
       const std::vector<int32_t>& data,
       const size_t flag_index);
 
+  static const netCDF::NcType typeToNcType() {
+    return NetCDFTypeMap<ncVarType>::ncType;
+  }
+
   static constexpr double double_fillvalue = 99999.0;
+  static constexpr double float_fillvalue = 99999.0;
   static constexpr int32_t int32_fillvalue = 0;
 
  private:

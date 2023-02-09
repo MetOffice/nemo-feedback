@@ -15,8 +15,10 @@
 #include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/RequiredParameter.h"
 #include "ufo/filters/processWhere.h"
+#include "nemo-feedback/NemoFeedbackParameterTraitsOutputDtype.h"
 
 namespace nemo_feedback {
+
 /// \brief NemoFeedback options for an "additional" variable.
 class NemoFeedbackAddVariableParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(NemoFeedbackAddVariableParameters, oops::Parameters)
@@ -54,12 +56,15 @@ class NemoFeedbackParameters : public oops::ObsFilterParametersBase {
   oops::OptionalParameter<util::DateTime> refDate{"reference date", this};
   oops::OptionalParameter<std::string> depthGroup{"depth group", this};
   oops::OptionalParameter<std::string> depthVariable{"depth variable", this};
+  /// Data Type (float or default to double) of the netCDF output data
+  oops::OptionalParameter<OutputDtype> type{"type", this};
   /// \brief boolean mask to select locations to be written to file.
-  /// If not specified, all locations will be written.
+  ///        If not specified, all locations will be written.
   oops::Parameter<std::vector<ufo::WhereParameters>> where{"where", {}, this};
-  /// \brief Parameter specifying path to yaml file containing Observation to GeoVaL name mapping
-  oops::OptionalParameter<std::string> geoVaLsAliasFile{"observation alias file", this};
+  /// \brief Parameter specifying path to yaml file containing Observation to
+  ///        GeoVaL name mapping
+  oops::OptionalParameter<std::string> geoVaLsAliasFile{
+    "observation alias file", this};
 };
 
 }  // namespace nemo_feedback
-

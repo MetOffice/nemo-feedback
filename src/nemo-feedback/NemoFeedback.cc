@@ -39,6 +39,69 @@
 
 namespace nemo_feedback {
 
+/// \brief interface between JEDI and NemoFeedbackWriter to manage the reading
+///        and writing of observation and HofX data.
+template<typename T>
+struct VariableData {
+  std::vector<T> data;
+  std::vector<T> reduced;
+
+  void read_obs(const ioda::ObsSpace & obsdb, const std::string& obs_group,
+      const std::string& ufo_name) {
+      T missing_value = util::missingValue(T(0));
+          obsdb.get_db(obs_group, ufo_name, data);
+          oops::Log::trace() << "Missing value OBS: " << missing_value
+                             << std::endl;
+          for_each(data.begin(), data.end(),
+              [missing_value](T d){
+                if (d == missing_value) {d = typeToFill::value<T>();} });
+  }
+  void read_hofx(const ioda::ObsVector &ov, const CoordData &coords,
+      const std::string& ufo_name) {
+      std::vector<std::string> ov_varnames = ov.varnames().variables();
+      auto var_it = std::find(ov_varnames.begin(), ov_varnames.end(),
+          ufo_name);
+      oops::Log::trace() << "NemoFeedback::variableData begin ov_varnames = "
+                         << ov_varnames << std::endl;
+      std::size_t var_it_dist = static_cast<std::size_t>(
+                                std::distance(ov_varnames.begin(), var_it));
+      oops::Log::debug() << "NemoFeedback::variableData::iterator distance is "
+                         << var_it_dist << " ov.nvars: " << ov.nvars()
+                         << std::endl;
+      T missing_value = util::missingValue(T(0));
+      // Awkward hack to assign a value for the missing value in the case
+      // of no observations
+      auto ov_indexer = [&](size_t iOb) -> int {
+          return iOb * ov.nvars() + var_it_dist;
+      };
+      for (size_t sIndx = 0; sIndx < coords.n_obs; ++sIndx) {
+        for (size_t rOb = 0; rOb < coords.record_counts[sIndx]; ++rOb) {
+          const size_t obIdx = coords.record_starts[sIndx] + rOb;
+          if (ov[ov_indexer(obIdx)] == missing_value) {
+            data[obIdx] = typeToFill::value<T>();
+          } else {
+            data[obIdx] = ov[ov_indexer(obIdx)];
+          }
+        }
+      }
+  }
+  void write_surf(NemoFeedbackWriter<T>& fdbk_writer,
+      NemoFeedbackReduce& reducer, const std::string& nemo_name) {
+      oops::Log::trace() << "NemoFeedback::variableData::write_surf "
+                          << nemo_name << std::endl;
+      reduced = reducer.reduce_data(data);
+      fdbk_writer.write_variable_surf(nemo_name, reduced);
+  }
+  void write_profile(NemoFeedbackWriter<T>& fdbk_writer,
+      NemoFeedbackReduce& reducer, const std::string& nemo_name) {
+      oops::Log::trace() << "NemoFeedback::variableData::write_profile "
+                         << nemo_name << std::endl;
+      reducer.reduce_profile_data(data, reduced);
+      fdbk_writer.write_variable_profile(nemo_name, reduced);
+  }
+};
+
+
 NemoFeedback::NemoFeedback(
     ioda::ObsSpace & obsdb,
     const Parameters_ & params,
@@ -94,7 +157,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   }
 
   // Generate lists of the variable names to setup the file
-  NemoFeedbackWriter::NameData name_data;
+  NameData name_data;
   std::vector<bool> extra_vars;
   bool is_altimeter = false;
   bool is_profile = false;
@@ -134,7 +197,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   //  Calculate n_obs, n_levels, starts, counts
   //  Fill out lats, lons, depths, julian_days
 
-  NemoFeedbackWriter::CoordData coords;
+  CoordData coords;
   coords.n_obs = n_locs;
   coords.n_levels = 1;
 
@@ -187,16 +250,44 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     coords.n_obs = n_obs_to_write;
   }
 
-  NemoFeedbackWriter fdbk_writer(
-      test_data_path,
-      coords,
-      name_data,
-      extra_vars,
-      station_types,
-      station_ids);
+  OutputDtype dtype = parameters_.type.value().value_or(OutputDtype::Double);
+  if (dtype == OutputDtype::Float) {
+    NemoFeedbackWriter<float> fdbk_writer(test_data_path,
+                                          coords,
+                                          name_data,
+                                          extra_vars,
+                                          station_types,
+                                          station_ids);
+    write_all_data<float> (fdbk_writer,
+                            reducer,
+                            coords,
+                            ov,
+                            is_profile);
+  } else {
+    NemoFeedbackWriter<double> fdbk_writer(test_data_path,
+                                           coords,
+                                           name_data,
+                                           extra_vars,
+                                           station_types,
+                                           station_ids);
+    write_all_data<double> (fdbk_writer,
+                            reducer,
+                            coords,
+                            ov,
+                            is_profile);
+  }
+}
 
+template <typename T>
+void NemoFeedback::write_all_data(NemoFeedbackWriter<T>& fdbk_writer,
+                                  NemoFeedbackReduce& reducer,
+                                  const CoordData& coords,
+                                  const ioda::ObsVector &ov,
+                                  const bool is_profile) const {
   // Write the data
-  std::vector<double> variable_data;
+  VariableData<T> variable_data{};
+
+  size_t n_locs = obsdb_.nlocs();
   std::vector<int> variable_qcFlags(n_locs);
   std::vector<int> variable_qc(n_locs);
   std::vector<ufo::DiagnosticFlag> do_not_assimilate;
@@ -206,26 +297,21 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     auto ufo_name = nemoVariableParams.name.value();
     auto obs_group = nemoVariableParams.iodaObsGroup.value()
         .value_or("ObsValue");
-    obsdb_.get_db(obs_group, ufo_name, variable_data);
-    auto missing_value = util::missingValue(
-        decltype(variable_data)::value_type(0));
-    oops::Log::trace() << "Missing value OBS: " << missing_value << std::endl;
-    std::vector<double> reduced_data;
-    if (!is_profile) reduced_data = reducer.reduce_data(variable_data);
+    variable_data.read_obs(obsdb_, obs_group, ufo_name);
+    if (variable_data.data.size() != n_locs)
+          throw eckit::BadValue("NemoFeedback::postFilter : no data ");
     auto extra_var = nemoVariableParams.extravar.value().value_or(false);
-    if (extra_var) {
-      fdbk_writer.write_variable_surf(nemo_name, reduced_data);
+    if (!is_profile && extra_var) {
+      variable_data.write_surf(fdbk_writer, reducer, nemo_name);
       // If this is an extra variable we do not want to write any of the
       // other variables with _OBS, _QC etc. added on to the name.
       continue;
     }
 
     if (is_profile) {
-      std::vector<double> reduced_prof_data;
-      reducer.reduce_profile_data(variable_data, reduced_prof_data);
-      fdbk_writer.write_variable_profile(nemo_name + "_OBS", reduced_prof_data);
+      variable_data.write_profile(fdbk_writer, reducer, nemo_name + "_OBS");
     } else {
-      fdbk_writer.write_variable_surf(nemo_name + "_OBS", reduced_data);
+      variable_data.write_surf(fdbk_writer, reducer, nemo_name + "_OBS");
     }
 
     // Write Met Office QC flag data for this variable if they exist.
@@ -287,7 +373,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
           variable_level_qc[iLoc] = 4;
         } else {variable_level_qc[iLoc] = 1;}
       }
-      for (size_t iStart = 0; iStart < reducer.unreduced_starts.size(); ++iStart) {
+      for (size_t iStart = 0; iStart < reducer.unreduced_starts.size();
+           ++iStart) {
         size_t jLoc = reducer.unreduced_starts[iStart];
         if (final_qc[jLoc]) {
           variable_qc[iStart] = 4;
@@ -302,7 +389,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
             variable_level_qc[iLoc] += 128;
           }
         }
-        for (size_t iStart = 0; iStart < reducer.unreduced_starts.size(); ++iStart) {
+        for (size_t iStart = 0; iStart < reducer.unreduced_starts.size();
+             ++iStart) {
           size_t jLoc = reducer.unreduced_starts[iStart];
           if (do_not_assimilate[jLoc]) {
             variable_qc[iStart] += 128;
@@ -329,65 +417,27 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       std::string ioda_group = addParams.iodaGroup.value();
       if (ioda_group == "HofX") {
         oops::Log::trace() << "NemoFeedback::HofX " << ov << std::endl;
-        if (ov.has(ufo_name)) {
-          std::vector<std::string> ov_varnames = ov.varnames().variables();
-          auto var_it = std::find(ov_varnames.begin(), ov_varnames.end(),
-              ufo_name);
-          oops::Log::trace() << "NemoFeedback::ov_varnames = "
-                             << ov_varnames << std::endl;
-          std::size_t var_it_dist = static_cast<std::size_t>(
-                                    std::distance(ov_varnames.begin(), var_it));
-          oops::Log::trace() << "NemoFeedback::iterator distance is "
-                             << var_it_dist << " ov.nvars: " << ov.nvars()
-                             << std::endl;
-          // Awkward hack to assign a value for the missing value in the case
-          // of no observations
-          auto missing_value_add = util::missingValue(static_cast<double>(0));
-          if (coords.n_locs > 0)
-              missing_value_add = util::missingValue(ov[var_it_dist]);
-          auto ov_indexer = [&](size_t iOb) -> int {
-              return iOb * ov.nvars() + var_it_dist;
-          };
-          for (size_t sIndx = 0; sIndx < coords.n_obs; ++sIndx) {
-            for (size_t rOb = 0; rOb < coords.record_counts[sIndx]; ++rOb) {
-              const size_t obIdx = coords.record_starts[sIndx] + rOb;
-              if (ov[ov_indexer(obIdx)] == missing_value_add) {
-                variable_data[obIdx] = NemoFeedbackWriter::double_fillvalue;
-              } else {
-                variable_data[obIdx] = ov[ov_indexer(obIdx)];
-              }
-            }
-          }
-          if (is_profile) {
-            std::vector<double> reduced_data;
-            reducer.reduce_profile_data(variable_data, reduced_data);
-            fdbk_writer.write_variable_profile(add_name, reduced_data);
-          } else {
-            std::vector<double> reduced_data = reducer.reduce_data(
-                variable_data);
-            fdbk_writer.write_variable_surf(add_name, reduced_data);
-          }
+        if (!ov.has(ufo_name)) {
+          throw eckit::BadValue(
+              "NemoFeedback::postFilter missing HofX variable: "
+              + ioda_group + "/" + ufo_name, Here());
+        }
+        variable_data.read_hofx(ov, coords, ufo_name);
+        if (is_profile) {
+          variable_data.write_profile(fdbk_writer, reducer, add_name);
+        } else {
+          variable_data.write_surf(fdbk_writer, reducer, add_name);
         }
       } else if (!obsdb_.has(ioda_group, ufo_name)) {
         oops::Log::trace() << obsdb_ << std::endl;
         throw eckit::BadValue("NemoFeedback::postFilter missing variable: "
             + ioda_group + "/" + ufo_name, Here());
       } else {
-        obsdb_.get_db(ioda_group, ufo_name, variable_data);
-        auto missing_value = util::missingValue(
-            decltype(variable_data)::value_type(0));
-        for (int i=0; i < coords.n_obs; ++i) {
-          if (variable_data[i] == missing_value)
-            variable_data[i] = NemoFeedbackWriter::double_fillvalue;
-        }
+        variable_data.read_obs(obsdb_, ioda_group, ufo_name);
         if (is_profile) {
-          std::vector<double> reduced_data;
-          reducer.reduce_profile_data(variable_data, reduced_data);
-          fdbk_writer.write_variable_profile(add_name, reduced_data);
+          variable_data.write_profile(fdbk_writer, reducer, add_name);
         } else {
-          std::vector<double> reduced_data = reducer.reduce_data(
-              variable_data);
-          fdbk_writer.write_variable_surf(add_name, reduced_data);
+          variable_data.write_surf(fdbk_writer, reducer, add_name);
         }
       }
     }
@@ -395,7 +445,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 }
 
 void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
-                                       NemoFeedbackWriter::CoordData& coords,
+                                       CoordData& coords,
                                        bool is_profile) const {
     coords.n_locs = obsdb_.nlocs();
     std::vector<util::DateTime> datetimes(coords.n_locs);
@@ -491,8 +541,8 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       datetimes.assign(record_dts.begin(), record_dts.end());
       coords.depths.resize(coords.n_locs);
       obsdb_.get_db(parameters_.depthGroup.value().value_or("MetaData"),
-                    parameters_.depthVariable.value().value_or("depthBelowWaterSurface"),
-                    coords.depths);
+          parameters_.depthVariable.value().value_or("depthBelowWaterSurface"),
+          coords.depths);
     } else {
       coords.n_obs = coords.n_locs;
       coords.depths.resize(coords.n_locs);
@@ -633,7 +683,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
       }
     }
 }
-  void NemoFeedback::mpi_sync_coordinates(NemoFeedbackWriter::CoordData& coords,
+  void NemoFeedback::mpi_sync_coordinates(CoordData& coords,
                                           const eckit::mpi::Comm& comm) {
   if (comm.size() > 0) {
     std::vector<size_t> all_nlevs(comm.size(), 0);
