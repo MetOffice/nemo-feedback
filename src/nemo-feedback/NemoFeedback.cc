@@ -48,13 +48,14 @@ struct VariableData {
 
   void read_obs(const ioda::ObsSpace & obsdb, const std::string& obs_group,
       const std::string& ufo_name) {
+      obsdb.get_db(obs_group, ufo_name, data);
       T missing_value = util::missingValue(T(0));
-          obsdb.get_db(obs_group, ufo_name, data);
-          oops::Log::trace() << "Missing value OBS: " << missing_value
-                             << std::endl;
-          for_each(data.begin(), data.end(),
-              [missing_value](T d){
-                if (d == missing_value) {d = typeToFill::value<T>();} });
+      oops::Log::trace() << "Missing value OBS: " << missing_value
+                         << std::endl;
+      // Convert oops missing values to NEMO missing value
+      for_each(data.begin(), data.end(),
+          [missing_value](T& d){
+            if (d == missing_value) {d = typeToFill::value<T>();} });
   }
   void read_hofx(const ioda::ObsVector &ov, const CoordData &coords,
       const std::string& ufo_name) {
@@ -68,9 +69,12 @@ struct VariableData {
       oops::Log::debug() << "NemoFeedback::variableData::iterator distance is "
                          << var_it_dist << " ov.nvars: " << ov.nvars()
                          << std::endl;
-      T missing_value = util::missingValue(T(0));
-      // Awkward hack to assign a value for the missing value in the case
-      // of no observations
+      // Convert oops missing values to NEMO missing value
+      double missing_value = util::missingValue(static_cast<double>(0));
+      if (coords.n_locs > 0)
+          missing_value = util::missingValue(ov[var_it_dist]);
+      oops::Log::trace() << "Missing value HofX: " << missing_value
+                         << std::endl;
       auto ov_indexer = [&](size_t iOb) -> int {
           return iOb * ov.nvars() + var_it_dist;
       };
