@@ -6,6 +6,8 @@ list( APPEND nemo_fdbk_src_files
     instantiateObsFilterFactory.h
     NemoFeedback.cc
     NemoFeedback.h
+    NemoFeedbackParameterTraitsOutputDtype.h
+    NemoFeedbackParameterTraitsOutputDtype.cc
     NemoFeedbackParameters.h
     NemoFeedbackWriter.h
     NemoFeedbackWriter.cc

@@ -13,6 +13,7 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "oops/util/missingValues.h"
+#include "oops/util/Logger.h"
 
 #include "nemo-feedback/NemoFeedbackReduce.h"
 #include "nemo-feedback/NemoFeedbackWriter.h"
@@ -26,6 +27,7 @@ NemoFeedbackReduce::NemoFeedbackReduce(const size_t n_obs,
     const std::vector<size_t> & record_counts) :
     n_obs_(n_obs), n_obs_to_write_(n_obs_to_write), to_write_(to_write),
     unreduced_starts(record_starts), unreduced_counts(record_counts) {
+  oops::Log::trace() << "NemoFeedbackReduce constructor" << std::endl;
   reduced_starts.reserve(n_obs_);
   reduced_counts.reserve(n_obs_);
   for (int i = 0; i < n_obs_; ++i) {
@@ -51,6 +53,7 @@ template <typename T>
 std::vector<T> NemoFeedbackReduce::reduce_data(
     const std::vector<T> & data_in,
     const bool change_fillvalues) {
+  oops::Log::trace() << "NemoFeedbackReduce::reduce_data" << std::endl;
   // profile data, n_obs dimension var - using the n_obs should be fine
   // surface data, n_locs/n_obs dimension var, n_locs = n_obs
   // so using n_obs should be fine
@@ -61,7 +64,7 @@ std::vector<T> NemoFeedbackReduce::reduce_data(
     if (to_write_[i]) {
       data_out[j++] = data_in[i];
       if (change_fillvalues && (data_in[i] == missing_value)) {
-        data_out[j-1] = static_cast<T>(NemoFeedbackWriter::double_fillvalue);
+        data_out[j-1] = static_cast<T>(typeToFill::value<T>());
       }
     }
   }
@@ -78,6 +81,7 @@ template std::vector<double> NemoFeedbackReduce::reduce_data<double>(
 std::vector<std::string> NemoFeedbackReduce::reduce_data(
     const std::vector<std::string> & data_in) {
   std::vector<std::string> data_out(n_obs_to_write_);
+  oops::Log::trace() << "NemoFeedbackReduce::reduce_data<string>" << std::endl;
   int j = 0;
   for (int i = 0; i < n_obs_; ++i) {
     if (to_write_[i]) {
@@ -93,8 +97,9 @@ void NemoFeedbackReduce::reduce_profile_data(
     std::vector<T> & data_out,
     const bool change_fillvalues
     ) {
-  // check that the size of the input data is large enough compared to the 
-  // amount of data expected in unreduced_counts. The data described in 
+  oops::Log::trace() << "NemoFeedbackReduce::reduce_profile_data" << std::endl;
+  // check that the size of the input data is large enough compared to the
+  // amount of data expected in unreduced_counts. The data described in
   // unreduced_counts may be smaller than the size of the input data because
   // unreduced_counts does not include data from whole profiles that are
   // not being written to file.
@@ -106,8 +111,8 @@ void NemoFeedbackReduce::reduce_profile_data(
             + std::to_string(data_in.size()) + " with nLocs "
             + std::to_string(n_unred_prof_obs), Here());
   }
-  // with profile data n_obs is the number of profiles and hence is not equal 
-  // to n_locs, which is the number of data points, and so we set up new 
+  // with profile data n_obs is the number of profiles and hence is not equal
+  // to n_locs, which is the number of data points, and so we set up new
   // record_starts and counts based on the new data vector.
   data_out.clear();
   const size_t n_prof_obs = std::accumulate(reduced_counts.begin(),
@@ -122,8 +127,7 @@ void NemoFeedbackReduce::reduce_profile_data(
         if (reclen++ == reduced_counts[iprof]) break;
         data_out.push_back(data_in[l]);
         if (change_fillvalues && (data_in[l] == missing_value)) {
-          data_out.back() = static_cast<T>(
-              NemoFeedbackWriter::double_fillvalue);
+          data_out.back() = static_cast<T>(typeToFill::value<T>());
         }
       }
     }

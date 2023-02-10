@@ -27,7 +27,7 @@ CASE("test creating test file ") {
 
   size_t n_obs = 5;
 
-  NemoFeedbackWriter::CoordData coords;
+  CoordData coords;
   coords.n_levels = 1;
   coords.n_obs = n_obs;
   coords.n_locs = n_obs;
@@ -41,7 +41,7 @@ CASE("test creating test file ") {
   for (int iLoc = 0; iLoc < coords.n_locs; ++iLoc)
       coords.record_starts[iLoc] = iLoc;
 
-  NemoFeedbackWriter::NameData name_data;
+  NameData name_data;
   name_data.variable_names = std::vector<std::string>{"SST", "MDT"};
   name_data.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
@@ -70,7 +70,7 @@ CASE("test creating test file ") {
   coords.n_obs = 4;
 
   SECTION("file writes") {
-    NemoFeedbackWriter fdbk_writer(
+    NemoFeedbackWriter<double> fdbk_writer(
         test_data_path,
         coords,
         name_data,
@@ -158,7 +158,7 @@ CASE("test creating profile file ") {
 
   const size_t n_locs = 7;
   const size_t n_obs = 2;
-  NemoFeedbackWriter::CoordData coords;
+  CoordData coords;
   coords.n_levels = 5;
   coords.n_obs = n_obs;
   coords.n_locs = n_locs;
@@ -168,7 +168,7 @@ CASE("test creating profile file ") {
   coords.julian_days = std::vector<double>(n_obs, 11.0);
   coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
 
-  NemoFeedbackWriter::NameData name_data;
+  NameData name_data;
   name_data.variable_names = std::vector<std::string>{"POTM", "PSAL"};
   name_data.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
@@ -186,7 +186,7 @@ CASE("test creating profile file ") {
     coords.record_starts = std::vector<size_t>{0, 2};
     coords.record_counts = std::vector<size_t>{2, coords.n_levels};
 
-    NemoFeedbackWriter fdbk_writer(
+    NemoFeedbackWriter<double> fdbk_writer(
         test_data_path,
         coords,
         name_data,
@@ -290,7 +290,7 @@ CASE("test creating reduced profile file ") {
   const size_t n_locs = 7;
   const size_t n_obs = 2;
   const size_t n_levels_unreduced = 5;
-  NemoFeedbackWriter::CoordData coords;
+  CoordData coords;
   coords.n_levels = 4;
   coords.n_obs = n_obs;
   coords.n_locs = n_locs;
@@ -300,7 +300,7 @@ CASE("test creating reduced profile file ") {
   coords.julian_days = std::vector<double>(n_obs, 11.0);
   coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
 
-  NemoFeedbackWriter::NameData name_data;
+  NameData name_data;
   name_data.variable_names = std::vector<std::string>{"POTM", "PSAL"};
   name_data.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
@@ -323,7 +323,7 @@ CASE("test creating reduced profile file ") {
     coords.record_starts = reducer.reduced_starts;
     coords.record_counts = reducer.reduced_counts;
 
-    NemoFeedbackWriter fdbk_writer(
+    NemoFeedbackWriter<double> fdbk_writer(
         test_data_path,
         coords,
         name_data,

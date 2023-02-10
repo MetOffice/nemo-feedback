@@ -52,10 +52,17 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   oops::Variables requiredHdiagnostics() const override {return extradiagvars_;}
 
  private:
+  /// \brief write the data to the feedback file depending on chosen type
+  template <typename T>
+  void write_all_data(NemoFeedbackWriter<T>& fdbk_writer,
+                      NemoFeedbackReduce& reducer,
+                      const CoordData& coords,
+                      const ioda::ObsVector &ov,
+                      const bool is_profile) const;
   /// \brief group coordinate data by the ioda record whilst filtering
   ///        observations to write to the file
   void groupCoordsByRecord(const std::vector<bool>& to_write,
-                          NemoFeedbackWriter::CoordData& coords,
+                          CoordData& coords,
                           bool is_profile) const;
   /// \brief Setup the NEMO STATION_TYPES and STATION_IDS netCDF variables for
   ///        altimeter observations.  Filter observations based on the latest
@@ -71,7 +78,7 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
                 std::vector<std::string>& station_ids,
                 std::vector<std::string>& station_types) const;
   /// \brief Sync relevent coordinate data across MPI processes
-  void mpi_sync_coordinates(NemoFeedbackWriter::CoordData& coords,
+  void mpi_sync_coordinates(CoordData& coords,
                             const eckit::mpi::Comm& comm);
   void print(std::ostream &) const override;
 

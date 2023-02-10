@@ -23,6 +23,7 @@ observations:
     - filter: NEMO Feedback Writer
       filename: testoutput/test_hofx_two_vars_writer_out.nc
       observation alias file: testinput/test_name_map.yaml
+      type : float
       variables:
       - name: seaIceFraction
         nemo name: ICECONC
