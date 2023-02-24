@@ -49,6 +49,10 @@ CASE("test creating test file ") {
                                                   "this is another unit"};
   name_data.additional_names = std::vector<std::string>{"Hx", "DW_FLAGS",
                                                        "STD"};
+  SECTION ("NameData validator can fail") {
+    EXPECT_THROWS_AS(name_data.validate(), eckit::BadValue);
+  }
+  name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
   std::vector<bool> extra_variables{false, true};
   std::vector<std::string> station_types{"  44", "  45", "  46", "  47",
@@ -175,6 +179,7 @@ CASE("test creating profile file ") {
   name_data.unit_names = std::vector<std::string>{"this is a unit",
                                                   "this is another unit"};
   name_data.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
+  name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
   const std::vector<bool> extra_variables{false, false};
   const std::vector<std::string> station_types{" 401", " 401"};
@@ -307,6 +312,7 @@ CASE("test creating reduced profile file ") {
   name_data.unit_names = std::vector<std::string>{"this is a unit",
                                                   "this is another unit"};
   name_data.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
+  name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
   const std::vector<bool> extra_variables{false, false};
   const std::vector<std::string> station_types{" 401", " 401"};

@@ -55,6 +55,9 @@ struct NameData {
   std::vector<std::string> additional_names;
   std::vector<std::string> long_names;
   std::vector<std::string> unit_names;
+  std::vector<bool> legacy_ops_qc_conventions;
+
+  void validate() const;
 };
 
 /// \brief Interface to the NetCDF library to write feedback files
@@ -140,13 +143,15 @@ class NemoFeedbackWriter {
   void define_variable(
       const std::string & variable_name,
       const std::string & long_name,
-      const std::string & unit_name);
+      const std::string & unit_name,
+      bool legacy_ops_qc_conventions = true);
 
   /// \brief Define an 'extra' data variable in the NetCDF file
   void define_extra_variable(
       const std::string & variable_name,
       const std::string & long_name,
-      const std::string & unit_name);
+      const std::string & unit_name,
+      bool legacy_ops_qc_conventions = true);
 
   std::unique_ptr<netCDF::NcFile> ncFile;
   std::unique_ptr<netCDF::NcDim> nobs_dim;

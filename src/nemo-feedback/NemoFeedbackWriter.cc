@@ -68,6 +68,17 @@ const std::map<std::string, size_t> NemoFeedbackWriter<T>::coord_sizes{
 typedef char fixed_length_name_type[STRINGNAM_NUM+1];
 typedef char fixed_length_type_type[STRINGTYP_NUM+1];
 
+void NameData::validate() const {
+  const size_t n_vars = variable_names.size();
+  if ((legacy_ops_qc_conventions.size() != n_vars) ||
+      (long_names.size() != n_vars) ||
+      (unit_names.size() != n_vars)) {
+    std::ostringstream err_stream;
+    err_stream << "nemo_feedback::NameData size mismatch " << std::endl;
+    throw eckit::BadValue(err_stream.str(), Here());
+  }
+}
+
 template<class C>
 NemoFeedbackWriter<C>::NemoFeedbackWriter(
     eckit::PathName& filename,
@@ -78,7 +89,7 @@ NemoFeedbackWriter<C>::NemoFeedbackWriter(
     const std::vector<std::string> & station_ids)
     : ncFile(nullptr), coords_(coords),
       name_data_(name_data) {
-  oops::Log::trace() << "nemo_feedback::NemoFieldReader::NemoFieldReader"
+  oops::Log::trace() << "nemo_feedback::NemoFieldWriter::NemoFieldWriter"
                      << " constructing for: " << filename.fullName().asString()
                      << std::endl;
 
@@ -86,14 +97,16 @@ NemoFeedbackWriter<C>::NemoFeedbackWriter(
       netCDF::NcFile::replace);
   if (ncFile->isNull()) {
     std::ostringstream err_stream;
-    err_stream << "nemo_feedback::NemoFieldReader::NemoFieldReader cannot open "
+    err_stream << "nemo_feedback::NemoFieldWriter::NemoFieldWriter cannot open "
                << filename << std::endl;
-    eckit::BadValue(err_stream.str(), Here());
+    throw eckit::BadValue(err_stream.str(), Here());
   }
 
   const size_t n_extra = std::count(extra_vars.begin(), extra_vars.end(), true);
   const size_t n_obs_vars = name_data_.variable_names.size() - n_extra;
   const size_t max_n_add_entries = name_data_.additional_names.size();
+
+  name_data_.validate();
 
   define_coord_variables(
       n_obs_vars,
@@ -110,12 +123,14 @@ NemoFeedbackWriter<C>::NemoFeedbackWriter(
     if (extra_vars[i]) {
       define_extra_variable(name_data_.variable_names[i],
                             name_data_.long_names[i],
-                            name_data_.unit_names[i]);
+                            name_data_.unit_names[i],
+                            name_data_.legacy_ops_qc_conventions[i]);
     } else {
       define_variable(
           name_data_.variable_names[i],
           name_data_.long_names[i],
-          name_data_.unit_names[i]);
+          name_data_.unit_names[i],
+          name_data_.legacy_ops_qc_conventions[i]);
     }
   }
 }
@@ -238,6 +253,8 @@ void NemoFeedbackWriter<C>::write_metadata_variables(
 /// JULD_QC_FLAGS, POSITION_QC, POSITION_QC_FLAGS
 template <class C>
 void NemoFeedbackWriter<C>::define_whole_report_variables() {
+
+  std::string flag_conventions = "JEDI UFO QC flag conventions";
   {
     const std::vector<netCDF::NcDim> dims{*nobs_dim, ncFile->getDim(STRINGWMO)};
     netCDF::NcVar tmp_var = ncFile->addVar("STATION_IDENTIFIER", netCDF::ncChar,
@@ -265,7 +282,7 @@ void NemoFeedbackWriter<C>::define_whole_report_variables() {
     netCDF::NcVar tmp_var = ncFile->addVar("DEPTH_QC_FLAGS", netCDF::ncInt,
         dims);
     tmp_var.putAtt("long_name", "Quality on depth");
-    tmp_var.putAtt("Conventions", "OPS flag conventions");
+    tmp_var.putAtt("Conventions", flag_conventions);
   }
 
   {
@@ -280,7 +297,7 @@ void NemoFeedbackWriter<C>::define_whole_report_variables() {
     netCDF::NcVar tmp_var = ncFile->addVar("OBSERVATION_QC_FLAGS",
         netCDF::ncInt, dims);
     tmp_var.putAtt("long_name", "Quality on observation");
-    tmp_var.putAtt("Conventions", "OPS flag conventions");
+    tmp_var.putAtt("Conventions", flag_conventions);
   }
 
   {
@@ -295,7 +312,7 @@ void NemoFeedbackWriter<C>::define_whole_report_variables() {
     netCDF::NcVar tmp_var = ncFile->addVar("POSITION_QC_FLAGS", netCDF::ncInt,
         dims);
     tmp_var.putAtt("long_name", "Quality on position");
-    tmp_var.putAtt("Conventions", "OPS flag conventions");
+    tmp_var.putAtt("Conventions", flag_conventions);
   }
 
   {
@@ -309,7 +326,7 @@ void NemoFeedbackWriter<C>::define_whole_report_variables() {
     netCDF::NcVar tmp_var = ncFile->addVar("JULD_QC_FLAGS", netCDF::ncInt,
         dims);
     tmp_var.putAtt("long_name", "Quality on date and time");
-    tmp_var.putAtt("Conventions", "OPS flag conventions");
+    tmp_var.putAtt("Conventions", flag_conventions);
   }
 
   {
@@ -329,7 +346,12 @@ template <class C>
 void NemoFeedbackWriter<C>::define_variable(
     const std::string & variable_name,
     const std::string & longName,
-    const std::string & units) {
+    const std::string & units,
+    bool legacy_ops_qc_conventions) {
+
+  std::string flag_conventions = "JEDI UFO QC flag conventions";
+  if (legacy_ops_qc_conventions)
+    flag_conventions = "OPS flag conventions";
 
   const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
   netCDF::NcVar obs_var;
@@ -355,7 +377,7 @@ void NemoFeedbackWriter<C>::define_variable(
     qc_flags_var.setFill(true, int32_fillvalue);
     qc_flags_var.putAtt("long_name", std::string("quality flags on ")
                         + longName);
-    qc_flags_var.putAtt("Conventions", "OPS flag conventions");
+    qc_flags_var.putAtt("Conventions", flag_conventions);
   }
 
   {
@@ -366,7 +388,7 @@ void NemoFeedbackWriter<C>::define_variable(
     level_qc_flags_var.setFill(true, int32_fillvalue);
     level_qc_flags_var.putAtt("long_name",
         std::string("quality flags for each level on ") + longName);
-    level_qc_flags_var.putAtt("Conventions", "OPS flag conventions");
+    level_qc_flags_var.putAtt("Conventions", flag_conventions);
   }
 
   netCDF::NcVar qc_var = ncFile->addVar(variable_name + "_QC", netCDF::ncInt,
@@ -404,7 +426,12 @@ template <class C>
 void NemoFeedbackWriter<C>::define_extra_variable(
     const std::string & variable_name,
     const std::string & longName,
-    const std::string & units ) {
+    const std::string & units,
+    bool legacy_ops_qc_conventions) {
+
+  std::string flag_conventions = "JEDI UFO QC flag conventions";
+  if (legacy_ops_qc_conventions)
+    flag_conventions = "OPS flag conventions";
 
   const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
 

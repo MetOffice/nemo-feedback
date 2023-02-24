@@ -175,6 +175,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
       is_profile = true;
     }
     name_data.variable_names.push_back(nemoVariableParams.nemoName.value());
+    name_data.legacy_ops_qc_conventions.push_back(obsdb_.has("QCFlags",
+          nemoVariableParams.name.value()));
     name_data.long_names.push_back(nemoVariableParams.longName.value());
     name_data.unit_names.push_back(nemoVariableParams.units.value());
     extra_vars.push_back(nemoVariableParams.extravar.value().value_or(false));
@@ -319,51 +321,64 @@ void NemoFeedback::write_all_data(NemoFeedbackWriter<T>& fdbk_writer,
     }
 
     // Write Met Office QC flag data for this variable if they exist.
+    bool hasMetOfficeQC = false;
     if (obsdb_.has("QCFlags", ufo_name)) {
       obsdb_.get_db("QCFlags", ufo_name, variable_qcFlags);
+      hasMetOfficeQC = true;
+    } else {
+      const size_t iv = flags_->varnames().find(ufo_name);
+      variable_qcFlags.assign((*flags_)[iv].begin(), (*flags_)[iv].end());
+    }
 
-      // To the first qc flag index location
-      std::vector<int> reduced_qcFlags;
-      if (is_profile) {
-        reducer.reduce_profile_data(variable_qcFlags, reduced_qcFlags);
-        fdbk_writer.write_variable_level_qc(
-            nemo_name + "_LEVEL_QC_FLAGS", reduced_qcFlags, 0);
-      } else {
-        std::vector<int> reduced_qcFlags = reducer.reduce_data(
-            variable_qcFlags);
-        fdbk_writer.write_variable_surf_qc(
-            nemo_name + "_QC_FLAGS", reduced_qcFlags, 0);
-      }
+    // To the first qc flag index location
+    std::vector<int> reduced_qcFlags;
+    if (is_profile) {
+      reducer.reduce_profile_data(variable_qcFlags, reduced_qcFlags);
+      fdbk_writer.write_variable_level_qc(
+          nemo_name + "_LEVEL_QC_FLAGS", reduced_qcFlags, 0);
+    } else {
+      std::vector<int> reduced_qcFlags = reducer.reduce_data(
+          variable_qcFlags);
+      fdbk_writer.write_variable_surf_qc(
+          nemo_name + "_QC_FLAGS", reduced_qcFlags, 0);
+    }
 
-      // Whole Observation report QC flags
-      if (is_profile) {
-        std::vector<int> reduced_qc(coords.n_obs, 0);
-        for (size_t iProf=0; iProf < coords.n_obs; ++iProf) {
-          size_t badObs = 0;
-          for (size_t iOb=0; iOb < coords.record_counts[iProf]; ++iOb) {
-            if (reduced_qcFlags[coords.record_starts[iProf] + iOb]
-                & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
-              ++badObs;
-            }
+    // Whole Observation report QC flags
+    if (is_profile) {
+      std::vector<int> reduced_qc(coords.n_obs, 0);
+      for (size_t iProf=0; iProf < coords.n_obs; ++iProf) {
+        size_t badObs = 0;
+        for (size_t iOb=0; iOb < coords.record_counts[iProf]; ++iOb) {
+          if (hasMetOfficeQC &&
+              (reduced_qcFlags[coords.record_starts[iProf] + iOb]
+               & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport)) {
+            ++badObs;
           }
-          reduced_qc[iProf] = (badObs == coords.record_counts[iProf] ? 4 : 1);
+          if (!hasMetOfficeQC &&
+              reduced_qcFlags[coords.record_starts[iProf] + iOb]) {
+            ++badObs;
+          }
         }
-        if (coords.record_counts.size() != coords.n_obs) {
-          throw eckit::BadValue("NemoFeedback::postFilter : sizes don't match "
-              + std::to_string(coords.record_counts.size()) + " != "
-              + std::to_string(coords.n_obs), Here());
-        }
-        fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
-      } else {
-        for (int i=0; i < variable_qc.size(); ++i) {
-          if (variable_qcFlags[i]
-              & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport) {
-            variable_qc[i] = 4;
-          } else {variable_qc[i] = 0;}
-        }
-        std::vector<int> reduced_qc = reducer.reduce_data(variable_qc);
-        fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
+        reduced_qc[iProf] = (badObs == coords.record_counts[iProf] ? 4 : 1);
       }
+      if (coords.record_counts.size() != coords.n_obs) {
+        throw eckit::BadValue("NemoFeedback::postFilter : sizes don't match "
+            + std::to_string(coords.record_counts.size()) + " != "
+            + std::to_string(coords.n_obs), Here());
+      }
+      fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
+    } else {
+      for (int i=0; i < variable_qc.size(); ++i) {
+        if (hasMetOfficeQC &&
+            (variable_qcFlags[i] &
+             ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport)) {
+          variable_qc[i] = 4;
+        } else if (!hasMetOfficeQC && variable_qcFlags[i]) {
+          variable_qc[i] = 4;
+        } else {variable_qc[i] = 0;}
+      }
+      std::vector<int> reduced_qc = reducer.reduce_data(variable_qc);
+      fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
     }
 
     // Overall quality control flags
