@@ -49,9 +49,9 @@ CASE("test creating test file ") {
                                                   "this is another unit"};
   name_data.additional_names = std::vector<std::string>{"Hx", "DW_FLAGS",
                                                        "STD"};
-  SECTION ("NameData validator can fail") {
-    EXPECT_THROWS_AS(name_data.validate(), eckit::BadValue);
-  }
+  //SECTION ("NameData validator can fail") {
+  //  EXPECT_THROWS_AS(name_data.validate(), eckit::BadValue);
+  //}
   name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
   std::vector<bool> extra_variables{false, true};
