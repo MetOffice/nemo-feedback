@@ -375,7 +375,7 @@ void NemoFeedback::write_all_data(NemoFeedbackWriter<T>& fdbk_writer,
           variable_qc[i] = 4;
         } else if (!hasMetOfficeQC && variable_qcFlags[i]) {
           variable_qc[i] = 4;
-        } else {variable_qc[i] = 0;}
+        } else {variable_qc[i] = 1;}
       }
       std::vector<int> reduced_qc = reducer.reduce_data(variable_qc);
       fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
