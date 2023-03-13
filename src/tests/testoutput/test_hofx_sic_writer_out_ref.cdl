@@ -41,25 +41,25 @@ variables:
 		DEPTH_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int DEPTH_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
 		DEPTH_QC_FLAGS:long_name = "Quality on depth" ;
-		DEPTH_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		DEPTH_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int OBSERVATION_QC(N_OBS) ;
 		OBSERVATION_QC:long_name = "Quality on observation" ;
 		OBSERVATION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int OBSERVATION_QC_FLAGS(N_OBS, N_QCF) ;
 		OBSERVATION_QC_FLAGS:long_name = "Quality on observation" ;
-		OBSERVATION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		OBSERVATION_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int POSITION_QC(N_OBS) ;
 		POSITION_QC:long_name = "Quality on position" ;
 		POSITION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int POSITION_QC_FLAGS(N_OBS, N_QCF) ;
 		POSITION_QC_FLAGS:long_name = "Quality on position" ;
-		POSITION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		POSITION_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int JULD_QC(N_OBS) ;
 		JULD_QC:long_name = "Quality on date and time" ;
 		JULD_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int JULD_QC_FLAGS(N_OBS, N_QCF) ;
 		JULD_QC_FLAGS:long_name = "Quality on date and time" ;
-		JULD_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		JULD_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int ORIGINAL_FILE_INDEX(N_OBS) ;
 		ORIGINAL_FILE_INDEX:long_name = "Index in original data file" ;
 	double ICECONC_OBS(N_OBS, N_LEVELS) ;
@@ -186,7 +186,7 @@ data:
   _, _,
   _, _ ;
 
- OBSERVATION_QC = 0, 4, 0, 0, 4, 0, 4, 0, 0, 0, 4 ;
+ OBSERVATION_QC = 1, 4, 1, 1, 4, 1, 4, 1, 1, 1, 4 ;
 
  OBSERVATION_QC_FLAGS =
   _, _,
