@@ -521,11 +521,7 @@ void NemoFeedbackWriter<C>::write_whole_report_variables(
     // +1 is for the null-terminator of a cstring
     char* buffer = new char[coords_.n_obs*nchars+1];
     for (int i = 0; i < coords_.n_obs; ++i) {
-      if (coords_.n_obs == coords_.n_locs) {
-        strcpy(buffer + nchars*j++, station_ids[i].c_str());
-      } else {
-        strcpy(buffer + nchars*j++, station_ids[i].c_str());
-      }
+      strcpy(buffer + nchars*j++, station_ids[i].c_str());
     }
     station_id_var.putVar({0, 0},
                           {coords_.n_obs, nchars},

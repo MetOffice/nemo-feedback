@@ -605,10 +605,11 @@ void NemoFeedback::setupIds(const size_t n_obs,
       std::vector<std::string> station_ids_tmp(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "stationIdentification", station_ids_tmp);
       for (int i=0; i< n_obs; ++i) {
-        if (station_ids_tmp[i] != "") {
-               int j = record_starts[i];
-               station_ids_tmp[j].resize(8, ' ');
-               station_ids[i] = station_ids_tmp[j].substr(0, 8);
+        if ((station_ids_tmp[i] != "") &&
+            (station_ids_tmp[i] != "*** MISSING ***")) {
+            int j = record_starts[i];
+            station_ids_tmp[j].resize(8, ' ');
+            station_ids[i] = station_ids_tmp[j].substr(0, 8);
         }
       }
     }
@@ -616,7 +617,7 @@ void NemoFeedback::setupIds(const size_t n_obs,
       std::vector<int> buoy_ids(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "buoyIdentifier", buoy_ids);
       char buffer[9];
-      auto buoy_id_missing_value = util::missingValue(buoy_ids[0]);
+      int buoy_id_missing_value = util::missingValue(buoy_id_missing_value);
       for (int i=0; i < n_obs; ++i) {
         if (buoy_ids[i] != buoy_id_missing_value) {
           int j = record_starts[i];
