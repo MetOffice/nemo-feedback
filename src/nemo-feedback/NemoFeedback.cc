@@ -591,10 +591,10 @@ void NemoFeedback::setupIds(const size_t n_obs,
       std::vector<int> station_types_int(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "fdbk_station_type", station_types_int);
       char buffer[5];
-      for (int i=0; i < n_obs; ++i) {
-        int j = record_starts[i];
-        snprintf(buffer, sizeof(buffer), "%-4d", station_types_int[j]);
-        station_types[i] = buffer;
+      for (int iOb = 0; iOb < n_obs; ++iOb) {
+        int jLoc = record_starts[iOb];
+        snprintf(buffer, sizeof(buffer), "%-4d", station_types_int[jLoc]);
+        station_types[iOb] = buffer;
       }
     }
 
@@ -605,13 +605,12 @@ void NemoFeedback::setupIds(const size_t n_obs,
       std::vector<std::string> station_ids_tmp(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "stationIdentification", station_ids_tmp);
       std::string station_id_missing_value = util::missingValue(station_id_missing_value);
-      for (int i=0; i< n_obs; ++i) {
-        int j = record_starts[i];
-        if ((station_ids_tmp[j] != "") &&
-            (station_ids_tmp[j] != station_id_missing_value)) {
-            station_ids_tmp[j].resize(8, ' ');
-            station_ids[i] = station_ids_tmp[j].substr(0, 8);
-            oops::Log::debug() << "ID station_id[" << i << "]: " << station_ids_tmp[j] << " " << station_ids[i] << std::endl;
+      for (int iOb = 0; iOb < n_obs; ++iOb) {
+        int jLoc = record_starts[iOb];
+        if ((station_ids_tmp[jLoc] != "") &&
+            (station_ids_tmp[jLoc] != station_id_missing_value)) {
+            station_ids_tmp[jLoc].resize(8, ' ');
+            station_ids[iOb] = station_ids_tmp[jLoc].substr(0, 8);
         }
       }
     }
@@ -620,13 +619,12 @@ void NemoFeedback::setupIds(const size_t n_obs,
       obsdb_.get_db("MetaData", "buoyIdentifier", buoy_ids);
       char buffer[9];
       int buoy_id_missing_value = util::missingValue(buoy_id_missing_value);
-      for (int i=0; i < n_obs; ++i) {
-        int j = record_starts[i];
-        if ((buoy_ids[j] != buoy_id_missing_value) &&
-            (station_ids[i] == std::string(8, ' '))){
-          snprintf(buffer, sizeof(buffer), "%-8d", buoy_ids[j]);
-          station_ids[i] = buffer;
-          oops::Log::debug() << "buoy station_id[" << i << "]: " << buoy_ids[j] << " " <<  station_ids[i] << std::endl;
+      for (int iOb = 0; iOb < n_obs; ++iOb) {
+        int jLoc = record_starts[iOb];
+        if ((buoy_ids[jLoc] != buoy_id_missing_value) &&
+            (station_ids[iOb] == std::string(8, ' '))){
+          snprintf(buffer, sizeof(buffer), "%8d", buoy_ids[jLoc]);
+          station_ids[iOb] = buffer;
         }
       }
     }
