@@ -593,7 +593,7 @@ void NemoFeedback::setupIds(const size_t n_obs,
       char buffer[5];
       for (int iOb = 0; iOb < n_obs; ++iOb) {
         int jLoc = record_starts[iOb];
-        snprintf(buffer, sizeof(buffer), "%-4d", station_types_int[jLoc]);
+        snprintf(buffer, sizeof(buffer), "%4d", station_types_int[jLoc]);
         station_types[iOb] = buffer;
       }
     }
