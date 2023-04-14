@@ -604,9 +604,10 @@ void NemoFeedback::setupIds(const size_t n_obs,
     if (obsdb_.has("MetaData", "stationIdentification")) {
       std::vector<std::string> station_ids_tmp(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "stationIdentification", station_ids_tmp);
+      std::string station_id_missing_value = util::missingValue(station_id_missing_value);
       for (int i=0; i< n_obs; ++i) {
         if ((station_ids_tmp[i] != "") &&
-            (station_ids_tmp[i] != "*** MISSING ***")) {
+            (station_ids_tmp[i] != station_id_missing_value)) {
             int j = record_starts[i];
             station_ids_tmp[j].resize(8, ' ');
             station_ids[i] = station_ids_tmp[j].substr(0, 8);
