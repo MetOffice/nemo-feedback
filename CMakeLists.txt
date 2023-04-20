@@ -4,12 +4,12 @@
 
 cmake_minimum_required( VERSION 3.12 FATAL_ERROR )
 
-find_package( ecbuild 3.4 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild )
-
 ################################################################################
 # Initialise project nemo-feedback
 
-project( nemo-feedback LANGUAGES CXX Fortran )
+project( nemo-feedback VERSION 0.4.0 LANGUAGES CXX Fortran )
+find_package( ecbuild QUIET )
+include( ecbuild_system NO_POLICY_SCOPE )
 ecbuild_declare_project()
 
 set( CMAKE_DIRECTORY_LABELS "nemo-feedback" )
