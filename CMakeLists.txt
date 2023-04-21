@@ -29,7 +29,7 @@ ecbuild_debug( "   ioda_FEATURES : [${ioda_FEATURES}]" )
 find_package( ufo REQUIRED )
 ecbuild_debug( "   ufo_FEATURES : [${ufo_FEATURES}]" )
 
-#ecbuild_find_package( NAME NetCDF COMPONENTS CXX)
+ecbuild_find_package( NAME NetCDF COMPONENTS CXX Fortran )
 find_package( NetCDF COMPONENTS CXX)
 ecbuild_debug( "   NetCDF_FEATURES: [${NetCDF_FEATURES}]" )
 
