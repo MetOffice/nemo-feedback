@@ -24,6 +24,7 @@ observations:
       observation alias file: testinput/test_name_map.yaml
       vertical coordinate: depthBelowWaterSurface
       observation vertical coordinate group: ObsValue
+      interpolation method: linear
     obs filters:
     - filter: NEMO Feedback Writer
       filename: testoutput/test_hofx_profiles_writer_out.nc
