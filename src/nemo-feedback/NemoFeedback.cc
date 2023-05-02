@@ -509,11 +509,14 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
         size_t n_levels_prof = 0;
         size_t reclen = 0;
         for (size_t jobs : obs_indices) {
-          ++reclen;
           if (prune_profiles) {
-            if (to_write[jobs]) ++n_levels_prof;
+            if (to_write[jobs]){
+              ++n_levels_prof;
+              ++reclen;
+            }
           } else {
             ++n_levels_prof;
+            ++reclen;
           }
         }
         if (n_levels_prof != 0) {
