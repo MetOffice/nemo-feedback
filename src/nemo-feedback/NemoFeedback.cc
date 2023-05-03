@@ -509,14 +509,13 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
         size_t n_levels_prof = 0;
         size_t reclen = 0;
         for (size_t jobs : obs_indices) {
+          ++reclen;
           if (prune_profiles) {
             if (to_write[jobs]){
               ++n_levels_prof;
-              ++reclen;
             }
           } else {
             ++n_levels_prof;
-            ++reclen;
           }
         }
         if (n_levels_prof != 0) {
@@ -542,11 +541,11 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
             Here());
       }
 
-      // n_levels is equal to largest number of levels across an entire
-      // profile data.
+      // n_levels is equal to largest number of levels across all the
+      // profile data, provided we keep all the data in every profile.
       size_t n_levels_check = *std::max_element(coords.record_counts.begin(),
           coords.record_counts.end());
-      if (n_levels_check != coords.n_levels) {
+      if (!prune_profiles && (n_levels_check != coords.n_levels)) {
           throw eckit::BadValue(
               std::string("NemoFeedback::groupCoordsByRecord ")
               + "n_levels_check != coords.n_levels "

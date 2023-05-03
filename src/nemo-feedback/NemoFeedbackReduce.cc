@@ -38,8 +38,7 @@ NemoFeedbackReduce::NemoFeedbackReduce(const size_t n_obs,
           if (i == 0) {
             reduced_starts.push_back(l);
           } else {
-            reduced_starts.push_back(
-                reduced_starts[i-1]+reduced_counts[i-1]);
+            reduced_starts.push_back(reduced_starts[i-1]+reduced_counts[i-1]);
           }
         }
         reclen++;
