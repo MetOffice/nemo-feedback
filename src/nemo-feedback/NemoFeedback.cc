@@ -101,9 +101,7 @@ struct VariableData {
       oops::Log::trace() << "NemoFeedback::variableData::write_profile "
                          << nemo_name << std::endl;
       reducer.reduce_profile_data(data, reduced);
-      oops::Log::trace() << "NemoFeedback::variableData::write_profile record extent "
-                         << coords_.record_counts[coords_.n_obs-1] +
-                            coords_.record_starts[coords_.n_obs-1]
+      oops::Log::trace() << "NemoFeedback::variableData::write_profile extent "
                          << " data size " << data.size()
                          << " reduced size " << reduced.size();
                          << nemo_name << std::endl;
