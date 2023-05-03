@@ -101,6 +101,12 @@ struct VariableData {
       oops::Log::trace() << "NemoFeedback::variableData::write_profile "
                          << nemo_name << std::endl;
       reducer.reduce_profile_data(data, reduced);
+      oops::Log::trace() << "NemoFeedback::variableData::write_profile record extent "
+                         << coords_.record_counts[coords_.n_obs-1] +
+                            coords_.record_starts[coords_.n_obs-1]
+                         << " data size " << data.size()
+                         << " reduced size " << reduced.size();
+                         << nemo_name << std::endl;
       fdbk_writer.write_variable_profile(nemo_name, reduced);
   }
 };
@@ -511,9 +517,7 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
         for (size_t jobs : obs_indices) {
           ++reclen;
           if (prune_profiles) {
-            if (to_write[jobs]){
-              ++n_levels_prof;
-            }
+            if (to_write[jobs]) { ++n_levels_prof; }
           } else {
             ++n_levels_prof;
           }
