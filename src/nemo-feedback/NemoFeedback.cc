@@ -280,8 +280,10 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   if (coords.record_counts.at(coords.n_obs-1)
       + coords.record_starts.at(coords.n_obs-1) > coords.depths.size()) {
       std::ostringstream err_stream;
-      err_stream << "nemo_feedback::NemoFeedbackWriter:: "
-                 << "index range out of bounds "
+      err_stream << "nemo_feedback::NemoFeedback:: "
+                 << "index range out of bounds coords.n_obs "
+                 << coords.n_obs << " record_starts.size() "
+                 << record_starts.size() < " counts: "
                  << coords.record_counts.at(coords.n_obs-1) << " + "
                  << coords.record_starts.at(coords.n_obs-1) << " = "
                  << coords.record_counts.at(coords.n_obs-1) +
