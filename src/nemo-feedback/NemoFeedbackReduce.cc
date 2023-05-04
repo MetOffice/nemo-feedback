@@ -46,6 +46,16 @@ NemoFeedbackReduce::NemoFeedbackReduce(const size_t n_obs,
     }
     reduced_counts.push_back(reclen);
   }
+  const size_t total_reduced_counts = std::accumulate(reduced_counts.begin(),
+      reduced_counts.end(), decltype(reduced_counts)::value_type(0));
+  const size_t total_to_write = std::count(to_write.begin(), to_write.end(), true);
+  if ( total_reduced_counts != total_to_write ) {
+      std::ostringstream err_stream;
+      err_stream << "nemo_feedback::NemoFeedbackReduce::constructor "
+                 << "total reduced counts doesn't match total number of obs to write"
+                 << total_reduced_counts << " != " << total_to_write;
+      throw eckit::BadValue(err_stream.str(), Here());
+  }
 }
 
 template <typename T>
@@ -102,21 +112,21 @@ void NemoFeedbackReduce::reduce_profile_data(
   // unreduced_counts may be smaller than the size of the input data because
   // unreduced_counts does not include data from whole profiles that are
   // not being written to file.
-  const size_t n_unred_prof_obs = std::accumulate(unreduced_counts.begin(),
+  const size_t n_unred_prof_locs = std::accumulate(unreduced_counts.begin(),
       unreduced_counts.end(), decltype(reduced_counts)::value_type(0));
-  if (data_in.size() < n_unred_prof_obs) {
+  if (data_in.size() < n_unred_prof_locs) {
         throw eckit::BadValue(
             "NemoFeedbackReduce:: bad counts or input data size: "
             + std::to_string(data_in.size()) + " with nLocs "
-            + std::to_string(n_unred_prof_obs), Here());
+            + std::to_string(n_unred_prof_locs), Here());
   }
   // with profile data n_obs is the number of profiles and hence is not equal
   // to n_locs, which is the number of data points, and so we set up new
   // record_starts and counts based on the new data vector.
   data_out.clear();
-  const size_t n_prof_obs = std::accumulate(reduced_counts.begin(),
+  const size_t n_prof_locs = std::accumulate(reduced_counts.begin(),
       reduced_counts.end(), decltype(reduced_counts)::value_type(0));
-  data_out.reserve(n_prof_obs);
+  data_out.reserve(n_prof_locs);
   auto missing_value = util::missingValue(T(0));
   for (int iprof = 0; iprof < n_obs_; ++iprof) {
     size_t reclen = 0;
@@ -131,17 +141,16 @@ void NemoFeedbackReduce::reduce_profile_data(
       }
     }
   }
-  if (reduced_counts.at(n_prof_obs-1)
-      + reduced_starts.at(n_prof_obs-1) > data_out.size()) {
+  if (reduced_counts.at(n_obs_-1) + reduced_starts.at(n_obs_-1) != data_out.size()) {
       std::ostringstream err_stream;
       err_stream << "nemo_feedback::NemoFeedbackReduce::reduce_profile_data "
-                 << "index range out of bounds n_prof_obs "
-                 << n_prof_obs << " reduced_starts.size() "
+                 << "index range out of bounds n_prof_locs "
+                 << n_obs_ << " reduced_starts.size() "
                  << reduced_starts.size() << " counts: "
-                 << reduced_counts.at(n_prof_obs-1) << " + "
-                 << reduced_starts.at(n_prof_obs-1) << " = "
-                 << reduced_counts.at(n_prof_obs-1) +
-                    reduced_starts.at(n_prof_obs-1)
+                 << reduced_counts.at(n_obs_-1) << " + "
+                 << reduced_starts.at(n_obs_-1) << " = "
+                 << reduced_counts.at(n_obs_-1) +
+                    reduced_starts.at(n_obs_-1)
                  << " >= " << data_out.size();
       throw eckit::BadValue(err_stream.str(), Here());
   }

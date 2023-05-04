@@ -277,6 +277,15 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     coords.n_obs = n_surf_obs_to_write;
   }
 
+  if (reducer.reduced_counts.size() != coords.n_obs) {
+      std::ostringstream err_stream;
+      err_stream << "nemo_feedback::NemoFeedback:: "
+                 << "coords.n_obs does not match with dimension of reduced counts "
+                 << " reduced_counts.size() " << reducer.reduced_counts.size()
+                 << " coords.record_counts.size() " << coords.record_counts.size()
+                 << " coords.n_obs " << coords.n_obs;
+      throw eckit::BadValue(err_stream.str(), Here());
+  }
   if (coords.record_counts.at(coords.n_obs-1)
       + coords.record_starts.at(coords.n_obs-1) > coords.depths.size()) {
       std::ostringstream err_stream;
@@ -288,9 +297,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                  << coords.record_starts.at(coords.n_obs-1) << " = "
                  << coords.record_counts.at(coords.n_obs-1) +
                   + coords.record_starts.at(coords.n_obs-1)
-                 << " >= " << coords.depths.size()
-                 << "and in the reducer: " << reducer.reduced_counts.at(coords.n_obs-1) +
-                  + reducer.reduced_starts.at(coords.n_obs-1)
                  << " >= " << coords.depths.size();
       throw eckit::BadValue(err_stream.str(), Here());
   }
