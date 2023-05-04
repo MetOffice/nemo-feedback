@@ -288,6 +288,9 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                  << coords.record_starts.at(coords.n_obs-1) << " = "
                  << coords.record_counts.at(coords.n_obs-1) +
                   + coords.record_starts.at(coords.n_obs-1)
+                 << " >= " << coords.depths.size()
+                 << "and in the reducer: " << reducer.reduced_counts.at(coords.n_obs-1) +
+                  + reducer.reduced_starts.at(coords.n_obs-1)
                  << " >= " << coords.depths.size();
       throw eckit::BadValue(err_stream.str(), Here());
   }

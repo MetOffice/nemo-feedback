@@ -131,6 +131,20 @@ void NemoFeedbackReduce::reduce_profile_data(
       }
     }
   }
+  if (reduced_counts.at(n_prof_obs-1)
+      + reduced_starts.at(n_prof_obs-1) > data_out.size()) {
+      std::ostringstream err_stream;
+      err_stream << "nemo_feedback::NemoFeedbackReduce::reduce_profile_data "
+                 << "index range out of bounds n_prof_obs "
+                 << n_prof_obs << " reduced_starts.size() "
+                 << reduced_starts.size() << " counts: "
+                 << reduced_counts.at(n_prof_obs-1) << " + "
+                 << reduced_starts.at(n_prof_obs-1) << " = "
+                 << reduced_counts.at(n_prof_obs-1) +
+                    reduced_starts.at(n_prof_obs-1)
+                 << " >= " << data_out.size();
+      throw eckit::BadValue(err_stream.str(), Here());
+  }
 }
 
 template void NemoFeedbackReduce::reduce_profile_data(
