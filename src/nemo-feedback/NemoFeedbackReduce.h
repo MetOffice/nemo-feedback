@@ -15,7 +15,7 @@ namespace nemo_feedback {
 
 class NemoFeedbackReduce {
  public:
-  NemoFeedbackReduce(const size_t n_obs, const size_t n_obs_to_write,
+  NemoFeedbackReduce(const size_t n_obs, const size_t n_surf_obs_to_write,
       const std::vector<bool>& to_write,
       const std::vector<size_t> & record_starts,
       const std::vector<size_t> & record_counts);
@@ -40,7 +40,7 @@ class NemoFeedbackReduce {
       const bool change_fillvalues = true);
 
   const size_t n_obs_;
-  const size_t n_obs_to_write_;
+  const size_t n_surf_obs_to_write_;
   const std::vector<bool> to_write_;
   const std::vector<size_t> unreduced_starts;
   const std::vector<size_t> unreduced_counts;

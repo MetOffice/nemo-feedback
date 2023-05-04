@@ -21,11 +21,11 @@
 namespace nemo_feedback {
 
 NemoFeedbackReduce::NemoFeedbackReduce(const size_t n_obs,
-    const size_t n_obs_to_write,
+    const size_t n_surf_obs_to_write,
     const std::vector<bool>& to_write,
     const std::vector<size_t> & record_starts,
     const std::vector<size_t> & record_counts) :
-    n_obs_(n_obs), n_obs_to_write_(n_obs_to_write), to_write_(to_write),
+    n_obs_(n_obs), n_surf_obs_to_write_(n_surf_obs_to_write), to_write_(to_write),
     unreduced_starts(record_starts), unreduced_counts(record_counts) {
   oops::Log::trace() << "NemoFeedbackReduce constructor" << std::endl;
   reduced_starts.reserve(n_obs_);
@@ -57,7 +57,7 @@ std::vector<T> NemoFeedbackReduce::reduce_data(
   // surface data, n_locs/n_obs dimension var, n_locs = n_obs
   // so using n_obs should be fine
   auto missing_value = util::missingValue(T(0));
-  std::vector<T> data_out(n_obs_to_write_);
+  std::vector<T> data_out(n_surf_obs_to_write_);
   int j = 0;
   for (int i = 0; i < n_obs_; ++i) {
     if (to_write_[i]) {
@@ -79,7 +79,7 @@ template std::vector<double> NemoFeedbackReduce::reduce_data<double>(
 
 std::vector<std::string> NemoFeedbackReduce::reduce_data(
     const std::vector<std::string> & data_in) {
-  std::vector<std::string> data_out(n_obs_to_write_);
+  std::vector<std::string> data_out(n_surf_obs_to_write_);
   oops::Log::trace() << "NemoFeedbackReduce::reduce_data<string>" << std::endl;
   int j = 0;
   for (int i = 0; i < n_obs_; ++i) {

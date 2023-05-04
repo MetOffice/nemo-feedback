@@ -101,10 +101,25 @@ struct VariableData {
       oops::Log::trace() << "NemoFeedback::variableData::write_profile "
                          << nemo_name << std::endl;
       reducer.reduce_profile_data(data, reduced);
-      oops::Log::trace() << "NemoFeedback::variableData::write_profile extent "
-                         << " data size " << data.size()
-                         << " reduced size " << reduced.size()
-                         << nemo_name << std::endl;
+      const size_t n_reduced_profs = reducer.reduced_counts.size();
+      if (reducer.reduced_counts[n_reduced_profs]
+          + reducer.reduced_starts[n_reduced_profs-1] > reduced.size()) {
+          std::ostringstream err_stream;
+          err_stream << "NemoFeedback::variableData::write_profile extent "
+                     << " data size " << data.size()
+                     << " reduced size " << reduced.size()
+                     << " n_reduced_profs " << n_reduced_profs
+                     << " reducer.n_obs_ " << reducer.n_obs_
+                     << " " << nemo_name << std::endl;
+          err_stream << "NemoFeedback::variableData::write_profile "
+                     << "index range out of bounds '" << nemo_name << "' "
+                     << reducer.reduced_counts[n_reduced_profs-1] << " + "
+                     << reducer.reduced_starts[n_reduced_profs-1] << " = "
+                     << reducer.reduced_counts[n_reduced_profs-1] +
+                      + reducer.reduced_starts[n_reduced_profs-1]
+                     << " >= " << reduced.size();
+          throw eckit::BadValue(err_stream.str(), Here());
+      }
       fdbk_writer.write_variable_profile(nemo_name, reduced);
   }
 };
@@ -207,43 +222,44 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   //  Calculate n_obs, n_levels, starts, counts
   //  Fill out lats, lons, depths, julian_days
 
-  CoordData coords;
-  coords.n_obs = n_locs;
-  coords.n_levels = 1;
+  CoordData unreduced_coords;
+  unreduced_coords.n_obs = n_locs;
+  unreduced_coords.n_levels = 1;
 
   // Handle the where option.
   std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_,
                                    ufo::WhereOperator::AND);
   if (to_write.size() != n_locs) to_write.assign(n_locs, true);
 
-  groupCoordsByRecord(to_write, coords, is_profile);
+  groupCoordsByRecord(to_write, unreduced_coords, is_profile);
 
   // sync n_levels and juld_reference across files if multi-processing
-  mpi_sync_coordinates(coords, obsdb_.comm());
+  mpi_sync_coordinates(unreduced_coords, obsdb_.comm());
 
   // Calculate total number of obs to actually write.
   // This is already handled in the construction of record_counts/sizes above
   // for profiles, but for surface fields n_obs == n_locs, and we can look at
   // to_write
-  const size_t n_obs_to_write = is_profile ? coords.n_obs
+  const size_t n_surf_obs_to_write = is_profile ? unreduced_coords.n_obs
       : std::count(to_write.begin(), to_write.end(), true);
 
   // Set up the station type and identifier variables. The way to do this
   // depends on the data type. Also modify which obs to write if this is
   // altimeter data.
-  std::vector<std::string> station_types(coords.n_obs, "    ");
-  std::vector<std::string> station_ids(coords.n_obs, "        ");
+  std::vector<std::string> station_types(unreduced_coords.n_obs, "    ");
+  std::vector<std::string> station_ids(unreduced_coords.n_obs, "        ");
 
   if (is_altimeter) {
-    setupAltimeterIds(coords.n_obs, station_ids, station_types, to_write);
+    setupAltimeterIds(unreduced_coords.n_obs, station_ids, station_types, to_write);
   } else {
-    setupIds(coords.n_obs, coords.record_starts, coords.record_counts,
+    setupIds(unreduced_coords.n_obs, unreduced_coords.record_starts, unreduced_coords.record_counts,
         station_ids, station_types);
   }
 
-  NemoFeedbackReduce reducer(coords.n_obs, n_obs_to_write, to_write,
-                             coords.record_starts, coords.record_counts);
+  NemoFeedbackReduce reducer(unreduced_coords.n_obs, n_surf_obs_to_write, to_write,
+                             unreduced_coords.record_starts, unreduced_coords.record_counts);
 
+  CoordData coords(std::move(unreduced_coords));
   if (is_profile) {
     coords.record_starts = reducer.reduced_starts;
     coords.record_counts = reducer.reduced_counts;
@@ -257,7 +273,20 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     coords.julian_days = reducer.reduce_data(coords.julian_days);
     station_ids = reducer.reduce_data(station_ids);
     station_types = reducer.reduce_data(station_types);
-    coords.n_obs = n_obs_to_write;
+    coords.n_obs = n_surf_obs_to_write;
+  }
+
+  if (coords.record_counts[coords.n_obs-1]
+      + coords.record_starts[coords.n_obs-1] > coords.depths.size()) {
+      std::ostringstream err_stream;
+      err_stream << "nemo_feedback::NemoFeedbackWriter:: "
+                 << "index range out of bounds "
+                 << coords.record_counts[coords.n_obs-1] << " + "
+                 << coords.record_starts[coords.n_obs-1] << " = "
+                 << coords.record_counts[coords.n_obs-1] +
+                  + coords.record_starts[coords.n_obs-1]
+                 << " >= " << coords.depths.size();
+      throw eckit::BadValue(err_stream.str(), Here());
   }
 
   OutputDtype dtype = parameters_.type.value().value_or(OutputDtype::Double);
