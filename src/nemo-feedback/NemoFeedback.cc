@@ -102,8 +102,9 @@ struct VariableData {
                          << nemo_name << std::endl;
       reducer.reduce_profile_data(data, reduced);
       const size_t n_reduced_profs = reducer.reduced_counts.size();
-      if (reducer.reduced_counts.at(n_reduced_profs-1)
-          + reducer.reduced_starts.at(n_reduced_profs-1) > reduced.size()) {
+      if ((reducer.reduced_counts.at(n_reduced_profs-1)
+           + reducer.reduced_starts.at(n_reduced_profs-1) > reduced.size()) ||
+          (n_reduced_profs != reducer.n_obs_)) {
           std::ostringstream err_stream;
           err_stream << "NemoFeedback::variableData::write_profile extent "
                      << " data size " << data.size()
