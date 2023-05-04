@@ -102,8 +102,8 @@ struct VariableData {
                          << nemo_name << std::endl;
       reducer.reduce_profile_data(data, reduced);
       const size_t n_reduced_profs = reducer.reduced_counts.size();
-      if (reducer.reduced_counts[n_reduced_profs]
-          + reducer.reduced_starts[n_reduced_profs-1] > reduced.size()) {
+      if (reducer.reduced_counts.at(n_reduced_profs-1)
+          + reducer.reduced_starts.at(n_reduced_profs-1) > reduced.size()) {
           std::ostringstream err_stream;
           err_stream << "NemoFeedback::variableData::write_profile extent "
                      << " data size " << data.size()
@@ -113,10 +113,10 @@ struct VariableData {
                      << " " << nemo_name << std::endl;
           err_stream << "NemoFeedback::variableData::write_profile "
                      << "index range out of bounds '" << nemo_name << "' "
-                     << reducer.reduced_counts[n_reduced_profs-1] << " + "
-                     << reducer.reduced_starts[n_reduced_profs-1] << " = "
-                     << reducer.reduced_counts[n_reduced_profs-1] +
-                      + reducer.reduced_starts[n_reduced_profs-1]
+                     << reducer.reduced_counts.at(n_reduced_profs-1) << " + "
+                     << reducer.reduced_starts.at(n_reduced_profs-1) << " = "
+                     << reducer.reduced_counts.at(n_reduced_profs-1) +
+                      + reducer.reduced_starts.at(n_reduced_profs-1)
                      << " >= " << reduced.size();
           throw eckit::BadValue(err_stream.str(), Here());
       }
@@ -276,15 +276,15 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     coords.n_obs = n_surf_obs_to_write;
   }
 
-  if (coords.record_counts[coords.n_obs-1]
-      + coords.record_starts[coords.n_obs-1] > coords.depths.size()) {
+  if (coords.record_counts.at(coords.n_obs-1)
+      + coords.record_starts.at(coords.n_obs-1) > coords.depths.size()) {
       std::ostringstream err_stream;
       err_stream << "nemo_feedback::NemoFeedbackWriter:: "
                  << "index range out of bounds "
-                 << coords.record_counts[coords.n_obs-1] << " + "
-                 << coords.record_starts[coords.n_obs-1] << " = "
-                 << coords.record_counts[coords.n_obs-1] +
-                  + coords.record_starts[coords.n_obs-1]
+                 << coords.record_counts.at(coords.n_obs-1) << " + "
+                 << coords.record_starts.at(coords.n_obs-1) << " = "
+                 << coords.record_counts.at(coords.n_obs-1) +
+                  + coords.record_starts.at(coords.n_obs-1)
                  << " >= " << coords.depths.size();
       throw eckit::BadValue(err_stream.str(), Here());
   }
