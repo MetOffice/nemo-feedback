@@ -305,17 +305,17 @@ CASE("test creating reduced profile file ") {
   eckit::PathName test_data_path(
       "../testoutput/simple_nemo_reduced_profile_out.nc");
 
-  const size_t n_locs = 7;
-  const size_t n_obs = 2;
+  const size_t n_locs = 9;
+  const size_t n_obs_unreduced = 3;
   const size_t n_levels_unreduced = 5;
   CoordData coords;
   coords.n_levels = 4;
-  coords.n_obs = n_obs;
+  coords.n_obs = 2;
   coords.n_locs = n_locs;
-  coords.lats = std::vector<double>(n_obs, 1.0);
-  coords.lons = std::vector<double>(n_obs, 6.0);
+  coords.lats = std::vector<double>(coords.n_obs, 1.0);
+  coords.lons = std::vector<double>(coords.n_obs, 6.0);
   coords.depths = std::vector<double>(n_locs, 0);
-  coords.julian_days = std::vector<double>(n_obs, 11.0);
+  coords.julian_days = std::vector<double>(coords.n_obs, 11.0);
   coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
 
   NameData name_data;
@@ -331,10 +331,10 @@ CASE("test creating reduced profile file ") {
   const std::vector<std::string> station_types{" 401", " 401"};
   const std::vector<std::string> station_ids{"123     ", "123     "};
 
-  const std::vector<bool> to_write{true, false, true, true, true, false, true};
+  const std::vector<bool> to_write{true, false, false, false, true, true, true, false, true};
 
   SECTION("file writes") {
-    coords.record_starts = std::vector<size_t>{0, 2};
+    coords.record_starts = std::vector<size_t>{0, 4};
     coords.record_counts = std::vector<size_t>{2, n_levels_unreduced};
 
     NemoFeedbackReduce reducer(coords.n_obs, 2, to_write,
@@ -392,18 +392,19 @@ CASE("test creating reduced profile file ") {
     for (const std::string& v_name : name_data.variable_names) {
       SECTION(std::string("Profile ") + v_name + v_type + " data is correct") {
         netCDF::NcVar ncVar = ncFile.getVar(v_name + v_type);
-        std::vector<double> data(n_obs*coords.n_levels, 12345);
-        ncVar.getVar({0, 0}, {n_obs, coords.n_levels}, data.data());
+        std::vector<double> data(coords.n_obs*coords.n_levels, 12345);
+        ncVar.getVar({0, 0}, {coords.n_obs, coords.n_levels}, data.data());
 
         EXPECT_EQUAL(0, data[0]);
         EXPECT_EQUAL(99999, data[1]);
         EXPECT_EQUAL(99999, data[2]);
         EXPECT_EQUAL(99999, data[3]);
 
-        EXPECT_EQUAL(2, data[coords.n_levels]);
-        EXPECT_EQUAL(3, data[coords.n_levels+1]);
-        EXPECT_EQUAL(4, data[coords.n_levels+2]);
-        EXPECT_EQUAL(6, data[coords.n_levels+3]);
+        EXPECT_EQUAL(4, data[coords.n_levels]);
+        EXPECT_EQUAL(5, data[coords.n_levels+1]);
+        EXPECT_EQUAL(6, data[coords.n_levels+2]);
+        // One observation reduced out of second profile
+        EXPECT_EQUAL(8, data[coords.n_levels+3]);
       }
     }
   }
@@ -411,34 +412,36 @@ CASE("test creating reduced profile file ") {
   for (const std::string& v_name : name_data.variable_names) {
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC_FLAGS is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC_FLAGS");
-      std::vector<int> data(n_obs*coords.n_levels, 12345);
-      ncVar.getVar({0, 0, 0}, {n_obs, coords.n_levels, 1}, data.data());
+      std::vector<int> data(coords.n_obs*coords.n_levels, 12345);
+      ncVar.getVar({0, 0, 0}, {coords.n_obs, coords.n_levels, 1}, data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(0, data[1]);
       EXPECT_EQUAL(0, data[2]);
       EXPECT_EQUAL(0, data[3]);
 
-      EXPECT_EQUAL(12, data[coords.n_levels]);
-      EXPECT_EQUAL(13, data[coords.n_levels+1]);
-      EXPECT_EQUAL(14, data[coords.n_levels+2]);
-      EXPECT_EQUAL(16, data[coords.n_levels+3]);
+      EXPECT_EQUAL(14, data[coords.n_levels]);
+      EXPECT_EQUAL(15, data[coords.n_levels+1]);
+      EXPECT_EQUAL(16, data[coords.n_levels+2]);
+      // One observation reduced out of second profile
+      EXPECT_EQUAL(18, data[coords.n_levels+3]);
     }
 
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC");
-      std::vector<int> data(n_obs*coords.n_levels, 12345);
-      ncVar.getVar({0, 0}, {n_obs, coords.n_levels}, data.data());
+      std::vector<int> data(coords.n_obs*coords.n_levels, 12345);
+      ncVar.getVar({0, 0}, {coords.n_obs, coords.n_levels}, data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(0, data[1]);
       EXPECT_EQUAL(0, data[2]);
       EXPECT_EQUAL(0, data[3]);
 
-      EXPECT_EQUAL(12, data[coords.n_levels]);
-      EXPECT_EQUAL(13, data[coords.n_levels+1]);
-      EXPECT_EQUAL(14, data[coords.n_levels+2]);
-      EXPECT_EQUAL(16, data[coords.n_levels+3]);
+      EXPECT_EQUAL(14, data[coords.n_levels]);
+      EXPECT_EQUAL(15, data[coords.n_levels+1]);
+      EXPECT_EQUAL(16, data[coords.n_levels+2]);
+      // One observation reduced out of second profile
+      EXPECT_EQUAL(18, data[coords.n_levels+3]);
     }
   }
 }

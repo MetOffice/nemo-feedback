@@ -296,7 +296,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                  << coords.record_counts.at(coords.n_obs-1) << " + "
                  << coords.record_starts.at(coords.n_obs-1) << " = "
                  << coords.record_counts.at(coords.n_obs-1) +
-                  + coords.record_starts.at(coords.n_obs-1)
+                    coords.record_starts.at(coords.n_obs-1)
                  << " >= " << coords.depths.size();
       throw eckit::BadValue(err_stream.str(), Here());
   }
@@ -583,6 +583,8 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
             + "recnums.size() != record_counts.size()",
             Here());
       }
+      oops::Log::trace() << "NemoFeedback::groupCoordsByRecord recnums.size(): " << recnums.size()
+                         << " coords.n_obs: " << coords.n_obs << std::endl;
 
       // n_levels is equal to largest number of levels across all the
       // profile data, provided we keep all the data in every profile.
