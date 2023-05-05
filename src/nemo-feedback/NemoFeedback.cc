@@ -561,12 +561,26 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
             ++n_levels_prof;
           }
         }
+        // eliminate profiles with no observations to write
         if (n_levels_prof != 0) {
-          // we cannot guarantee profiles are stored in increasing depth order
-          // (i.e "sort order: ascending") so we calculate the likely start
-          // with a hack:
+          // Find the first observation index in the sequence
           size_t start = *std::min_element(obs_indices.begin(),
                                            obs_indices.end());
+          if (start != *obs_indices.begin()) {
+            bool isMonotonic = true;
+            size_t prev = obs_indices[0];
+            for (auto & jOb : obs_indices) {
+              if (jOb < prev) {
+                isMonotonic = false;
+                break;
+              }
+            }
+            oops::Log::trace() << std::string("NemoFeedback::groupCoordsByRecord ")
+                + "start " + std::to_string(start) + " != beginning of profile elements "
+                + std::to_string(*obs_indices.begin()) + " - possibly something "
+                + "strange happening with the sort order. The last observation is " + std::to_string(*obs_indices.end())
+                + " and the observation indices increase monotonically: " + std::to_string(isMonotonic) << std::endl;
+          }
           coords.record_starts.push_back(start);
           coords.record_counts.push_back(reclen);
           record_lats.push_back(coords.lats[start]);

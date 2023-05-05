@@ -305,9 +305,9 @@ CASE("test creating reduced profile file ") {
   eckit::PathName test_data_path(
       "../testoutput/simple_nemo_reduced_profile_out.nc");
 
-  const size_t n_locs = 9;
-  const size_t n_obs_unreduced = 3;
-  const size_t n_levels_unreduced = 5;
+  const size_t n_locs = 17;
+  const size_t n_obs_unreduced = 5;
+  const size_t n_levels_unreduced = 6;
   CoordData coords;
   coords.n_levels = 4;
   coords.n_obs = 2;
@@ -331,14 +331,20 @@ CASE("test creating reduced profile file ") {
   const std::vector<std::string> station_types{" 401", " 401"};
   const std::vector<std::string> station_ids{"123     ", "123     "};
 
-  const std::vector<bool> to_write{true, false, false, false, true, true, true, false, true};
+  const std::vector<bool> to_write{true, false,
+                                   false, false,
+                                   false, false,
+                                   true, true, true, false, true,
+                                   false, false, false, false, false, false};
 
   SECTION("file writes") {
-    coords.record_starts = std::vector<size_t>{0, 4};
+    // Without eliminating empty profiles:    {0, 2, 2, 4, 10};
+    coords.record_starts = std::vector<size_t>{0, 6,};
+    // Without eliminating empty profiles:    {2, 2, 2, n_levels_unreduced, 6};
     coords.record_counts = std::vector<size_t>{2, n_levels_unreduced};
 
-    NemoFeedbackReduce reducer(coords.n_obs, 2, to_write,
-        coords.record_starts, coords.record_counts);
+    NemoFeedbackReduce reducer(coords.n_obs, coords.n_obs, to_write,
+                               coords.record_starts, coords.record_counts);
     coords.record_starts = reducer.reduced_starts;
     coords.record_counts = reducer.reduced_counts;
 
@@ -399,12 +405,13 @@ CASE("test creating reduced profile file ") {
         EXPECT_EQUAL(99999, data[1]);
         EXPECT_EQUAL(99999, data[2]);
         EXPECT_EQUAL(99999, data[3]);
-
-        EXPECT_EQUAL(4, data[coords.n_levels]);
-        EXPECT_EQUAL(5, data[coords.n_levels+1]);
-        EXPECT_EQUAL(6, data[coords.n_levels+2]);
+        // Two profiles immediately rejected, as they lack valid observations
+        EXPECT_EQUAL(6, data[coords.n_levels]);
+        EXPECT_EQUAL(7, data[coords.n_levels+1]);
+        EXPECT_EQUAL(8, data[coords.n_levels+2]);
         // One observation reduced out of second profile
-        EXPECT_EQUAL(8, data[coords.n_levels+3]);
+        EXPECT_EQUAL(10, data[coords.n_levels+3]);
+        // Final profile immediately rejected, as it lacks valid observations
       }
     }
   }
@@ -419,12 +426,13 @@ CASE("test creating reduced profile file ") {
       EXPECT_EQUAL(0, data[1]);
       EXPECT_EQUAL(0, data[2]);
       EXPECT_EQUAL(0, data[3]);
-
-      EXPECT_EQUAL(14, data[coords.n_levels]);
-      EXPECT_EQUAL(15, data[coords.n_levels+1]);
-      EXPECT_EQUAL(16, data[coords.n_levels+2]);
+      // Two profiles immediately rejected, as they lack valid observations
+      EXPECT_EQUAL(16, data[coords.n_levels]);
+      EXPECT_EQUAL(17, data[coords.n_levels+1]);
+      EXPECT_EQUAL(18, data[coords.n_levels+2]);
       // One observation reduced out of second profile
-      EXPECT_EQUAL(18, data[coords.n_levels+3]);
+      EXPECT_EQUAL(20, data[coords.n_levels+3]);
+      // Final profile immediately rejected, as it lacks valid observations
     }
 
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
@@ -436,12 +444,13 @@ CASE("test creating reduced profile file ") {
       EXPECT_EQUAL(0, data[1]);
       EXPECT_EQUAL(0, data[2]);
       EXPECT_EQUAL(0, data[3]);
-
-      EXPECT_EQUAL(14, data[coords.n_levels]);
-      EXPECT_EQUAL(15, data[coords.n_levels+1]);
-      EXPECT_EQUAL(16, data[coords.n_levels+2]);
+      // Two profiles immediately rejected, as they lack valid observations
+      EXPECT_EQUAL(16, data[coords.n_levels]);
+      EXPECT_EQUAL(17, data[coords.n_levels+1]);
+      EXPECT_EQUAL(18, data[coords.n_levels+2]);
       // One observation reduced out of second profile
-      EXPECT_EQUAL(18, data[coords.n_levels+3]);
+      EXPECT_EQUAL(20, data[coords.n_levels+3]);
+      // Final profile immediately rejected, as it lacks valid observations
     }
   }
 }
