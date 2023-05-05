@@ -80,6 +80,10 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   /// \brief Sync relevent coordinate data across MPI processes
   void mpi_sync_coordinates(CoordData& coords,
                             const eckit::mpi::Comm& comm);
+  /// \brief print starts and counts
+  void print_profile_starts_and_counts(const std::vector<size_t>& starts,
+                                       const std::vector<size_t>& counts,
+                                       const std::string filename) const;
   void print(std::ostream &) const override;
 
   ioda::ObsSpace & obsdb_;

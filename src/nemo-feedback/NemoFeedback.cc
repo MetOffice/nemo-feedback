@@ -7,6 +7,8 @@
 #include "nemo-feedback/NemoFeedback.h"
 
 #include <string.h>
+#include <fstream>
+#include <iomanip>
 
 #include <algorithm>
 #include <utility>
@@ -576,7 +578,8 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
               }
             }
             oops::Log::trace() << std::string("NemoFeedback::groupCoordsByRecord ")
-                + "start " + std::to_string(start) + " != beginning of profile elements "
+                + "ob: " + std::to_string(coords.record_starts.size() + 1)
+                + " start " + std::to_string(start) + " != beginning of profile elements "
                 + std::to_string(*obs_indices.begin()) + " - possibly something "
                 + "strange happening with the sort order. The last observation is "
                 + std::to_string(*(obs_indices.end()-1))
@@ -600,6 +603,7 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       }
       oops::Log::trace() << "NemoFeedback::groupCoordsByRecord recnums.size(): " << recnums.size()
                          << " coords.n_obs: " << coords.n_obs << std::endl;
+      print_profile_starts_and_counts(coords.record_starts, coords.record_counts, "NemoFeedbackStartsAndCounts.txt");
 
       // n_levels is equal to largest number of levels across all the
       // profile data, provided we keep all the data in every profile.
@@ -782,6 +786,20 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     size_t index_0 = 0;
     coords.juld_reference.deserialize(juld_ref, index_0);
   }
+}
+
+void NemoFeedback::print_profile_starts_and_counts(const std::vector<size_t>& starts,
+                                                   const std::vector<size_t>& counts,
+                                                   const std::string filename) const {
+  std::ofstream outFile(filename);
+  const size_t nObs = starts.size();
+  for (size_t iOb = 0; iOb < nObs; ++iOb) {
+    outFile << std::setw(12) << iOb << " "
+            << std::setw(12) << starts[iOb] << " "
+            << std::setw(12) << counts[iOb] << " "
+            << std::setw(12) << starts[iOb] + counts[iOb] << std::endl;
+  }
+  outFile.close();
 }
 
 void NemoFeedback::print(std::ostream & os) const {
