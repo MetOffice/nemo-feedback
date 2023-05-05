@@ -578,7 +578,8 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
             oops::Log::trace() << std::string("NemoFeedback::groupCoordsByRecord ")
                 + "start " + std::to_string(start) + " != beginning of profile elements "
                 + std::to_string(*obs_indices.begin()) + " - possibly something "
-                + "strange happening with the sort order. The last observation is " + std::to_string(*obs_indices.end())
+                + "strange happening with the sort order. The last observation is "
+                + std::to_string(*(obs_indices.end()-1))
                 + " and the observation indices increase monotonically: " + std::to_string(isMonotonic) << std::endl;
           }
           coords.record_starts.push_back(start);
