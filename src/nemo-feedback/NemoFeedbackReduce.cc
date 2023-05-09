@@ -45,13 +45,8 @@ NemoFeedbackReduce::NemoFeedbackReduce(const size_t n_obs,
   const size_t total_reduced_counts = std::accumulate(reduced_counts.begin(),
       reduced_counts.end(), decltype(reduced_counts)::value_type(0));
   const size_t total_to_write = std::count(to_write.begin(), to_write.end(), true);
-  if ( total_reduced_counts != total_to_write ) {
-      std::ostringstream err_stream;
-      err_stream << "nemo_feedback::NemoFeedbackReduce::constructor "
-                 << "total reduced counts doesn't match total number of obs to write"
-                 << total_reduced_counts << " != " << total_to_write;
-      throw eckit::BadValue(err_stream.str(), Here());
-  }
+  ASSERT_MSG(total_reduced_counts == total_to_write,
+      "NemoFeedbackReduce::constructor: number of indexed locations does not match the number to write");
 }
 
 template <typename T>
@@ -137,19 +132,8 @@ void NemoFeedbackReduce::reduce_profile_data(
       }
     }
   }
-  if (reduced_counts.at(n_obs_-1) + reduced_starts.at(n_obs_-1) != data_out.size()) {
-      std::ostringstream err_stream;
-      err_stream << "nemo_feedback::NemoFeedbackReduce::reduce_profile_data "
-                 << "index range out of bounds n_prof_locs "
-                 << n_obs_ << " reduced_starts.size() "
-                 << reduced_starts.size() << " counts: "
-                 << reduced_counts.at(n_obs_-1) << " + "
-                 << reduced_starts.at(n_obs_-1) << " = "
-                 << reduced_counts.at(n_obs_-1) +
-                    reduced_starts.at(n_obs_-1)
-                 << " >= " << data_out.size();
-      throw eckit::BadValue(err_stream.str(), Here());
-  }
+  ASSERT_MSG(reduced_counts.at(n_obs_-1) + reduced_starts.at(n_obs_-1) == data_out.size(),
+      "NemoFeedbackReduce::reduce_profile_data: number of indexed locations does not match the number in the data.");
 }
 
 template void NemoFeedbackReduce::reduce_profile_data(

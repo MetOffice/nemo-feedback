@@ -7,8 +7,6 @@
 #include "nemo-feedback/NemoFeedback.h"
 
 #include <string.h>
-#include <fstream>
-#include <iomanip>
 
 #include <algorithm>
 #include <utility>
@@ -103,26 +101,6 @@ struct VariableData {
       oops::Log::trace() << "NemoFeedback::variableData::write_profile "
                          << nemo_name << std::endl;
       reducer.reduce_profile_data(data, reduced);
-      const size_t n_reduced_profs = reducer.reduced_counts.size();
-      if ((reducer.reduced_counts.at(n_reduced_profs-1)
-           + reducer.reduced_starts.at(n_reduced_profs-1) > reduced.size()) ||
-          (n_reduced_profs != reducer.n_obs_)) {
-          std::ostringstream err_stream;
-          err_stream << "NemoFeedback::variableData::write_profile extent "
-                     << " data size " << data.size()
-                     << " reduced size " << reduced.size()
-                     << " n_reduced_profs " << n_reduced_profs
-                     << " reducer.n_obs_ " << reducer.n_obs_
-                     << " " << nemo_name << std::endl;
-          err_stream << "NemoFeedback::variableData::write_profile "
-                     << "index range out of bounds '" << nemo_name << "' "
-                     << reducer.reduced_counts.at(n_reduced_profs-1) << " + "
-                     << reducer.reduced_starts.at(n_reduced_profs-1) << " = "
-                     << reducer.reduced_counts.at(n_reduced_profs-1) +
-                      + reducer.reduced_starts.at(n_reduced_profs-1)
-                     << " >= " << reduced.size();
-          throw eckit::BadValue(err_stream.str(), Here());
-      }
       fdbk_writer.write_variable_profile(nemo_name, reduced);
   }
 };
@@ -279,32 +257,6 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     coords.n_obs = n_surf_obs_to_write;
   }
 
-  print_profile_starts_and_counts(coords.record_starts, coords.record_counts, "NemoFeedbackReducedStartsAndCounts.txt");
-
-  if (reducer.reduced_counts.size() != coords.n_obs) {
-      std::ostringstream err_stream;
-      err_stream << "nemo_feedback::NemoFeedback:: "
-                 << "coords.n_obs does not match with dimension of reduced counts "
-                 << " reduced_counts.size() " << reducer.reduced_counts.size()
-                 << " coords.record_counts.size() " << coords.record_counts.size()
-                 << " coords.n_obs " << coords.n_obs;
-      throw eckit::BadValue(err_stream.str(), Here());
-  }
-  if (coords.record_counts.at(coords.n_obs-1)
-      + coords.record_starts.at(coords.n_obs-1) > coords.depths.size()) {
-      std::ostringstream err_stream;
-      err_stream << "nemo_feedback::NemoFeedback:: "
-                 << "index range out of bounds coords.n_obs "
-                 << coords.n_obs << " record_starts.size() "
-                 << coords.record_starts.size() << " counts: "
-                 << coords.record_counts.at(coords.n_obs-1) << " + "
-                 << coords.record_starts.at(coords.n_obs-1) << " = "
-                 << coords.record_counts.at(coords.n_obs-1) +
-                    coords.record_starts.at(coords.n_obs-1)
-                 << " >= " << coords.depths.size();
-      throw eckit::BadValue(err_stream.str(), Here());
-  }
-
   OutputDtype dtype = parameters_.type.value().value_or(OutputDtype::Double);
   if (dtype == OutputDtype::Float) {
     NemoFeedbackWriter<float> fdbk_writer(test_data_path,
@@ -417,7 +369,7 @@ void NemoFeedback::write_all_data(NemoFeedbackWriter<T>& fdbk_writer,
       }
       fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
     } else {
-      for (int i=0; i < variable_qc.size(); ++i) {
+      for (size_t i=0; i < variable_qc.size(); ++i) {
         if (hasMetOfficeQC &&
             (variable_qcFlags[i] &
              ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport)) {
@@ -570,23 +522,6 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
           // Find the first observation index in the sequence
           size_t start = *std::min_element(obs_indices.begin(),
                                            obs_indices.end());
-          if (start != *obs_indices.begin()) {
-            bool isMonotonic = true;
-            size_t prev = obs_indices[0];
-            for (auto & jOb : obs_indices) {
-              if (jOb < prev) {
-                isMonotonic = false;
-                break;
-              }
-            }
-            oops::Log::trace() << std::string("NemoFeedback::groupCoordsByRecord ")
-                + "ob: " + std::to_string(coords.record_starts.size() + 1)
-                + " start " + std::to_string(start) + " != beginning of profile elements "
-                + std::to_string(*obs_indices.begin()) + " - possibly something "
-                + "strange happening with the sort order. The last observation is "
-                + std::to_string(*(obs_indices.end()-1))
-                + " and the observation indices increase monotonically: " + std::to_string(isMonotonic) << std::endl;
-          }
           coords.record_starts.push_back(start);
           coords.record_counts.push_back(reclen);
           record_lats.push_back(coords.lats[start]);
@@ -598,27 +533,17 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       }
 
       coords.n_obs = coords.record_counts.size();
-      if (!prune_profiles && (recnums.size() != coords.n_obs)) {
-        throw eckit::BadValue(std::string("NemoFeedback::groupCoordsByRecord ")
-            + "recnums.size() != record_counts.size()",
-            Here());
+      if (!prune_profiles) {
+        ASSERT_MSG(recnums.size() == coords.n_obs,
+            "NemoFeedback::groupCoordsByRecord recnums.size() != record_counts.size()");
       }
-      oops::Log::trace() << "NemoFeedback::groupCoordsByRecord recnums.size(): " << recnums.size()
-                         << " coords.n_obs: " << coords.n_obs << std::endl;
-      print_profile_starts_and_counts(coords.record_starts, coords.record_counts, "NemoFeedbackStartsAndCounts.txt");
-
       // n_levels is equal to largest number of levels across all the
-      // profile data, provided we keep all the data in every profile.
+      // profile data
       size_t n_levels_check = *std::max_element(coords.record_counts.begin(),
           coords.record_counts.end());
-      if (!prune_profiles && (n_levels_check != coords.n_levels)) {
-          throw eckit::BadValue(
-              std::string("NemoFeedback::groupCoordsByRecord ")
-              + "n_levels_check != coords.n_levels "
-              + std::to_string(n_levels_check) + " "
-              + std::to_string(coords.n_levels),
-              Here());
-      }
+      ASSERT_MSG(n_levels_check == coords.n_levels,
+          std::string("NemoFeedback::groupCoordsByRecord mismatch between number of levels and")
+          + " the per-profile location counts");
 
       coords.lats.resize(coords.n_obs);
       coords.lats.assign(record_lats.begin(), record_lats.end());
@@ -636,12 +561,12 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       std::fill(coords.depths.begin(), coords.depths.end(), 0);
       coords.record_counts.assign(coords.n_locs, 1);
       coords.record_starts.resize(coords.n_locs);
-      for (int iLoc = 0; iLoc < coords.n_locs; ++iLoc)
+      for (size_t iLoc = 0; iLoc < coords.n_locs; ++iLoc)
         coords.record_starts[iLoc] = iLoc;
     }
 
     coords.julian_days.resize(coords.n_obs);
-    for (int i=0; i < coords.n_obs; ++i) {
+    for (size_t i = 0; i < coords.n_obs; ++i) {
       util::Duration duration = static_cast<util::DateTime>(datetimes[i])
           - coords.juld_reference;
       coords.julian_days[i] = duration.toSeconds() / 86400.0;
@@ -659,7 +584,7 @@ void NemoFeedback::setupIds(const size_t n_obs,
       std::vector<int> station_types_int(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "fdbk_station_type", station_types_int);
       char buffer[5];
-      for (int iOb = 0; iOb < n_obs; ++iOb) {
+      for (size_t iOb = 0; iOb < n_obs; ++iOb) {
         int jLoc = record_starts[iOb];
         snprintf(buffer, sizeof(buffer), "%4d", station_types_int[jLoc]);
         station_types[iOb] = buffer;
@@ -673,7 +598,7 @@ void NemoFeedback::setupIds(const size_t n_obs,
       std::vector<std::string> station_ids_tmp(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "stationIdentification", station_ids_tmp);
       std::string station_id_missing_value = util::missingValue(station_id_missing_value);
-      for (int iOb = 0; iOb < n_obs; ++iOb) {
+      for (size_t iOb = 0; iOb < n_obs; ++iOb) {
         int jLoc = record_starts[iOb];
         if ((station_ids_tmp[jLoc] != "") &&
             (station_ids_tmp[jLoc] != station_id_missing_value)) {
@@ -687,7 +612,7 @@ void NemoFeedback::setupIds(const size_t n_obs,
       obsdb_.get_db("MetaData", "buoyIdentifier", buoy_ids);
       char buffer[9];
       int buoy_id_missing_value = util::missingValue(buoy_id_missing_value);
-      for (int iOb = 0; iOb < n_obs; ++iOb) {
+      for (size_t iOb = 0; iOb < n_obs; ++iOb) {
         int jLoc = record_starts[iOb];
         if ((buoy_ids[jLoc] != buoy_id_missing_value) &&
             (station_ids[iOb] == std::string(8, ' '))){
@@ -721,7 +646,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     obsdb_.get_db("MetaData", "instrumentIdentifier", version);
     char buffer9[9];
     char buffer5[5];
-    for (int i=0; i < n_obs; ++i) {
+    for (size_t i = 0; i < n_obs; ++i) {
       snprintf(buffer9, sizeof(buffer9), "%04d    ", satellite_ids[i]);
       station_ids[i] = buffer9;
       snprintf(buffer5, sizeof(buffer5), "%4d", satellite_ids[i]);
@@ -732,7 +657,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     std::vector<int> ymd(n_obs);
     int ymd_tmp;
     int hms_tmp;
-    for (int i=0; i < n_obs; ++i) {
+    for (size_t i = 0; i < n_obs; ++i) {
       datetimes[i].toYYYYMMDDhhmmss(ymd_tmp, hms_tmp);
       ymd[i] = ymd_tmp;
     }
@@ -747,7 +672,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     for (int ymd_to_find : ymd_set) {
       for (int sid_to_find : sid_set) {
         latest_version = 0;
-        for (int i=0; i < n_obs; ++i) {
+        for (size_t i=0; i < n_obs; ++i) {
           if (to_write[i] &&
               ymd[i] == ymd_to_find &&
               satellite_ids[i] == sid_to_find &&
@@ -761,7 +686,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
         // as not to write already. Therefore, we only need to do anything
         // further if latest_version > 0.
         if (latest_version > 0) {
-          for (int i=0; i < n_obs; ++i) {
+          for (size_t i=0; i < n_obs; ++i) {
             if (to_write[i] &&
                 ymd[i] == ymd_to_find &&
                 satellite_ids[i] == sid_to_find &&
@@ -788,20 +713,6 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     size_t index_0 = 0;
     coords.juld_reference.deserialize(juld_ref, index_0);
   }
-}
-
-void NemoFeedback::print_profile_starts_and_counts(const std::vector<size_t>& starts,
-                                                   const std::vector<size_t>& counts,
-                                                   const std::string filename) const {
-  std::ofstream outFile(filename);
-  const size_t nObs = starts.size();
-  for (size_t iOb = 0; iOb < nObs; ++iOb) {
-    outFile << std::setw(12) << iOb << " "
-            << std::setw(12) << starts[iOb] << " "
-            << std::setw(12) << counts[iOb] << " "
-            << std::setw(12) << starts[iOb] + counts[iOb] << std::endl;
-  }
-  outFile.close();
 }
 
 void NemoFeedback::print(std::ostream & os) const {
