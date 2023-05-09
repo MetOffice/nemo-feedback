@@ -33,18 +33,14 @@ NemoFeedbackReduce::NemoFeedbackReduce(const size_t n_obs,
   for (int i = 0; i < n_obs_; ++i) {
     size_t reclen = 0;
     for (int l = record_starts[i]; l < record_starts[i]+record_counts[i]; ++l) {
-      if (to_write_[l]) {
-        if (i >= reduced_starts.size()) {
-          if (i == 0) {
-            reduced_starts.push_back(l);
-          } else {
-            reduced_starts.push_back(reduced_starts[i-1]+reduced_counts[i-1]);
-          }
-        }
+      if (to_write_[l])
         reclen++;
-      }
     }
     reduced_counts.push_back(reclen);
+  }
+  reduced_starts.push_back(0);
+  for (int i = 1; i < n_obs; ++i) {
+    reduced_starts.push_back(reduced_starts[i-1] + reduced_counts[i-1]);
   }
   const size_t total_reduced_counts = std::accumulate(reduced_counts.begin(),
       reduced_counts.end(), decltype(reduced_counts)::value_type(0));
