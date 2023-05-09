@@ -9,6 +9,7 @@
 #include<netcdf>
 #include<string>
 #include <algorithm>
+#include <numeric>
 
 #include "eckit/log/Bytes.h"
 
@@ -40,7 +41,7 @@ CASE("test creating test file ") {
   coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
   coords.record_counts.assign(coords.n_locs, 1);
   coords.record_starts.resize(coords.n_locs);
-  for (int iLoc = 0; iLoc < coords.n_locs; ++iLoc)
+  for (size_t iLoc = 0; iLoc < coords.n_locs; ++iLoc)
       coords.record_starts[iLoc] = iLoc;
 
   NameData name_data;
@@ -86,7 +87,7 @@ CASE("test creating test file ") {
         station_ids);
 
     // wait up to 20 seconds for the file system...
-    for (int wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -208,7 +209,7 @@ CASE("test creating profile file ") {
         station_ids);
 
     std::vector<double> data(n_locs, 0);
-    for (int i = 0; i < n_locs; ++i) data[i] = i;
+    for (size_t i = 0; i < n_locs; ++i) data[i] = i;
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
         data);
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
@@ -219,7 +220,7 @@ CASE("test creating profile file ") {
         data);
 
     std::vector<int32_t> int_data(n_locs, 0);
-    for (int i = 0; i < n_locs; ++i) int_data[i] = 10+i;
+    for (size_t i = 0; i < n_locs; ++i) int_data[i] = 10+i;
     fdbk_writer.write_variable_level_qc(
         name_data.variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0);
     fdbk_writer.write_variable_level_qc(
@@ -230,7 +231,7 @@ CASE("test creating profile file ") {
         name_data.variable_names[1] + "_LEVEL_QC", int_data);
 
     // wait up to 20 seconds for the file system...
-    for (int wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -306,7 +307,6 @@ CASE("test creating reduced profile file ") {
       "../testoutput/simple_nemo_reduced_profile_out.nc");
 
   const size_t n_locs = 17;
-  const size_t n_obs_unreduced = 5;
   const size_t n_levels_unreduced = 6;
   CoordData coords;
   coords.n_levels = 4;
@@ -345,6 +345,21 @@ CASE("test creating reduced profile file ") {
 
     NemoFeedbackReduce reducer(coords.n_obs, coords.n_obs, to_write,
                                coords.record_starts, coords.record_counts);
+
+    // reduced index arrays should index a reduced data array based on where to_write is true
+    // In the above example this is two profiles with:
+    // [A, B, B, B, B,]
+    EXPECT_EQUAL(0, reducer.reduced_starts[0]);
+    EXPECT_EQUAL(1, reducer.reduced_starts[1]);
+    EXPECT_EQUAL(1, reducer.reduced_counts[0]);
+    EXPECT_EQUAL(4, reducer.reduced_counts[1]);
+
+    const size_t n_write_locs = std::count(to_write.begin(), to_write.end(), true);
+    const size_t n_reduced_locs = std::accumulate(reducer.reduced_counts.begin(),
+                                                  reducer.reduced_counts.end(), size_t(0));
+    // number of locations to write should match the total in the reduced_counts arrays
+    EXPECT_EQUAL(n_write_locs, n_reduced_locs);
+
     coords.record_starts = reducer.reduced_starts;
     coords.record_counts = reducer.reduced_counts;
 
@@ -358,7 +373,7 @@ CASE("test creating reduced profile file ") {
 
     std::vector<double> data(n_locs, 0);
     std::vector<double> reduced_data;
-    for (int i = 0; i < n_locs; ++i) data[i] = i;
+    for (size_t i = 0; i < n_locs; ++i) data[i] = i;
     reducer.reduce_profile_data(data, reduced_data);
 
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
@@ -372,7 +387,7 @@ CASE("test creating reduced profile file ") {
 
     std::vector<int32_t> int_data(n_locs, 0);
     std::vector<int32_t> reduced_int_data;
-    for (int i = 0; i < n_locs; ++i) int_data[i] = 10+i;
+    for (size_t i = 0; i < n_locs; ++i) int_data[i] = 10+i;
     reducer.reduce_profile_data(int_data, reduced_int_data);
     fdbk_writer.write_variable_level_qc(
         name_data.variable_names[0] + "_LEVEL_QC_FLAGS", reduced_int_data, 0);
@@ -384,7 +399,7 @@ CASE("test creating reduced profile file ") {
         name_data.variable_names[1] + "_LEVEL_QC", reduced_int_data);
 
     // wait up to 20 seconds for the file system...
-    for (int wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
