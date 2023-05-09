@@ -279,6 +279,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     coords.n_obs = n_surf_obs_to_write;
   }
 
+  print_profile_starts_and_counts(coords.record_starts, coords.record_counts, "NemoFeedbackReducedStartsAndCounts.txt");
+
   if (reducer.reduced_counts.size() != coords.n_obs) {
       std::ostringstream err_stream;
       err_stream << "nemo_feedback::NemoFeedback:: "
