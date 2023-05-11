@@ -9,6 +9,7 @@
 #include<netcdf>
 #include<string>
 #include <algorithm>
+#include <numeric>
 
 #include "eckit/log/Bytes.h"
 
@@ -40,7 +41,7 @@ CASE("test creating test file ") {
   coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
   coords.record_counts.assign(coords.n_locs, 1);
   coords.record_starts.resize(coords.n_locs);
-  for (int iLoc = 0; iLoc < coords.n_locs; ++iLoc)
+  for (size_t iLoc = 0; iLoc < coords.n_locs; ++iLoc)
       coords.record_starts[iLoc] = iLoc;
 
   NameData name_data;
@@ -86,7 +87,7 @@ CASE("test creating test file ") {
         station_ids);
 
     // wait up to 20 seconds for the file system...
-    for (int wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -208,7 +209,7 @@ CASE("test creating profile file ") {
         station_ids);
 
     std::vector<double> data(n_locs, 0);
-    for (int i = 0; i < n_locs; ++i) data[i] = i;
+    for (size_t i = 0; i < n_locs; ++i) data[i] = i;
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
         data);
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
@@ -219,7 +220,7 @@ CASE("test creating profile file ") {
         data);
 
     std::vector<int32_t> int_data(n_locs, 0);
-    for (int i = 0; i < n_locs; ++i) int_data[i] = 10+i;
+    for (size_t i = 0; i < n_locs; ++i) int_data[i] = 10+i;
     fdbk_writer.write_variable_level_qc(
         name_data.variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0);
     fdbk_writer.write_variable_level_qc(
@@ -230,7 +231,7 @@ CASE("test creating profile file ") {
         name_data.variable_names[1] + "_LEVEL_QC", int_data);
 
     // wait up to 20 seconds for the file system...
-    for (int wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -305,17 +306,16 @@ CASE("test creating reduced profile file ") {
   eckit::PathName test_data_path(
       "../testoutput/simple_nemo_reduced_profile_out.nc");
 
-  const size_t n_locs = 7;
-  const size_t n_obs = 2;
-  const size_t n_levels_unreduced = 5;
+  const size_t n_locs = 17;
+  const size_t n_levels_unreduced = 6;
   CoordData coords;
   coords.n_levels = 4;
-  coords.n_obs = n_obs;
+  coords.n_obs = 2;
   coords.n_locs = n_locs;
-  coords.lats = std::vector<double>(n_obs, 1.0);
-  coords.lons = std::vector<double>(n_obs, 6.0);
+  coords.lats = std::vector<double>(coords.n_obs, 1.0);
+  coords.lons = std::vector<double>(coords.n_obs, 6.0);
   coords.depths = std::vector<double>(n_locs, 0);
-  coords.julian_days = std::vector<double>(n_obs, 11.0);
+  coords.julian_days = std::vector<double>(coords.n_obs, 11.0);
   coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
 
   NameData name_data;
@@ -331,14 +331,35 @@ CASE("test creating reduced profile file ") {
   const std::vector<std::string> station_types{" 401", " 401"};
   const std::vector<std::string> station_ids{"123     ", "123     "};
 
-  const std::vector<bool> to_write{true, false, true, true, true, false, true};
+  const std::vector<bool> to_write{true, false,
+                                   false, false,
+                                   false, false,
+                                   true, true, true, false, true,
+                                   false, false, false, false, false, false};
 
   SECTION("file writes") {
-    coords.record_starts = std::vector<size_t>{0, 2};
+    // Without eliminating empty profiles:    {0, 2, 2, 4, 10};
+    coords.record_starts = std::vector<size_t>{0, 6,};
+    // Without eliminating empty profiles:    {2, 2, 2, n_levels_unreduced, 6};
     coords.record_counts = std::vector<size_t>{2, n_levels_unreduced};
 
-    NemoFeedbackReduce reducer(coords.n_obs, 2, to_write,
-        coords.record_starts, coords.record_counts);
+    NemoFeedbackReduce reducer(coords.n_obs, coords.n_obs, to_write,
+                               coords.record_starts, coords.record_counts);
+
+    // reduced index arrays should index a reduced data array based on where to_write is true
+    // In the above example this is two profiles with:
+    // [A, B, B, B, B,]
+    EXPECT_EQUAL(0, reducer.reduced_starts[0]);
+    EXPECT_EQUAL(1, reducer.reduced_starts[1]);
+    EXPECT_EQUAL(1, reducer.reduced_counts[0]);
+    EXPECT_EQUAL(4, reducer.reduced_counts[1]);
+
+    const size_t n_write_locs = std::count(to_write.begin(), to_write.end(), true);
+    const size_t n_reduced_locs = std::accumulate(reducer.reduced_counts.begin(),
+                                                  reducer.reduced_counts.end(), size_t(0));
+    // number of locations to write should match the total in the reduced_counts arrays
+    EXPECT_EQUAL(n_write_locs, n_reduced_locs);
+
     coords.record_starts = reducer.reduced_starts;
     coords.record_counts = reducer.reduced_counts;
 
@@ -352,7 +373,7 @@ CASE("test creating reduced profile file ") {
 
     std::vector<double> data(n_locs, 0);
     std::vector<double> reduced_data;
-    for (int i = 0; i < n_locs; ++i) data[i] = i;
+    for (size_t i = 0; i < n_locs; ++i) data[i] = i;
     reducer.reduce_profile_data(data, reduced_data);
 
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
@@ -366,7 +387,7 @@ CASE("test creating reduced profile file ") {
 
     std::vector<int32_t> int_data(n_locs, 0);
     std::vector<int32_t> reduced_int_data;
-    for (int i = 0; i < n_locs; ++i) int_data[i] = 10+i;
+    for (size_t i = 0; i < n_locs; ++i) int_data[i] = 10+i;
     reducer.reduce_profile_data(int_data, reduced_int_data);
     fdbk_writer.write_variable_level_qc(
         name_data.variable_names[0] + "_LEVEL_QC_FLAGS", reduced_int_data, 0);
@@ -378,7 +399,7 @@ CASE("test creating reduced profile file ") {
         name_data.variable_names[1] + "_LEVEL_QC", reduced_int_data);
 
     // wait up to 20 seconds for the file system...
-    for (int wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -392,18 +413,20 @@ CASE("test creating reduced profile file ") {
     for (const std::string& v_name : name_data.variable_names) {
       SECTION(std::string("Profile ") + v_name + v_type + " data is correct") {
         netCDF::NcVar ncVar = ncFile.getVar(v_name + v_type);
-        std::vector<double> data(n_obs*coords.n_levels, 12345);
-        ncVar.getVar({0, 0}, {n_obs, coords.n_levels}, data.data());
+        std::vector<double> data(coords.n_obs*coords.n_levels, 12345);
+        ncVar.getVar({0, 0}, {coords.n_obs, coords.n_levels}, data.data());
 
         EXPECT_EQUAL(0, data[0]);
         EXPECT_EQUAL(99999, data[1]);
         EXPECT_EQUAL(99999, data[2]);
         EXPECT_EQUAL(99999, data[3]);
-
-        EXPECT_EQUAL(2, data[coords.n_levels]);
-        EXPECT_EQUAL(3, data[coords.n_levels+1]);
-        EXPECT_EQUAL(4, data[coords.n_levels+2]);
-        EXPECT_EQUAL(6, data[coords.n_levels+3]);
+        // Two profiles immediately rejected, as they lack valid observations
+        EXPECT_EQUAL(6, data[coords.n_levels]);
+        EXPECT_EQUAL(7, data[coords.n_levels+1]);
+        EXPECT_EQUAL(8, data[coords.n_levels+2]);
+        // One observation reduced out of second profile
+        EXPECT_EQUAL(10, data[coords.n_levels+3]);
+        // Final profile immediately rejected, as it lacks valid observations
       }
     }
   }
@@ -411,34 +434,38 @@ CASE("test creating reduced profile file ") {
   for (const std::string& v_name : name_data.variable_names) {
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC_FLAGS is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC_FLAGS");
-      std::vector<int> data(n_obs*coords.n_levels, 12345);
-      ncVar.getVar({0, 0, 0}, {n_obs, coords.n_levels, 1}, data.data());
+      std::vector<int> data(coords.n_obs*coords.n_levels, 12345);
+      ncVar.getVar({0, 0, 0}, {coords.n_obs, coords.n_levels, 1}, data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(0, data[1]);
       EXPECT_EQUAL(0, data[2]);
       EXPECT_EQUAL(0, data[3]);
-
-      EXPECT_EQUAL(12, data[coords.n_levels]);
-      EXPECT_EQUAL(13, data[coords.n_levels+1]);
-      EXPECT_EQUAL(14, data[coords.n_levels+2]);
-      EXPECT_EQUAL(16, data[coords.n_levels+3]);
+      // Two profiles immediately rejected, as they lack valid observations
+      EXPECT_EQUAL(16, data[coords.n_levels]);
+      EXPECT_EQUAL(17, data[coords.n_levels+1]);
+      EXPECT_EQUAL(18, data[coords.n_levels+2]);
+      // One observation reduced out of second profile
+      EXPECT_EQUAL(20, data[coords.n_levels+3]);
+      // Final profile immediately rejected, as it lacks valid observations
     }
 
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC");
-      std::vector<int> data(n_obs*coords.n_levels, 12345);
-      ncVar.getVar({0, 0}, {n_obs, coords.n_levels}, data.data());
+      std::vector<int> data(coords.n_obs*coords.n_levels, 12345);
+      ncVar.getVar({0, 0}, {coords.n_obs, coords.n_levels}, data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(0, data[1]);
       EXPECT_EQUAL(0, data[2]);
       EXPECT_EQUAL(0, data[3]);
-
-      EXPECT_EQUAL(12, data[coords.n_levels]);
-      EXPECT_EQUAL(13, data[coords.n_levels+1]);
-      EXPECT_EQUAL(14, data[coords.n_levels+2]);
-      EXPECT_EQUAL(16, data[coords.n_levels+3]);
+      // Two profiles immediately rejected, as they lack valid observations
+      EXPECT_EQUAL(16, data[coords.n_levels]);
+      EXPECT_EQUAL(17, data[coords.n_levels+1]);
+      EXPECT_EQUAL(18, data[coords.n_levels+2]);
+      // One observation reduced out of second profile
+      EXPECT_EQUAL(20, data[coords.n_levels+3]);
+      // Final profile immediately rejected, as it lacks valid observations
     }
   }
 }

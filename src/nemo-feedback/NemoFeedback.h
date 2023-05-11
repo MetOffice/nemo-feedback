@@ -5,7 +5,6 @@
  */
 
 #pragma once
-
 #include <memory>
 #include <ostream>
 #include <string>
@@ -84,14 +83,13 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
 
   ioda::ObsSpace & obsdb_;
   ufo::ObsFilterData data_;
-  ufo::VariableNameMap nameMap_;
   oops::Variables geovars_;
   oops::Variables extradiagvars_;
   std::shared_ptr<ioda::ObsDataVector<int>> flags_;
   std::shared_ptr<ioda::ObsDataVector<float>> obsErrors_;
-  const util::DateTime validityTime_;
-
   NemoFeedbackParameters parameters_;
+  ufo::VariableNameMap nameMap_;
+  const util::DateTime validityTime_;
 };
 
 }  // namespace nemo_feedback

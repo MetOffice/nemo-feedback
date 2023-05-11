@@ -587,7 +587,9 @@ void NemoFeedbackWriter<C>::write_variable_profile(
       std::ostringstream err_stream;
       err_stream << "nemo_feedback::NemoFeedbackWriter::write_variable_profile "
                  << "index range out of bounds '" << variable_name << "' "
-                 << coords_.record_counts[coords_.n_obs-1]
+                 << coords_.record_counts[coords_.n_obs-1] << " + "
+                 << coords_.record_starts[coords_.n_obs-1] << " = "
+                 << coords_.record_counts[coords_.n_obs-1] +
                   + coords_.record_starts[coords_.n_obs-1]
                  << " >= " << data.size();
       throw eckit::BadValue(err_stream.str(), Here());

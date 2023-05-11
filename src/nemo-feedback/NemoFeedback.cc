@@ -203,43 +203,44 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   //  Calculate n_obs, n_levels, starts, counts
   //  Fill out lats, lons, depths, julian_days
 
-  CoordData coords;
-  coords.n_obs = n_locs;
-  coords.n_levels = 1;
+  CoordData unreduced_coords;
+  unreduced_coords.n_obs = n_locs;
+  unreduced_coords.n_levels = 1;
 
   // Handle the where option.
   std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_,
                                    ufo::WhereOperator::AND);
   if (to_write.size() != n_locs) to_write.assign(n_locs, true);
 
-  groupCoordsByRecord(to_write, coords, is_profile);
+  groupCoordsByRecord(to_write, unreduced_coords, is_profile);
 
   // sync n_levels and juld_reference across files if multi-processing
-  mpi_sync_coordinates(coords, obsdb_.comm());
+  mpi_sync_coordinates(unreduced_coords, obsdb_.comm());
 
   // Calculate total number of obs to actually write.
   // This is already handled in the construction of record_counts/sizes above
   // for profiles, but for surface fields n_obs == n_locs, and we can look at
   // to_write
-  const size_t n_obs_to_write = is_profile ? coords.n_obs
+  const size_t n_surf_obs_to_write = is_profile ? unreduced_coords.n_obs
       : std::count(to_write.begin(), to_write.end(), true);
 
   // Set up the station type and identifier variables. The way to do this
   // depends on the data type. Also modify which obs to write if this is
   // altimeter data.
-  std::vector<std::string> station_types(coords.n_obs, "    ");
-  std::vector<std::string> station_ids(coords.n_obs, "        ");
+  std::vector<std::string> station_types(unreduced_coords.n_obs, "    ");
+  std::vector<std::string> station_ids(unreduced_coords.n_obs, "        ");
 
   if (is_altimeter) {
-    setupAltimeterIds(coords.n_obs, station_ids, station_types, to_write);
+    setupAltimeterIds(unreduced_coords.n_obs, station_ids, station_types, to_write);
   } else {
-    setupIds(coords.n_obs, coords.record_starts, coords.record_counts,
+    setupIds(unreduced_coords.n_obs, unreduced_coords.record_starts, unreduced_coords.record_counts,
         station_ids, station_types);
   }
 
-  NemoFeedbackReduce reducer(coords.n_obs, n_obs_to_write, to_write,
-                             coords.record_starts, coords.record_counts);
+  NemoFeedbackReduce reducer(unreduced_coords.n_obs, n_surf_obs_to_write, to_write,
+                             unreduced_coords.record_starts, unreduced_coords.record_counts);
 
+  CoordData coords(std::move(unreduced_coords));
   if (is_profile) {
     coords.record_starts = reducer.reduced_starts;
     coords.record_counts = reducer.reduced_counts;
@@ -253,7 +254,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     coords.julian_days = reducer.reduce_data(coords.julian_days);
     station_ids = reducer.reduce_data(station_ids);
     station_types = reducer.reduce_data(station_types);
-    coords.n_obs = n_obs_to_write;
+    coords.n_obs = n_surf_obs_to_write;
   }
 
   OutputDtype dtype = parameters_.type.value().value_or(OutputDtype::Double);
@@ -368,7 +369,7 @@ void NemoFeedback::write_all_data(NemoFeedbackWriter<T>& fdbk_writer,
       }
       fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", reduced_qc);
     } else {
-      for (int i=0; i < variable_qc.size(); ++i) {
+      for (size_t i=0; i < variable_qc.size(); ++i) {
         if (hasMetOfficeQC &&
             (variable_qcFlags[i] &
              ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport)) {
@@ -511,15 +512,16 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
         for (size_t jobs : obs_indices) {
           ++reclen;
           if (prune_profiles) {
-            if (to_write[jobs]) ++n_levels_prof;
+            if (to_write[jobs]) { ++n_levels_prof; }
           } else {
             ++n_levels_prof;
           }
         }
+        if (n_levels_prof > coords.n_levels)
+          coords.n_levels = n_levels_prof;
+        // eliminate profiles with no observations to write but keep the rest
         if (n_levels_prof != 0) {
-          // we cannot guarantee profiles are stored in increasing depth order
-          // (i.e "sort order: ascending") so we calculate the likely start
-          // with a hack:
+          // Find the first observation index in the sequence
           size_t start = *std::min_element(obs_indices.begin(),
                                            obs_indices.end());
           coords.record_starts.push_back(start);
@@ -528,28 +530,21 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
           record_lons.push_back(coords.lons[start]);
           record_dts.push_back(datetimes[start]);
         }
-        if (n_levels_prof > coords.n_levels)
-          coords.n_levels = n_levels_prof;
       }
 
       coords.n_obs = coords.record_counts.size();
-      if (!prune_profiles && (recnums.size() != coords.n_obs)) {
-        throw eckit::BadValue(std::string("NemoFeedback::groupCoordsByRecord ")
-            + "recnums.size() != record_counts.size()",
-            Here());
-      }
-
-      // n_levels is equal to largest number of levels across an entire
-      // profile data.
-      size_t n_levels_check = *std::max_element(coords.record_counts.begin(),
-          coords.record_counts.end());
-      if (n_levels_check != coords.n_levels) {
-          throw eckit::BadValue(
-              std::string("NemoFeedback::groupCoordsByRecord ")
-              + "n_levels_check != coords.n_levels "
-              + std::to_string(n_levels_check) + " "
-              + std::to_string(coords.n_levels),
-              Here());
+      if (!prune_profiles) {
+        ASSERT_MSG(recnums.size() == coords.n_obs,
+            "NemoFeedback::groupCoordsByRecord recnums.size() != record_counts.size()");
+        // n_levels is equal to largest number of levels across all the profile
+        // data, except when profiles are pruned and this number needs to be
+        // setup to reflect only the written obs in the feedback file
+        size_t n_levels_check = *std::max_element(coords.record_counts.begin(),
+            coords.record_counts.end());
+        ASSERT_MSG(n_levels_check == coords.n_levels,
+            std::string("NemoFeedback::groupCoordsByRecord mismatch between number of levels and")
+            + " the per-profile location counts: " + std::to_string(coords.n_levels) + " != "
+            + std::to_string(n_levels_check));
       }
 
       coords.lats.resize(coords.n_obs);
@@ -568,12 +563,12 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
       std::fill(coords.depths.begin(), coords.depths.end(), 0);
       coords.record_counts.assign(coords.n_locs, 1);
       coords.record_starts.resize(coords.n_locs);
-      for (int iLoc = 0; iLoc < coords.n_locs; ++iLoc)
+      for (size_t iLoc = 0; iLoc < coords.n_locs; ++iLoc)
         coords.record_starts[iLoc] = iLoc;
     }
 
     coords.julian_days.resize(coords.n_obs);
-    for (int i=0; i < coords.n_obs; ++i) {
+    for (size_t i = 0; i < coords.n_obs; ++i) {
       util::Duration duration = static_cast<util::DateTime>(datetimes[i])
           - coords.juld_reference;
       coords.julian_days[i] = duration.toSeconds() / 86400.0;
@@ -591,7 +586,7 @@ void NemoFeedback::setupIds(const size_t n_obs,
       std::vector<int> station_types_int(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "fdbk_station_type", station_types_int);
       char buffer[5];
-      for (int iOb = 0; iOb < n_obs; ++iOb) {
+      for (size_t iOb = 0; iOb < n_obs; ++iOb) {
         int jLoc = record_starts[iOb];
         snprintf(buffer, sizeof(buffer), "%4d", station_types_int[jLoc]);
         station_types[iOb] = buffer;
@@ -605,7 +600,7 @@ void NemoFeedback::setupIds(const size_t n_obs,
       std::vector<std::string> station_ids_tmp(obsdb_.nlocs());
       obsdb_.get_db("MetaData", "stationIdentification", station_ids_tmp);
       std::string station_id_missing_value = util::missingValue(station_id_missing_value);
-      for (int iOb = 0; iOb < n_obs; ++iOb) {
+      for (size_t iOb = 0; iOb < n_obs; ++iOb) {
         int jLoc = record_starts[iOb];
         if ((station_ids_tmp[jLoc] != "") &&
             (station_ids_tmp[jLoc] != station_id_missing_value)) {
@@ -619,7 +614,7 @@ void NemoFeedback::setupIds(const size_t n_obs,
       obsdb_.get_db("MetaData", "buoyIdentifier", buoy_ids);
       char buffer[9];
       int buoy_id_missing_value = util::missingValue(buoy_id_missing_value);
-      for (int iOb = 0; iOb < n_obs; ++iOb) {
+      for (size_t iOb = 0; iOb < n_obs; ++iOb) {
         int jLoc = record_starts[iOb];
         if ((buoy_ids[jLoc] != buoy_id_missing_value) &&
             (station_ids[iOb] == std::string(8, ' '))){
@@ -653,7 +648,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     obsdb_.get_db("MetaData", "instrumentIdentifier", version);
     char buffer9[9];
     char buffer5[5];
-    for (int i=0; i < n_obs; ++i) {
+    for (size_t i = 0; i < n_obs; ++i) {
       snprintf(buffer9, sizeof(buffer9), "%04d    ", satellite_ids[i]);
       station_ids[i] = buffer9;
       snprintf(buffer5, sizeof(buffer5), "%4d", satellite_ids[i]);
@@ -664,7 +659,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     std::vector<int> ymd(n_obs);
     int ymd_tmp;
     int hms_tmp;
-    for (int i=0; i < n_obs; ++i) {
+    for (size_t i = 0; i < n_obs; ++i) {
       datetimes[i].toYYYYMMDDhhmmss(ymd_tmp, hms_tmp);
       ymd[i] = ymd_tmp;
     }
@@ -679,7 +674,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
     for (int ymd_to_find : ymd_set) {
       for (int sid_to_find : sid_set) {
         latest_version = 0;
-        for (int i=0; i < n_obs; ++i) {
+        for (size_t i=0; i < n_obs; ++i) {
           if (to_write[i] &&
               ymd[i] == ymd_to_find &&
               satellite_ids[i] == sid_to_find &&
@@ -693,7 +688,7 @@ void NemoFeedback::setupAltimeterIds(const size_t n_obs,
         // as not to write already. Therefore, we only need to do anything
         // further if latest_version > 0.
         if (latest_version > 0) {
-          for (int i=0; i < n_obs; ++i) {
+          for (size_t i=0; i < n_obs; ++i) {
             if (to_write[i] &&
                 ymd[i] == ymd_to_find &&
                 satellite_ids[i] == sid_to_find &&
