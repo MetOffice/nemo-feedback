@@ -517,7 +517,9 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
             ++n_levels_prof;
           }
         }
-        // eliminate profiles with no observations to write
+        if (n_levels_prof > coords.n_levels)
+          coords.n_levels = n_levels_prof;
+        // eliminate profiles with no observations to write but keep the rest
         if (n_levels_prof != 0) {
           // Find the first observation index in the sequence
           size_t start = *std::min_element(obs_indices.begin(),
@@ -528,23 +530,22 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
           record_lons.push_back(coords.lons[start]);
           record_dts.push_back(datetimes[start]);
         }
-        if (n_levels_prof > coords.n_levels)
-          coords.n_levels = n_levels_prof;
       }
 
       coords.n_obs = coords.record_counts.size();
       if (!prune_profiles) {
         ASSERT_MSG(recnums.size() == coords.n_obs,
             "NemoFeedback::groupCoordsByRecord recnums.size() != record_counts.size()");
+        // n_levels is equal to largest number of levels across all the profile
+        // data, except when profiles are pruned and this number needs to be
+        // setup to reflect only the written obs in the feedback file
+        size_t n_levels_check = *std::max_element(coords.record_counts.begin(),
+            coords.record_counts.end());
+        ASSERT_MSG(n_levels_check == coords.n_levels,
+            std::string("NemoFeedback::groupCoordsByRecord mismatch between number of levels and")
+            + " the per-profile location counts: " + std::to_string(coords.n_levels) + " != "
+            + std::to_string(n_levels_check));
       }
-      // n_levels is equal to largest number of levels across all the
-      // profile data
-      size_t n_levels_check = *std::max_element(coords.record_counts.begin(),
-          coords.record_counts.end());
-      ASSERT_MSG(n_levels_check == coords.n_levels,
-          std::string("NemoFeedback::groupCoordsByRecord mismatch between number of levels and")
-          + " the per-profile location counts: " + std::to_string(coords.n_levels) + " != "
-          + std::to_string(n_levels_check));
 
       coords.lats.resize(coords.n_obs);
       coords.lats.assign(record_lats.begin(), record_lats.end());
