@@ -543,7 +543,8 @@ void NemoFeedback::groupCoordsByRecord(const std::vector<bool>& to_write,
           coords.record_counts.end());
       ASSERT_MSG(n_levels_check == coords.n_levels,
           std::string("NemoFeedback::groupCoordsByRecord mismatch between number of levels and")
-          + " the per-profile location counts");
+          + " the per-profile location counts: " + std::to_string(coords.n_levels) + " != "
+          + std::to_string(n_levels_check));
 
       coords.lats.resize(coords.n_obs);
       coords.lats.assign(record_lats.begin(), record_lats.end());
