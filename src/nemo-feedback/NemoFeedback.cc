@@ -57,8 +57,7 @@ struct VariableData {
           [missing_value](T& d){
             if (d == missing_value) {d = typeToFill::value<T>();} });
   }
-  void read_hofx(const ioda::ObsVector &ov, const CoordData &coords,
-      const std::string& ufo_name) {
+  void read_hofx(const ioda::ObsVector &ov, const std::string& ufo_name) {
       std::vector<std::string> ov_varnames = ov.varnames().variables();
       auto var_it = std::find(ov_varnames.begin(), ov_varnames.end(),
           ufo_name);
@@ -71,21 +70,18 @@ struct VariableData {
                          << std::endl;
       // Convert oops missing values to NEMO missing value
       double missing_value = util::missingValue(static_cast<double>(0));
-      if (coords.n_locs > 0)
+      if (ov.n_locs() > 0)
           missing_value = util::missingValue(ov[var_it_dist]);
       oops::Log::trace() << "Missing value HofX: " << missing_value
                          << std::endl;
       auto ov_indexer = [&](size_t iOb) -> int {
           return iOb * ov.nvars() + var_it_dist;
       };
-      for (size_t sIndx = 0; sIndx < coords.n_obs; ++sIndx) {
-        for (size_t rOb = 0; rOb < coords.record_counts[sIndx]; ++rOb) {
-          const size_t obIdx = coords.record_starts[sIndx] + rOb;
-          if (ov[ov_indexer(obIdx)] == missing_value) {
-            data[obIdx] = typeToFill::value<T>();
-          } else {
-            data[obIdx] = ov[ov_indexer(obIdx)];
-          }
+      for (size_t obIdx = 0; obIdx < ov.n_locs(); ++obIdx) {
+        if (ov[ov_indexer(obIdx)] == missing_value) {
+          data[obIdx] = typeToFill::value<T>();
+        } else {
+          data[obIdx] = ov[ov_indexer(obIdx)];
         }
       }
   }
@@ -442,7 +438,7 @@ void NemoFeedback::write_all_data(NemoFeedbackWriter<T>& fdbk_writer,
               "NemoFeedback::postFilter missing HofX variable: "
               + ioda_group + "/" + ufo_name, Here());
         }
-        variable_data.read_hofx(ov, coords, ufo_name);
+        variable_data.read_hofx(ov, ufo_name);
         if (is_profile) {
           variable_data.write_profile(fdbk_writer, reducer, add_name);
         } else {
