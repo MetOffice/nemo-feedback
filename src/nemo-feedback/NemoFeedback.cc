@@ -70,7 +70,7 @@ struct VariableData {
                          << std::endl;
       // Convert oops missing values to NEMO missing value
       double missing_value = util::missingValue(static_cast<double>(0));
-      if (ov.n_locs() > 0)
+      if (ov.nlocs() > 0)
           missing_value = util::missingValue(ov[var_it_dist]);
       oops::Log::trace() << "Missing value HofX: " << missing_value
                          << std::endl;
@@ -79,7 +79,7 @@ struct VariableData {
       };
       ASSERT_MSG(data.size() == ov.nlocs(),
             "NemoFeedback::read_hofx data.size() != ov.nlocs()");
-      for (size_t obIdx = 0; obIdx < ov.n_locs(); ++obIdx) {
+      for (size_t obIdx = 0; obIdx < ov.nlocs(); ++obIdx) {
         if (ov[ov_indexer(obIdx)] == missing_value) {
           data[obIdx] = typeToFill::value<T>();
         } else {
