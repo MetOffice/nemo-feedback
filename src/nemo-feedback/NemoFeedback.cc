@@ -77,6 +77,8 @@ struct VariableData {
       auto ov_indexer = [&](size_t iOb) -> int {
           return iOb * ov.nvars() + var_it_dist;
       };
+      ASSERT_MSG(data.size() == ov.nlocs(),
+            "NemoFeedback::read_hofx data.size() != ov.nlocs()");
       for (size_t obIdx = 0; obIdx < ov.n_locs(); ++obIdx) {
         if (ov[ov_indexer(obIdx)] == missing_value) {
           data[obIdx] = typeToFill::value<T>();
