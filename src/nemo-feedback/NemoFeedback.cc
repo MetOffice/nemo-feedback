@@ -124,14 +124,25 @@ NemoFeedback::NemoFeedback(
 
   const std::vector<int> channels{};
   std::vector<std::string> varnames;
+  std::vector<std::string> hofxnames;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
     const std::string varname = nemoVariableParams.name.value();
     if (std::find(varnames.begin(), varnames.end(), varname) == varnames.end())
       varnames.push_back(varname);
+      
+    auto additionalVariablesParams = nemoVariableParams.variables.value();
+    for (const NemoFeedbackAddVariableParameters& addVariableParams :
+        additionalVariablesParams) {
+      std::string add_ioda_group = addVariableParams.iodaGroup.value();
+      if (add_ioda_group == "HofX") {
+        hofxnames.push_back(varname);
+      }
+    }
   }
   const oops::Variables obsVarnames(varnames, channels);
-  geovars_ = nameMap_.convertName(obsVarnames);
+  const oops::Variables hofxVarnames(hofxnames, channels);
+  geovars_ = nameMap_.convertName(hofxVarnames);
 }
 
 NemoFeedback::~NemoFeedback() {
@@ -306,8 +317,12 @@ void NemoFeedback::write_all_data(NemoFeedbackWriter<T>& fdbk_writer,
     if (variable_data.data.size() != n_locs)
           throw eckit::BadValue("NemoFeedback::postFilter : no data ");
     auto extra_var = nemoVariableParams.extravar.value().value_or(false);
-    if (!is_profile && extra_var) {
-      variable_data.write_surf(fdbk_writer, reducer, nemo_name);
+    if (extra_var) {
+      if (is_profile) {
+        variable_data.write_profile(fdbk_writer, reducer, nemo_name); 
+      } else {
+        variable_data.write_surf(fdbk_writer, reducer, nemo_name);
+      }
       // If this is an extra variable we do not want to write any of the
       // other variables with _OBS, _QC etc. added on to the name.
       continue;

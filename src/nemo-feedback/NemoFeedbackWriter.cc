@@ -439,6 +439,7 @@ void NemoFeedbackWriter<C>::define_extra_variable(
                                      netCDF::ncDouble, dims);
   var.putAtt("long_name", longName);
   var.putAtt("units", units);
+  var.setFill(true, typeToFill::value<C>());
 }
 
 template <class C>
@@ -458,6 +459,7 @@ void NemoFeedbackWriter<C>::write_coord_variables() {
       dims);
   depth_var.putAtt("units", "metre");
   depth_var.putAtt("long_name", "Depth");
+  depth_var.setFill(true, typeToFill::value<double>());
 
   netCDF::NcVar juld_var = ncFile->addVar("JULD", netCDF::ncDouble, *nobs_dim);
   juld_var.putAtt("units", "days since JULD_REFERENCE");
