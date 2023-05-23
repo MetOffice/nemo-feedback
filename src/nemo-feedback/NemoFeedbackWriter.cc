@@ -439,7 +439,7 @@ void NemoFeedbackWriter<C>::define_extra_variable(
                                      netCDF::ncDouble, dims);
   var.putAtt("long_name", longName);
   var.putAtt("units", units);
-  var.setFill(true, typeToFill::value<C>());
+  var.setFill(true, typeToFill::value<double>());
 }
 
 template <class C>
