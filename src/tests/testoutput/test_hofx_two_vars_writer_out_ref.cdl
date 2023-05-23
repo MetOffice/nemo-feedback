@@ -27,6 +27,7 @@ variables:
 	double DEPTH(N_OBS, N_LEVELS) ;
 		DEPTH:units = "metre" ;
 		DEPTH:long_name = "Depth" ;
+		DEPTH:_FillValue = 99999. ;
 	double JULD(N_OBS) ;
 		JULD:units = "days since JULD_REFERENCE" ;
 		JULD:long_name = "Julian day" ;

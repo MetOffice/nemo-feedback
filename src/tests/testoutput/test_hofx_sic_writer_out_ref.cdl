@@ -29,6 +29,7 @@ variables:
 	double DEPTH(N_OBS, N_LEVELS) ;
 		DEPTH:units = "metre" ;
 		DEPTH:long_name = "Depth" ;
+		DEPTH:_FillValue = 99999. ;
 	double JULD(N_OBS) ;
 		JULD:units = "days since JULD_REFERENCE" ;
 		JULD:long_name = "Julian day" ;
@@ -96,6 +97,7 @@ variables:
 	double MDT(N_OBS, N_LEVELS) ;
 		MDT:long_name = "fake MDT" ;
 		MDT:units = "fake metres" ;
+		MDT:_FillValue = 99999. ;
 
 // global attributes:
 		:title = "NEMO observation operator output" ;
@@ -321,7 +323,7 @@ data:
 
  MDT =
   0,
-  99999,
+  _,
   0.99629998,
   0,
   0,
