@@ -10,12 +10,14 @@ dimensions:
 	N_LEVELS = 10 ;
 	N_VARS = 1 ;
 	N_ENTRIES = 1 ;
+	N_EXTRA = 1 ;
 variables:
 	char JULD_REFERENCE(STRINGJULD) ;
 		JULD_REFERENCE:long_name = "Date of reference for julian days" ;
 		JULD_REFERENCE:Conventions = "YYYYMMDDHHMMSS" ;
 	char VARIABLES(N_VARS, STRINGNAM) ;
 		VARIABLES:long_name = "List of variables in feedback files" ;
+	char EXTRA(N_EXTRA, STRINGNAM) ;
 	char ENTRIES(N_ENTRIES, STRINGNAM) ;
 		ENTRIES:long_name = "List of additional entries for each variable in feedback files" ;
 	double LATITUDE(N_OBS) ;
@@ -92,6 +94,10 @@ variables:
 		POTM_IOBSK:long_name = "ORCA grid search K coordinate" ;
 	char POTM_GRID(STRINGGRID) ;
 		POTM_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+	double PSAL(N_OBS, N_LEVELS) ;
+		PSAL:long_name = "sea water salinity" ;
+		PSAL:units = "PSU" ;
+		PSAL:_FillValue = 99999. ;
 
 // global attributes:
 		:title = "NEMO observation operator output" ;
@@ -102,6 +108,9 @@ data:
 
  VARIABLES =
   "POTM    " ;
+
+ EXTRA =
+  "PSAL    " ;
 
  ENTRIES =
   "Hx      " ;
@@ -219,4 +228,8 @@ data:
   _, _, _, _, _, _, _, _, _, _ ;
 
  POTM_GRID = "T" ;
+
+ PSAL =
+  35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+  35, 35, _, _, _, _, _, _, _, _ ;
 }
