@@ -4,12 +4,14 @@
  * Refer to COPYRIGHT.txt of this distribution for details.
  */
 
-#include<chrono>
-#include<thread>
 #include<netcdf>
+
 #include<string>
+#include<chrono>
 #include <algorithm>
 #include <numeric>
+#include <sstream>
+#include <iomanip>
 
 #include "eckit/log/Bytes.h"
 
@@ -17,8 +19,7 @@
 
 #include "eckit/testing/Test.h"
 
-#include "nemo-feedback/NemoFeedbackWriter.h"
-#include "nemo-feedback/NemoFeedbackReduce.h"
+#include "nemo-feedback/feedback_io/Writer.h"
 
 namespace nemo_feedback {
 namespace test {
@@ -28,23 +29,59 @@ namespace test {
 CASE("test creating test file ") {
   eckit::PathName test_data_path("../testoutput/simple_nemo_out.nc");
 
-  size_t n_obs = 5;
+  size_t nObs = 5;
+  size_t nLevels = 1;
 
-  CoordData coords;
-  coords.n_levels = 1;
-  coords.n_obs = n_obs;
-  coords.n_locs = n_obs;
-  coords.lats = std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0};
-  coords.lons = std::vector<double>{6.0, 7.0, 8.0, 9.0, 10.0};
-  coords.depths = std::vector<double>(n_obs*coords.n_levels, 0);
-  coords.julian_days = std::vector<double>{11.0, 12.0, 13.0, 14.0, 15.0};
-  coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
-  coords.record_counts.assign(coords.n_locs, 1);
-  coords.record_starts.resize(coords.n_locs);
-  for (size_t iLoc = 0; iLoc < coords.n_locs; ++iLoc)
-      coords.record_starts[iLoc] = iLoc;
+  std::vector<size_t> indices;
+  for (size_t iLoc = 0; iLoc < nObs; ++iLoc)
+    indices.push_back(iLoc);
 
-  NameData name_data;
+  SECTION("NemoFeedbackData empty constructors are valid") {
+    feedback_io::Data<double> test1;
+  }
+
+  feedback_io::DataIndexer unReducedIndexer(indices);
+  feedback_io::DataIndexer indexer(unReducedIndexer,
+      {true, false, true, true, true});
+
+  feedback_io::Data<double> lats(indexer,
+                                std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0});
+  feedback_io::Data<double> lons(indexer,
+                                std::vector<double>{6.0, 7.0, 8.0, 9.0, 10.0});
+  feedback_io::Data<double> depths(indexer,
+                                  std::vector<double>(nObs*nLevels, 0));
+  feedback_io::Data<double> julianDays(indexer,
+     std::vector<double>{11.0, 12.0, 13.0, 14.0, 15.0});
+  feedback_io::Data<std::string> stationTypes(indexer,
+     std::vector<std::string>{"  44", "  45", "  46", "  47", "  48"});
+  feedback_io::Data<std::string> stationIDs(indexer,
+     std::vector<std::string>{"12345678",
+                              " 2345678",
+                              "1234567 ",
+                              " 3456789",
+                              "123     "});
+
+  std::string juldReference;
+  {
+    util::DateTime juldReferenceDT = util::DateTime("2021-08-31T15:26:00Z");
+    int year, month, day, hour, minute, second;
+    juldReferenceDT.toYYYYMMDDhhmmss(year, month, day, hour, minute,
+                                           second);
+    std::ostringstream ref_stream;
+    ref_stream << std::setfill('0');
+    ref_stream << std::setw(4) << year;
+    ref_stream << std::setw(2) << month;
+    ref_stream << std::setw(2) << day;
+    ref_stream << std::setw(2) << hour;
+    ref_stream << std::setw(2) << minute;
+    ref_stream << std::setw(2) << second;
+    juldReference = ref_stream.str();
+  }
+
+  feedback_io::MetaData metaData(lats, lons, julianDays, depths, stationTypes,
+      stationIDs, nLevels, juldReference);
+
+  feedback_io::NameData name_data;
   name_data.variable_names = std::vector<std::string>{"SST", "MDT"};
   name_data.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
@@ -52,42 +89,27 @@ CASE("test creating test file ") {
                                                   "this is another unit"};
   name_data.additional_names = std::vector<std::string>{"Hx", "DW_FLAGS",
                                                        "STD"};
-  // For some reason this test fails CI with a "file not found" error
-  //SECTION ("NameData validator can fail") {
-  //  EXPECT_THROWS_AS(name_data.validate(), eckit::BadValue);
-  //}
+
+  // For some reason this test fails CI with a "file not found" error instead
+  // of the eckit error we expect. This is different behaviour depending on the
+  // system it seems.
+  // SECTION ("NameData validator can fail") {
+  //   EXPECT_THROWS_AS(name_data.validate(), eckit::BadValue);
+  // }
+
   name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
-  std::vector<bool> extra_variables{false, true};
-  std::vector<std::string> station_types{"  44", "  45", "  46", "  47",
-                                         "  48"};
-  std::vector<std::string> station_ids{"12345678",
-                                       " 2345678",
-                                       "1234567 ",
-                                       " 3456789",
-                                       "123     "};
-
-  NemoFeedbackReduce reducer(coords.n_obs, 4, {true, false, true, true, true},
-        coords.record_starts, coords.record_counts);
-  coords.lats = reducer.reduce_data(coords.lats);
-  coords.lons = reducer.reduce_data(coords.lons);
-  coords.depths = reducer.reduce_data(coords.depths);
-  coords.julian_days = reducer.reduce_data(coords.julian_days);
-  station_types = reducer.reduce_data(station_types);
-  station_ids = reducer.reduce_data(station_ids);
-  coords.n_obs = 4;
+  std::vector<bool> isExtraVariable{false, true};
 
   SECTION("file writes") {
-    NemoFeedbackWriter<double> fdbk_writer(
+    feedback_io::Writer<double> fdbk_writer(
         test_data_path,
-        coords,
+        metaData,
         name_data,
-        extra_variables,
-        station_types,
-        station_ids);
+        isExtraVariable);
 
     // wait up to 20 seconds for the file system...
-    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t waitCount = 0; waitCount < 10; ++waitCount) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -169,19 +191,49 @@ CASE("test creating test file ") {
 CASE("test creating profile file ") {
   eckit::PathName test_data_path("../testoutput/simple_nemo_profile_out.nc");
 
-  const size_t n_locs = 7;
-  const size_t n_obs = 2;
-  CoordData coords;
-  coords.n_levels = 5;
-  coords.n_obs = n_obs;
-  coords.n_locs = n_locs;
-  coords.lats = std::vector<double>(n_obs, 1.0);
-  coords.lons = std::vector<double>(n_obs, 6.0);
-  coords.depths = std::vector<double>(n_locs, 0);
-  coords.julian_days = std::vector<double>(n_obs, 11.0);
-  coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
+  const size_t nLocations = 7;
+  const size_t nObs = 2;
+  const size_t nLevels = 5;
 
-  NameData name_data;
+  std::vector<size_t> indices;
+  for (size_t iLoc = 0; iLoc < nLocations; ++iLoc)
+    indices.push_back(iLoc);
+  std::vector<size_t> starts = std::vector<size_t>{0, 2};
+
+  feedback_io::DataIndexer indexer(nObs, nLevels, starts, indices);
+
+  feedback_io::Data<double> lats(indexer, std::vector<double>(nLocations, 1.0));
+  feedback_io::Data<double> lons(indexer, std::vector<double>(nLocations, 6.0));
+  feedback_io::Data<double> depths(indexer, std::vector<double>(nLocations, 0));
+  feedback_io::Data<double> julianDays(indexer,
+      std::vector<double>(nLocations, 11.0));
+
+  feedback_io::Data<std::string> stationTypes(indexer,
+      std::vector<std::string>(nLocations, " 401"));
+  feedback_io::Data<std::string> stationIDs(indexer,
+      std::vector<std::string>(nLocations, "123     "));
+
+  std::string juldReference;
+  {
+    util::DateTime juldReferenceDT = util::DateTime("2021-08-31T15:26:00Z");
+    int year, month, day, hour, minute, second;
+    juldReferenceDT.toYYYYMMDDhhmmss(year, month, day, hour, minute,
+                                           second);
+    std::ostringstream ref_stream;
+    ref_stream << std::setfill('0');
+    ref_stream << std::setw(4) << year;
+    ref_stream << std::setw(2) << month;
+    ref_stream << std::setw(2) << day;
+    ref_stream << std::setw(2) << hour;
+    ref_stream << std::setw(2) << minute;
+    ref_stream << std::setw(2) << second;
+    juldReference = ref_stream.str();
+  }
+
+  feedback_io::MetaData metaData(lats, lons, julianDays, depths, stationTypes,
+      stationIDs, nLevels, juldReference);
+
+  feedback_io::NameData name_data;
   name_data.variable_names = std::vector<std::string>{"POTM", "PSAL"};
   name_data.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
@@ -190,26 +242,18 @@ CASE("test creating profile file ") {
   name_data.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
   name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
-  const std::vector<bool> extra_variables{false, false};
-  const std::vector<std::string> station_types{" 401", " 401"};
-  const std::vector<std::string> station_ids{"123     ", "123     "};
-
-  const std::vector<bool> to_write(n_locs, true);
+  const std::vector<bool> isExtraVariable{false, false};
 
   SECTION("file writes") {
-    coords.record_starts = std::vector<size_t>{0, 2};
-    coords.record_counts = std::vector<size_t>{2, coords.n_levels};
-
-    NemoFeedbackWriter<double> fdbk_writer(
+    feedback_io::Writer<double> fdbk_writer(
         test_data_path,
-        coords,
+        metaData,
         name_data,
-        extra_variables,
-        station_types,
-        station_ids);
+        isExtraVariable);
 
-    std::vector<double> data(n_locs, 0);
-    for (size_t i = 0; i < n_locs; ++i) data[i] = i;
+    std::vector<double> dataVec(nLocations);
+    for (size_t iLoc = 0; iLoc < nLocations; ++iLoc) dataVec[iLoc] = iLoc;
+    feedback_io::Data<double> data(indexer, dataVec);
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
         data);
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
@@ -219,19 +263,20 @@ CASE("test creating profile file ") {
     fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_Hx",
         data);
 
-    std::vector<int32_t> int_data(n_locs, 0);
-    for (size_t i = 0; i < n_locs; ++i) int_data[i] = 10+i;
+    std::vector<int32_t> intVec(nLocations, 0);
+    for (size_t iLoc = 0; iLoc < nLocations; ++iLoc) intVec[iLoc] = 10+iLoc;
+    feedback_io::Data<int32_t> intData(indexer, intVec);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", int_data, 0);
+        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", intData, 0);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", int_data, 0);
+        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", intData, 0);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC", int_data);
+        name_data.variable_names[0] + "_LEVEL_QC", intData);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC", int_data);
+        name_data.variable_names[1] + "_LEVEL_QC", intData);
 
     // wait up to 20 seconds for the file system...
-    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t waitCount = 0; waitCount < 10; ++waitCount) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -245,8 +290,8 @@ CASE("test creating profile file ") {
     for (const std::string& v_name : name_data.variable_names) {
       SECTION(std::string("Profile ") + v_name + v_type + " data is correct") {
         netCDF::NcVar ncVar = ncFile.getVar(v_name + v_type);
-        std::vector<double> data(n_obs*coords.n_levels, 12345);
-        ncVar.getVar({0, 0}, {n_obs, coords.n_levels}, data.data());
+        std::vector<double> data(metaData.nObs*metaData.nLevels, 12345);
+        ncVar.getVar({0, 0}, {metaData.nObs, metaData.nLevels}, data.data());
 
         EXPECT_EQUAL(0, data[0]);
         EXPECT_EQUAL(1, data[1]);
@@ -254,11 +299,11 @@ CASE("test creating profile file ") {
         EXPECT_EQUAL(99999, data[3]);
         EXPECT_EQUAL(99999, data[4]);
 
-        EXPECT_EQUAL(2, data[coords.n_levels]);
-        EXPECT_EQUAL(3, data[coords.n_levels+1]);
-        EXPECT_EQUAL(4, data[coords.n_levels+2]);
-        EXPECT_EQUAL(5, data[coords.n_levels+3]);
-        EXPECT_EQUAL(6, data[coords.n_levels+4]);
+        EXPECT_EQUAL(2, data[metaData.nLevels]);
+        EXPECT_EQUAL(3, data[metaData.nLevels+1]);
+        EXPECT_EQUAL(4, data[metaData.nLevels+2]);
+        EXPECT_EQUAL(5, data[metaData.nLevels+3]);
+        EXPECT_EQUAL(6, data[metaData.nLevels+4]);
       }
     }
   }
@@ -266,8 +311,9 @@ CASE("test creating profile file ") {
   for (const std::string& v_name : name_data.variable_names) {
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC_FLAGS is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC_FLAGS");
-      std::vector<int> data(n_obs*coords.n_levels, 12345);
-      ncVar.getVar({0, 0, 0}, {n_obs, coords.n_levels, 1}, data.data());
+      std::vector<int> data(metaData.nObs*metaData.nLevels, 12345);
+      ncVar.getVar({0, 0, 0}, {metaData.nObs, metaData.nLevels, 1},
+          data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(11, data[1]);
@@ -275,17 +321,17 @@ CASE("test creating profile file ") {
       EXPECT_EQUAL(0, data[3]);
       EXPECT_EQUAL(0, data[4]);
 
-      EXPECT_EQUAL(12, data[coords.n_levels]);
-      EXPECT_EQUAL(13, data[coords.n_levels+1]);
-      EXPECT_EQUAL(14, data[coords.n_levels+2]);
-      EXPECT_EQUAL(15, data[coords.n_levels+3]);
-      EXPECT_EQUAL(16, data[coords.n_levels+4]);
+      EXPECT_EQUAL(12, data[metaData.nLevels]);
+      EXPECT_EQUAL(13, data[metaData.nLevels+1]);
+      EXPECT_EQUAL(14, data[metaData.nLevels+2]);
+      EXPECT_EQUAL(15, data[metaData.nLevels+3]);
+      EXPECT_EQUAL(16, data[metaData.nLevels+4]);
     }
 
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC");
-      std::vector<int> data(n_obs*coords.n_levels, 12345);
-      ncVar.getVar({0, 0}, {n_obs, coords.n_levels}, data.data());
+      std::vector<int> data(metaData.nObs*metaData.nLevels, 12345);
+      ncVar.getVar({0, 0}, {metaData.nObs, metaData.nLevels}, data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(11, data[1]);
@@ -293,11 +339,11 @@ CASE("test creating profile file ") {
       EXPECT_EQUAL(0, data[3]);
       EXPECT_EQUAL(0, data[4]);
 
-      EXPECT_EQUAL(12, data[coords.n_levels]);
-      EXPECT_EQUAL(13, data[coords.n_levels+1]);
-      EXPECT_EQUAL(14, data[coords.n_levels+2]);
-      EXPECT_EQUAL(15, data[coords.n_levels+3]);
-      EXPECT_EQUAL(16, data[coords.n_levels+4]);
+      EXPECT_EQUAL(12, data[metaData.nLevels]);
+      EXPECT_EQUAL(13, data[metaData.nLevels+1]);
+      EXPECT_EQUAL(14, data[metaData.nLevels+2]);
+      EXPECT_EQUAL(15, data[metaData.nLevels+3]);
+      EXPECT_EQUAL(16, data[metaData.nLevels+4]);
     }
   }
 }
@@ -306,19 +352,57 @@ CASE("test creating reduced profile file ") {
   eckit::PathName test_data_path(
       "../testoutput/simple_nemo_reduced_profile_out.nc");
 
-  const size_t n_locs = 17;
-  const size_t n_levels_unreduced = 6;
-  CoordData coords;
-  coords.n_levels = 4;
-  coords.n_obs = 2;
-  coords.n_locs = n_locs;
-  coords.lats = std::vector<double>(coords.n_obs, 1.0);
-  coords.lons = std::vector<double>(coords.n_obs, 6.0);
-  coords.depths = std::vector<double>(n_locs, 0);
-  coords.julian_days = std::vector<double>(coords.n_obs, 11.0);
-  coords.juld_reference = util::DateTime("2021-08-31T15:26:00Z");
+  const size_t nLocations = 17;
+  const size_t nObs = 5;
+  const size_t nLevels = 6;
 
-  NameData name_data;
+  std::vector<size_t> indices;
+  for (size_t iLoc = 0; iLoc < nLocations; ++iLoc)
+    indices.push_back(iLoc);
+  // Without eliminating empty profiles:
+  std::vector<size_t> starts{0, 2, 4, 6, 11};
+  feedback_io::DataIndexer unReducedIndexer(nObs, nLevels, starts, indices);
+  // Without eliminating empty profiles lenghts are {2, 2, 2, nLevels, 6};
+  const std::vector<bool> toWrite{true, false,
+                                  false, false,
+                                  false, false,
+                                  true, true, true, false, true,
+                                  false, false, false, false, false, false};
+
+  feedback_io::DataIndexer indexer(unReducedIndexer, toWrite);
+
+  feedback_io::Data<double> lats(indexer, std::vector<double>(nLocations, 1.0));
+  feedback_io::Data<double> lons(indexer, std::vector<double>(nLocations, 6.0));
+  feedback_io::Data<double> depths(indexer, std::vector<double>(nLocations, 0));
+  feedback_io::Data<double> julianDays(indexer,
+      std::vector<double>(nLocations, 11.0));
+
+  feedback_io::Data<std::string> stationTypes(indexer,
+     std::vector<std::string>(nLocations, " 401"));
+  feedback_io::Data<std::string> stationIDs(indexer,
+     std::vector<std::string>(nLocations, "123     "));
+
+  std::string juldReference;
+  {
+    util::DateTime juldReferenceDT = util::DateTime("2021-08-31T15:26:00Z");
+    int year, month, day, hour, minute, second;
+    juldReferenceDT.toYYYYMMDDhhmmss(year, month, day, hour, minute,
+                                           second);
+    std::ostringstream ref_stream;
+    ref_stream << std::setfill('0');
+    ref_stream << std::setw(4) << year;
+    ref_stream << std::setw(2) << month;
+    ref_stream << std::setw(2) << day;
+    ref_stream << std::setw(2) << hour;
+    ref_stream << std::setw(2) << minute;
+    ref_stream << std::setw(2) << second;
+    juldReference = ref_stream.str();
+  }
+
+  feedback_io::MetaData metaData(lats, lons, julianDays, depths, stationTypes,
+      stationIDs, nLevels, juldReference);
+
+  feedback_io::NameData name_data;
   name_data.variable_names = std::vector<std::string>{"POTM", "PSAL"};
   name_data.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
@@ -327,79 +411,50 @@ CASE("test creating reduced profile file ") {
   name_data.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
   name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
-  const std::vector<bool> extra_variables{false, false};
-  const std::vector<std::string> station_types{" 401", " 401"};
-  const std::vector<std::string> station_ids{"123     ", "123     "};
-
-  const std::vector<bool> to_write{true, false,
-                                   false, false,
-                                   false, false,
-                                   true, true, true, false, true,
-                                   false, false, false, false, false, false};
+  const std::vector<bool> isExtraVariable{false, false};
 
   SECTION("file writes") {
-    // Without eliminating empty profiles:    {0, 2, 2, 4, 10};
-    coords.record_starts = std::vector<size_t>{0, 6,};
-    // Without eliminating empty profiles:    {2, 2, 2, n_levels_unreduced, 6};
-    coords.record_counts = std::vector<size_t>{2, n_levels_unreduced};
-
-    NemoFeedbackReduce reducer(coords.n_obs, coords.n_obs, to_write,
-                               coords.record_starts, coords.record_counts);
-
-    // reduced index arrays should index a reduced data array based on where to_write is true
     // In the above example this is two profiles with:
     // [A, B, B, B, B,]
-    EXPECT_EQUAL(0, reducer.reduced_starts[0]);
-    EXPECT_EQUAL(1, reducer.reduced_starts[1]);
-    EXPECT_EQUAL(1, reducer.reduced_counts[0]);
-    EXPECT_EQUAL(4, reducer.reduced_counts[1]);
 
-    const size_t n_write_locs = std::count(to_write.begin(), to_write.end(), true);
-    const size_t n_reduced_locs = std::accumulate(reducer.reduced_counts.begin(),
-                                                  reducer.reduced_counts.end(), size_t(0));
-    // number of locations to write should match the total in the reduced_counts arrays
-    EXPECT_EQUAL(n_write_locs, n_reduced_locs);
+    const size_t nToWrite = std::count(toWrite.begin(), toWrite.end(), true);
+    // number of locations to write should match the total number of locations
+    EXPECT_EQUAL(nToWrite, metaData.nLocations);
 
-    coords.record_starts = reducer.reduced_starts;
-    coords.record_counts = reducer.reduced_counts;
-
-    NemoFeedbackWriter<double> fdbk_writer(
+    feedback_io::Writer<double> fdbk_writer(
         test_data_path,
-        coords,
+        metaData,
         name_data,
-        extra_variables,
-        station_types,
-        station_ids);
+        isExtraVariable);
 
-    std::vector<double> data(n_locs, 0);
-    std::vector<double> reduced_data;
-    for (size_t i = 0; i < n_locs; ++i) data[i] = i;
-    reducer.reduce_profile_data(data, reduced_data);
+    std::vector<double> dataVec(nLocations);
+    for (size_t iLoc = 0; iLoc < nLocations; ++iLoc) dataVec[iLoc] = iLoc;
+    feedback_io::Data<double> data(indexer, dataVec);
 
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
-        reduced_data);
+        data);
     fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
-        reduced_data);
+        data);
     fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_OBS",
-        reduced_data);
+        data);
     fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_Hx",
-        reduced_data);
+        data);
 
-    std::vector<int32_t> int_data(n_locs, 0);
-    std::vector<int32_t> reduced_int_data;
-    for (size_t i = 0; i < n_locs; ++i) int_data[i] = 10+i;
-    reducer.reduce_profile_data(int_data, reduced_int_data);
+    std::vector<int32_t> intVec(nLocations, 0);
+    for (size_t iLoc = 0; iLoc < nLocations; ++iLoc) intVec[iLoc] = 10+iLoc;
+    feedback_io::Data<int32_t> intData(indexer, intVec);
+
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", reduced_int_data, 0);
+        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", intData, 0);
     fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", reduced_int_data, 0);
-    fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC", reduced_int_data);
-    fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC", reduced_int_data);
+        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", intData, 0);
+    fdbk_writer.write_variable_level_qc(name_data.variable_names[0]
+        + "_LEVEL_QC", intData);
+    fdbk_writer.write_variable_level_qc(name_data.variable_names[1]
+        + "_LEVEL_QC", intData);
 
     // wait up to 20 seconds for the file system...
-    for (size_t wait_count=0; wait_count < 10; ++wait_count) {
+    for (size_t waitCount = 0; waitCount < 10; ++waitCount) {
       if (test_data_path.exists()) break;
       std::this_thread::sleep_for(std::chrono::seconds(2));
     }
@@ -413,19 +468,19 @@ CASE("test creating reduced profile file ") {
     for (const std::string& v_name : name_data.variable_names) {
       SECTION(std::string("Profile ") + v_name + v_type + " data is correct") {
         netCDF::NcVar ncVar = ncFile.getVar(v_name + v_type);
-        std::vector<double> data(coords.n_obs*coords.n_levels, 12345);
-        ncVar.getVar({0, 0}, {coords.n_obs, coords.n_levels}, data.data());
+        std::vector<double> data(metaData.nObs*metaData.nLevels, 12345);
+        ncVar.getVar({0, 0}, {metaData.nObs, metaData.nLevels}, data.data());
 
         EXPECT_EQUAL(0, data[0]);
         EXPECT_EQUAL(99999, data[1]);
         EXPECT_EQUAL(99999, data[2]);
         EXPECT_EQUAL(99999, data[3]);
         // Two profiles immediately rejected, as they lack valid observations
-        EXPECT_EQUAL(6, data[coords.n_levels]);
-        EXPECT_EQUAL(7, data[coords.n_levels+1]);
-        EXPECT_EQUAL(8, data[coords.n_levels+2]);
+        EXPECT_EQUAL(6, data[metaData.nLevels]);
+        EXPECT_EQUAL(7, data[metaData.nLevels+1]);
+        EXPECT_EQUAL(8, data[metaData.nLevels+2]);
         // One observation reduced out of second profile
-        EXPECT_EQUAL(10, data[coords.n_levels+3]);
+        EXPECT_EQUAL(10, data[metaData.nLevels+3]);
         // Final profile immediately rejected, as it lacks valid observations
       }
     }
@@ -434,37 +489,38 @@ CASE("test creating reduced profile file ") {
   for (const std::string& v_name : name_data.variable_names) {
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC_FLAGS is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC_FLAGS");
-      std::vector<int> data(coords.n_obs*coords.n_levels, 12345);
-      ncVar.getVar({0, 0, 0}, {coords.n_obs, coords.n_levels, 1}, data.data());
+      std::vector<int> data(metaData.nObs*metaData.nLevels, 12345);
+      ncVar.getVar({0, 0, 0}, {metaData.nObs, metaData.nLevels, 1},
+          data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(0, data[1]);
       EXPECT_EQUAL(0, data[2]);
       EXPECT_EQUAL(0, data[3]);
       // Two profiles immediately rejected, as they lack valid observations
-      EXPECT_EQUAL(16, data[coords.n_levels]);
-      EXPECT_EQUAL(17, data[coords.n_levels+1]);
-      EXPECT_EQUAL(18, data[coords.n_levels+2]);
+      EXPECT_EQUAL(16, data[metaData.nLevels]);
+      EXPECT_EQUAL(17, data[metaData.nLevels+1]);
+      EXPECT_EQUAL(18, data[metaData.nLevels+2]);
       // One observation reduced out of second profile
-      EXPECT_EQUAL(20, data[coords.n_levels+3]);
+      EXPECT_EQUAL(20, data[metaData.nLevels+3]);
       // Final profile immediately rejected, as it lacks valid observations
     }
 
     SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
       netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC");
-      std::vector<int> data(coords.n_obs*coords.n_levels, 12345);
-      ncVar.getVar({0, 0}, {coords.n_obs, coords.n_levels}, data.data());
+      std::vector<int> data(metaData.nObs*metaData.nLevels, 12345);
+      ncVar.getVar({0, 0}, {metaData.nObs, metaData.nLevels}, data.data());
 
       EXPECT_EQUAL(10, data[0]);
       EXPECT_EQUAL(0, data[1]);
       EXPECT_EQUAL(0, data[2]);
       EXPECT_EQUAL(0, data[3]);
       // Two profiles immediately rejected, as they lack valid observations
-      EXPECT_EQUAL(16, data[coords.n_levels]);
-      EXPECT_EQUAL(17, data[coords.n_levels+1]);
-      EXPECT_EQUAL(18, data[coords.n_levels+2]);
+      EXPECT_EQUAL(16, data[metaData.nLevels]);
+      EXPECT_EQUAL(17, data[metaData.nLevels+1]);
+      EXPECT_EQUAL(18, data[metaData.nLevels+2]);
       // One observation reduced out of second profile
-      EXPECT_EQUAL(20, data[coords.n_levels+3]);
+      EXPECT_EQUAL(20, data[metaData.nLevels+3]);
       // Final profile immediately rejected, as it lacks valid observations
     }
   }

@@ -11,7 +11,7 @@ observations:
           group variables: ["stationIdentification", "dateTime"]
           sort variable: depthBelowWaterSurface
           sort group: ObsValue
-          sort order: descending
+          sort order: ascending
       obsdataout:
         engine:
           type: H5File
