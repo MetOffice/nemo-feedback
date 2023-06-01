@@ -8,6 +8,7 @@
 
 #include<string>
 #include<chrono>
+#include<thread>
 #include <algorithm>
 #include <numeric>
 #include <sstream>
