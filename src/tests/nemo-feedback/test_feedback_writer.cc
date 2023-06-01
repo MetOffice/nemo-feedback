@@ -109,10 +109,10 @@ CASE("test creating test file ") {
         name_data,
         isExtraVariable);
 
-    // wait up to 20 seconds for the file system...
-    for (size_t waitCount = 0; waitCount < 10; ++waitCount) {
-      if (test_data_path.exists()) break;
+    // wait up to 100 seconds for the file system...
+    for (size_t waitCount = 0; waitCount < 50; ++waitCount) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
+      if (test_data_path.exists()) break;
     }
     EXPECT(test_data_path.exists());
   }
@@ -276,10 +276,10 @@ CASE("test creating profile file ") {
     fdbk_writer.write_variable_level_qc(
         name_data.variable_names[1] + "_LEVEL_QC", intData);
 
-    // wait up to 20 seconds for the file system...
-    for (size_t waitCount = 0; waitCount < 10; ++waitCount) {
-      if (test_data_path.exists()) break;
+    // wait up to 100 seconds for the file system...
+    for (size_t waitCount = 0; waitCount < 50; ++waitCount) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
+      if (test_data_path.exists()) break;
     }
     EXPECT(test_data_path.exists());
   }
@@ -454,10 +454,10 @@ CASE("test creating reduced profile file ") {
     fdbk_writer.write_variable_level_qc(name_data.variable_names[1]
         + "_LEVEL_QC", intData);
 
-    // wait up to 20 seconds for the file system...
-    for (size_t waitCount = 0; waitCount < 10; ++waitCount) {
-      if (test_data_path.exists()) break;
+    // wait up to 100 seconds for the file system...
+    for (size_t waitCount = 0; waitCount < 50; ++waitCount) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
+      if (test_data_path.exists()) break;
     }
     EXPECT(test_data_path.exists());
   }
