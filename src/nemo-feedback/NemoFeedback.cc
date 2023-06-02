@@ -347,7 +347,6 @@ std::tuple<feedback_io::Data<std::string>, feedback_io::Data<std::string>>
       } else {
           stationIDs[iOb] = buoyIDs[iOb];
       }
-      std::cout << iOb << ": " << stationIDs[iOb] << std::endl;
     }
     stationIdentificationAvailable = true;
   }

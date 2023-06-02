@@ -103,7 +103,6 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(const
       sourceData[iOb].resize(width, ' ');
       data[iOb] = sourceData[iOb].substr(0, width);
     }
-    std::cout << iOb << ": " << data[iOb] << std::endl;
   }
   return feedback_io::Data<std::string>(indexer_, std::move(data));
 }
@@ -142,7 +141,6 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
       snprintf(buffer, width+1, format.c_str(), sourceData[iOb]);
       data[iOb] = static_cast<std::string>(buffer);
     }
-    std::cout << iOb << ": " << data[iOb] << std::endl;
   }
   return feedback_io::Data<std::string>(indexer_, std::move(data));
 }
