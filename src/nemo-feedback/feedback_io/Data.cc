@@ -28,6 +28,10 @@ void Data<T>::validate() const {
           << indexer_->n_locations() << " > " << data_->size();
   ASSERT_MSG(indexer_->n_locations() <= data_->size(), message.str());
   message.str(std::string());
+  message << Data::className() << ": indexer created for a different vector: "
+          << indexer_->n_source_data() << " != " << data_->size();
+  ASSERT_MSG(indexer_->n_source_data() == data_->size(), message.str());
+  message.str(std::string());
 }
 
 template <class T>
@@ -43,7 +47,8 @@ Data<T> Data<T>::deep_copy() const {
   }
 
   DataIndexer indexer(
-      this->indexer_->n_obs(), this->indexer_->n_levels(), starts, indices);
+      this->indexer_->n_obs(), this->indexer_->n_levels(), data.size(),
+      starts, indices);
 
   return Data(std::move(indexer), std::move(data));
 }

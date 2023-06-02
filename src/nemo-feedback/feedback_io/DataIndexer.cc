@@ -19,16 +19,18 @@
 namespace nemo_feedback {
 namespace feedback_io {
 
-DataIndexer::DataIndexer() : nObs_(0), nLevels_(0),
+DataIndexer::DataIndexer() : nObs_(0), nLevels_(0), sourceDataSize_(0),
     indices_(std::vector<size_t>()), starts_(std::vector<size_t>()),
     counts_(std::vector<size_t>()) {
       validate();
 }
 
 DataIndexer::DataIndexer(const size_t nObs, const size_t nLevels,
+                         const size_t sourceDataSize,
                          const std::vector<size_t> starts,
                          const std::vector<size_t> indices) :
-  nObs_(nObs), nLevels_(nLevels), indices_(indices), starts_(starts) {
+  nObs_(nObs), nLevels_(nLevels),  sourceDataSize_(sourceDataSize),
+  indices_(indices), starts_(starts) {
   counts_.reserve(nObs);
   for (size_t iProf = 0; iProf < nObs - 1; ++iProf) {
     counts_.push_back(starts[iProf +1] - starts[iProf]);
@@ -39,16 +41,18 @@ DataIndexer::DataIndexer(const size_t nObs, const size_t nLevels,
   validate();
 }
 
-DataIndexer::DataIndexer(const std::vector<size_t> indices) :
-    nObs_(indices.size()), nLevels_(1), indices_(indices),
-    starts_(indices.size()), counts_(indices.size(), 1) {
+DataIndexer::DataIndexer(const std::vector<size_t> indices,
+                         const size_t sourceDataSize) :
+    nObs_(indices.size()), nLevels_(1), sourceDataSize_(sourceDataSize),
+    indices_(indices), starts_(indices.size()), counts_(indices.size(), 1) {
   std::iota(starts_.begin(), starts_.end(), 0);
   validate();
 }
 
 DataIndexer::DataIndexer(const DataIndexer& superset,
-  const std::vector<bool> select) : nObs_(0), nLevels_(0), indices_(),
-    starts_(), counts_() {
+  const std::vector<bool> select) : nObs_(0), nLevels_(0),
+    sourceDataSize_(superset.sourceDataSize_),
+    indices_(), starts_(), counts_() {
   ASSERT_MSG(superset.indices_.size() == select.size(),
       DataIndexer::className()
       + ": source indices and selection vector size mismatch.");

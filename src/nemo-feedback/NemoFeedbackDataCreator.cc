@@ -52,7 +52,7 @@ NemoFeedbackDataCreator::NemoFeedbackDataCreator(
   size_t nObs = profileIndices.size();
 
   indexer_ = std::make_shared<feedback_io::DataIndexer>(
-      nObs, nLevels, std::move(starts), std::move(indices));
+      nObs, nLevels, nLocations, std::move(starts), std::move(indices));
 }
 
 template<typename T>
@@ -150,13 +150,13 @@ feedback_io::Data<int32_t> NemoFeedbackDataCreator::create_from_obsdb(const
     ufo::DiagnosticFlag TypeInstance, int32_t whenTrue,
     int32_t whenFalse) const {
   oops::Log::trace() << NemoFeedbackDataCreator::className()
-                     << ":create_from_obsdb " << obsGroup << "/" << ufoName
-                     << std::endl;
+                     << ":create_from_obsdb ufo::DiagnosticFlag "
+                     << obsGroup << "/" << ufoName << std::endl;
   std::vector<int32_t> data;
   std::vector<ufo::DiagnosticFlag> flagData;
   obsdb_.get_db(obsGroup, ufoName, flagData);
-  for (size_t iElem = 0; iElem < flagData.size(); ++iElem) {
-    data.push_back(flagData[iElem] ? whenTrue : whenFalse);
+  for (ufo::DiagnosticFlag flag : flagData) {
+    data.push_back(flag ? whenTrue : whenFalse);
   }
   if (data.size() != obsdb_.nlocs())
     throw eckit::BadValue(NemoFeedbackDataCreator::className()

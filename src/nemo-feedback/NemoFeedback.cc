@@ -160,6 +160,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                                             isExtraVariable_);
     write_all_data<double> (fdbk_writer, creator);
   }
+  oops::Log::trace() << "NemoFeedback postFilter done" << std::endl;
 }
 
 template <typename T>
@@ -249,7 +250,7 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& fdbk_writer,
             iProfile < variableDoNotAssimilateData.n_obs(); ++iProfile) {
           for (size_t iLevel = 0;
               iLevel < variableDoNotAssimilateData.length(iProfile);
-              ++iProfile) {
+              ++iLevel) {
             variableFinalQCData(iProfile, iLevel) +=
               variableDoNotAssimilateData(iProfile, iLevel);
           }

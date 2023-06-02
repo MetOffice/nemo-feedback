@@ -41,7 +41,7 @@ CASE("test creating test file ") {
     feedback_io::Data<double> test1;
   }
 
-  feedback_io::DataIndexer unReducedIndexer(indices);
+  feedback_io::DataIndexer unReducedIndexer(indices, nObs);
   feedback_io::DataIndexer indexer(unReducedIndexer,
       {true, false, true, true, true});
 
@@ -201,7 +201,7 @@ CASE("test creating profile file ") {
     indices.push_back(iLoc);
   std::vector<size_t> starts = std::vector<size_t>{0, 2};
 
-  feedback_io::DataIndexer indexer(nObs, nLevels, starts, indices);
+  feedback_io::DataIndexer indexer(nObs, nLevels, nLocations, starts, indices);
 
   feedback_io::Data<double> lats(indexer, std::vector<double>(nLocations, 1.0));
   feedback_io::Data<double> lons(indexer, std::vector<double>(nLocations, 6.0));
@@ -362,7 +362,7 @@ CASE("test creating reduced profile file ") {
     indices.push_back(iLoc);
   // Without eliminating empty profiles:
   std::vector<size_t> starts{0, 2, 4, 6, 11};
-  feedback_io::DataIndexer unReducedIndexer(nObs, nLevels, starts, indices);
+  feedback_io::DataIndexer unReducedIndexer(nObs, nLevels, nLocations, starts, indices);
   // Without eliminating empty profiles lenghts are {2, 2, 2, nLevels, 6};
   const std::vector<bool> toWrite{true, false,
                                   false, false,

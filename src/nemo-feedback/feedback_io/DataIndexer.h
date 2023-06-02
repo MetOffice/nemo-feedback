@@ -24,10 +24,12 @@ class DataIndexer {
   DataIndexer();
   /// \brief profile data indexing constructor
   DataIndexer(const size_t nObs, const size_t nLevels,
-                          const std::vector<size_t> starts,
-                          const std::vector<size_t> indices);
+              const size_t sourceDataSize,
+              const std::vector<size_t> starts,
+              const std::vector<size_t> indices);
   /// \brief surface data indexing constructor
-  explicit DataIndexer(const std::vector<size_t> indices);
+  explicit DataIndexer(const std::vector<size_t> indices,
+                       const size_t sourceDataSize);
   /// \brief force a default copy constructor
   DataIndexer(const DataIndexer&) = default;
   /// \brief Copy constructor for a new indexer which is a subset of another
@@ -45,11 +47,13 @@ class DataIndexer {
   size_t n_obs() const { return nObs_; }
   size_t n_levels() const { return nLevels_; }
   size_t n_locations() const { return indices_.size(); }
+  size_t n_source_data() const { return sourceDataSize_; }
 
  private:
   void validate();
   size_t nObs_;
   size_t nLevels_;
+  const size_t sourceDataSize_;
   std::vector<size_t> indices_;
   std::vector<size_t> starts_;
   std::vector<size_t> counts_;

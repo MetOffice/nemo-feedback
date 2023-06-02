@@ -119,7 +119,7 @@ CASE("Test Nemo Feedback indexer") {
     std::string indexingType = fixture.indexingTypes.at(test);
     std::vector<size_t> indices = fixture.indices.at(test);
 
-    DataIndexer indexer(indices);
+    DataIndexer indexer(indices, fixture.unReducedData[test].size());
     SECTION("indexing surface " + indexingType + " indices") {
       for (size_t iOb = 0; iOb < indexer.n_obs(); ++iOb) {
         EXPECT_EQUAL(fixture.unReducedData.at(test).at(iOb),
@@ -157,7 +157,8 @@ CASE("Test Nemo Feedback indexer") {
     std::vector<size_t> indices = fixture.indices[test];
 
     DataIndexer indexer(fixture.unreducedNProfiles,
-        fixture.unreducedNLevels, fixture.starts, indices);
+        fixture.unreducedNLevels, fixture.unReducedData[test].size(),
+        fixture.starts, indices);
 
     SECTION("indexing profile " + indexingType + " indices") {
       size_t iLoc = 0;
@@ -220,7 +221,8 @@ CASE("Test Nemo Feedback indexer") {
 CASE("Test Nemo Feedback surface data") {
   // Constrcted using deep copy of the data
   std::vector<size_t> indices = fixture.indices.at(0);
-  auto indexer = std::make_shared<DataIndexer>(indices);
+  auto indexer = std::make_shared<DataIndexer>(indices,
+      fixture.unReducedData[0].size());
   Data<size_t>      feedbackData(indexer, fixture.data);
   Data<float>       feedbackFloatData(indexer, fixture.floatData);
   Data<double>      feedbackDoubleData(indexer, fixture.doubleData);
@@ -279,7 +281,8 @@ CASE("Test Nemo Feedback surface data") {
     std::string indexingType = fixture.indexingTypes.at(test);
     std::vector<size_t> indices = fixture.indices.at(test);
     // Deep copy of the data
-    auto indexer = std::make_shared<DataIndexer>(indices);
+    auto indexer = std::make_shared<DataIndexer>(indices,
+        fixture.unReducedData[0].size());
     Data<size_t>      feedbackData(indexer, fixture.data);
     Data<float>       feedbackFloatData(indexer, fixture.floatData);
     Data<double>      feedbackDoubleData(indexer, fixture.doubleData);
@@ -313,7 +316,8 @@ CASE("Test Nemo Feedback profile data") {
   // Constrcted using deep copy of the data
   std::vector<size_t> indices = fixture.indices.at(0);
   auto indexer = std::make_shared<DataIndexer>(fixture.unreducedNProfiles,
-      fixture.unreducedNLevels, fixture.starts, indices);
+      fixture.unreducedNLevels, fixture.unReducedData[0].size(), fixture.starts,
+      indices);
   Data<size_t>      feedbackData(indexer, fixture.data);
   Data<float>       feedbackFloatData(indexer, fixture.floatData);
   Data<double>      feedbackDoubleData(indexer, fixture.doubleData);
@@ -403,7 +407,8 @@ CASE("Test Nemo Feedback profile data") {
     std::vector<size_t> indices = fixture.indices.at(test);
     // Deep copy of the data
     auto indexer = std::make_shared<DataIndexer>(fixture.unreducedNProfiles,
-        fixture.unreducedNLevels, fixture.starts, indices);
+        fixture.unreducedNLevels, fixture.unReducedData[0].size(),
+        fixture.starts, indices);
     Data<size_t>      feedbackData(indexer, fixture.data);
     Data<float>       feedbackFloatData(indexer, fixture.floatData);
     Data<double>      feedbackDoubleData(indexer, fixture.doubleData);
