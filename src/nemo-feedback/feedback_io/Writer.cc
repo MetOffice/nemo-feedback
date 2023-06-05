@@ -453,36 +453,38 @@ void Writer<C>::write_whole_report_variables() {
   {
     size_t nchars = (ncFile->getDim(STRINGTYP)).getSize();
     auto station_type_var = ncFile->getVar("STATION_TYPE");
-    int j = 0;
     // +1 is for the null-terminator of a cstring
-    char* buffer = new char[metaData_.nObs*nchars+1];
     std::vector<std::string> stationTypesSurface = metaData_.stationTypes
       .raw_surface();
-    for (std::string& stationType : stationTypesSurface) {
-      strcpy(buffer + nchars*j++, stationType.c_str());  // NOLINT(*)
+    ASSERT_MSG(stationTypesSurface.size() == metaData_.nObs,
+        "stationTypesSurface.size() != metaData_.nObs");
+    std::string buffer;
+    for (std::string stationType : stationTypesSurface) {
+      stationType.resize(STRINGTYP_NUM, ' ');
+      buffer += stationType.substr(0, STRINGTYP_NUM);
     }
     station_type_var.putVar({0, 0},
                             {metaData_.nObs, nchars},
-                            buffer);
-    delete[] buffer;
+                            buffer.c_str());
   }
 
   // Write station IDs.
   {
     size_t nchars = (ncFile->getDim(STRINGWMO)).getSize();
     auto station_id_var = ncFile->getVar("STATION_IDENTIFIER");
-    int j = 0;
     // +1 is for the null-terminator of a cstring
-    char* buffer = new char[metaData_.nObs*nchars+1];
     std::vector<std::string> stationIDsSurface = metaData_.stationIDs
       .raw_surface();
-    for (std::string& stationID : stationIDsSurface) {
-      strcpy(buffer + nchars*j++, stationID.c_str());  // NOLINT(runtime/printf)
+    ASSERT_MSG(stationIDsSurface.size() == metaData_.nObs,
+        "stationTypesSurface.size() != metaData_.nObs");
+    std::string buffer;
+    for (std::string stationID : stationIDsSurface) {
+      stationID.resize(STRINGWMO_NUM, ' ');
+      buffer += stationID.substr(0, STRINGWMO_NUM);
     }
     station_id_var.putVar({0, 0},
                           {metaData_.nObs, nchars},
-                          buffer);
-    delete[] buffer;
+                          buffer.c_str());
   }
 }
 
