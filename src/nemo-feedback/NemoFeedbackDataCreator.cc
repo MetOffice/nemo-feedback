@@ -114,13 +114,6 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
   oops::Log::trace() << NemoFeedbackDataCreator::className()
                      << ":create_from_obsdb " << obsGroup << "/" << ufoName
                      << std::endl;
-  constexpr size_t kMaxWidth = 10;
-
-  if (kMaxWidth <= width)
-    throw eckit::BadValue(NemoFeedbackDataCreator::className()
-        + ":create_from_obsdb supplied width is larger than kMaxWidth: "
-        + std::to_string(kMaxWidth) + " <= " + std::to_string(width));
-
   std::vector<int32_t> sourceData(obsdb_.nlocs(), 0);
   obsdb_.get_db(obsGroup, ufoName, sourceData);
   const int32_t missingValue = util::missingValue(int32_t(0));
@@ -133,13 +126,14 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
   stream << "%" << width << "d";
   std::string format(stream.str());
   std::vector<std::string> data(obsdb_.nlocs(), missingValueOut);
-  char buffer[kMaxWidth];
+  auto buffer = std::make_unique<char[]>(width);
   for (size_t iOb = 0; iOb < obsdb_.nlocs(); ++iOb) {
     if (missingValue == sourceData[iOb]) {
       data[iOb] = missingValueOut.substr(0, width);
     } else {
-      snprintf(buffer, width+1, format.c_str(), sourceData[iOb]);
-      data[iOb] = static_cast<std::string>(buffer);
+      snprintf(buffer.get(), width, format.c_str(), sourceData[iOb]);
+      // construct string from char array range excluding null terminator
+      data[iOb] = std::string(buffer.get(), buffer.get() + width - 1);
     }
   }
   return feedback_io::Data<std::string>(indexer_, std::move(data));
@@ -296,9 +290,9 @@ NemoFeedbackDataCreator::create_altimeter_IDs() const {
     char buffer5[5];
     for (size_t iLoc = 0; iLoc < obsdb_.nlocs(); ++iLoc) {
       snprintf(buffer9, sizeof(buffer9), "%04d    ", satellite_ids[iLoc]);
-      station_ids[iLoc] = buffer9;
+      station_ids[iLoc] = static_cast<std::string>(buffer9);
       snprintf(buffer5, sizeof(buffer5), "%4d", satellite_ids[iLoc]);
-      station_types[iLoc] = buffer5;
+      station_types[iLoc] = static_cast<std::string>(buffer5);
     }
 
     return std::make_tuple<feedback_io::Data<std::string>,
