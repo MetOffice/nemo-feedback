@@ -459,6 +459,7 @@ void Writer<C>::write_whole_report_variables() {
     ASSERT_MSG(stationTypesSurface.size() == metaData_.nObs,
         "stationTypesSurface.size() != metaData_.nObs");
     std::string buffer;
+    buffer.reserve(metaData_.nObs*nchars);
     for (std::string stationType : stationTypesSurface) {
       stationType.resize(STRINGTYP_NUM, ' ');
       buffer += stationType.substr(0, STRINGTYP_NUM);
@@ -478,6 +479,7 @@ void Writer<C>::write_whole_report_variables() {
     ASSERT_MSG(stationIDsSurface.size() == metaData_.nObs,
         "stationTypesSurface.size() != metaData_.nObs");
     std::string buffer;
+    buffer.reserve(metaData_.nObs*nchars);
     for (std::string stationID : stationIDsSurface) {
       stationID.resize(STRINGWMO_NUM, ' ');
       buffer += stationID.substr(0, STRINGWMO_NUM);
