@@ -98,7 +98,7 @@ static struct Fixture {
   const std::vector<double>      doubleData = {1, 2, 3, 4, 5, 6, 7, 8, 9};  // NOLINT(*)
   const std::vector<int32_t>     intData    = {1, 2, 3, 4, 5, 6, 7, 8, 9};  // NOLINT(*)
   const std::vector<std::string> stringData = {"A", "B", "C", "D", "E",  // NOLINT(*)
-                                               "F", "G", "H", "I", "J"};
+                                               "F", "G", "H", "I"};
   // imagine our test data is also split into 3 profiles, with 4 max levels
   const size_t unreducedNProfiles = 3;
   const size_t unreducedNLevels = 4;
