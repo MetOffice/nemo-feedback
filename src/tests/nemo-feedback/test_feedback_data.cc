@@ -29,75 +29,75 @@ namespace test {
 static struct Fixture {
   Fixture() {
     // test cases for the vector of indices
-    indexingTypes.push_back   ("ordered");
-    indices.emplace_back  (std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8});
-    unReducedData.emplace_back(std::vector<size_t>{1, 2, 3, 4, 5, 6, 7, 8, 9});
-    indexingTypes.push_back   ("reversed");
-    indices.emplace_back  (std::vector<size_t>{8, 7, 6, 5, 4, 3, 2, 1, 0});
-    unReducedData.emplace_back(std::vector<size_t>{9, 8, 7, 6, 5, 4, 3, 2, 1});
-    indexingTypes.push_back   ("alternating");
-    indices.emplace_back  (std::vector<size_t>{8, 1, 6, 3, 4, 5, 2, 7, 0});
-    unReducedData.emplace_back(std::vector<size_t>{9, 2, 7, 4, 5, 6, 3, 8, 1});
+    indexingTypes.push_back   ("ordered");  // NOLINT(*)
+    indices.emplace_back  (std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8});  // NOLINT(*)
+    unReducedData.emplace_back(std::vector<size_t>{1, 2, 3, 4, 5, 6, 7, 8, 9});  // NOLINT(*)
+    indexingTypes.push_back   ("reversed");  // NOLINT(*)
+    indices.emplace_back  (std::vector<size_t>{8, 7, 6, 5, 4, 3, 2, 1, 0});  // NOLINT(*)
+    unReducedData.emplace_back(std::vector<size_t>{9, 8, 7, 6, 5, 4, 3, 2, 1});  // NOLINT(*)
+    indexingTypes.push_back   ("alternating");  // NOLINT(*)
+    indices.emplace_back  (std::vector<size_t>{8, 1, 6, 3, 4, 5, 2, 7, 0});  // NOLINT(*)
+    unReducedData.emplace_back(std::vector<size_t>{9, 2, 7, 4, 5, 6, 3, 8, 1});  // NOLINT(*)
 
     ReducedData.resize(indexingTypes.size());
     nProfiles.resize(indexingTypes.size());
     nLevels.resize(indexingTypes.size());
 
     // test cases for the selection of data
-    selectionTypes.push_back       ("all");
-    selections.emplace_back    (std::vector<bool  >{1, 1, 1, 1, 1, 1, 1, 1, 1});
-    ReducedData[0].emplace_back(std::vector<size_t>{1, 2, 3, 4, 5, 6, 7, 8, 9});
-    nProfiles[0].push_back     (3);
-    nLevels[0].push_back       (4);
-    ReducedData[1].emplace_back(std::vector<size_t>{9, 8, 7, 6, 5, 4, 3, 2, 1});
-    nProfiles[1].push_back     (3);
-    nLevels[1].push_back       (4);
-    ReducedData[2].emplace_back(std::vector<size_t>{9, 2, 7, 4, 5, 6, 3, 8, 1});
-    nProfiles[2].push_back     (3);
-    nLevels[2].push_back       (4);
+    selectionTypes.push_back       ("all");  // NOLINT(*)
+    selections.emplace_back    (std::vector<bool  >{1, 1, 1, 1, 1, 1, 1, 1, 1});  // NOLINT(*)
+    ReducedData[0].emplace_back(std::vector<size_t>{1, 2, 3, 4, 5, 6, 7, 8, 9});  // NOLINT(*)
+    nProfiles[0].push_back     (3);  // NOLINT(*)
+    nLevels[0].push_back       (4);  // NOLINT(*)
+    ReducedData[1].emplace_back(std::vector<size_t>{9, 8, 7, 6, 5, 4, 3, 2, 1});  // NOLINT(*)
+    nProfiles[1].push_back     (3);  // NOLINT(*)
+    nLevels[1].push_back       (4);  // NOLINT(*)
+    ReducedData[2].emplace_back(std::vector<size_t>{9, 2, 7, 4, 5, 6, 3, 8, 1});  // NOLINT(*)
+    nProfiles[2].push_back     (3);  // NOLINT(*)
+    nLevels[2].push_back       (4);  // NOLINT(*)
 
-    selectionTypes.push_back       ("none");
-    selections.emplace_back    (std::vector<bool  >{0, 0, 0, 0, 0, 0, 0, 0, 0});
-    ReducedData[0].emplace_back(std::vector<size_t>{                         });
-    nProfiles[0].push_back     (0);
-    nLevels[0].push_back       (0);
-    ReducedData[1].emplace_back(std::vector<size_t>{                         });
-    nProfiles[1].push_back     (0);
-    nLevels[1].push_back       (0);
-    ReducedData[2].emplace_back(std::vector<size_t>{                         });
-    nProfiles[2].push_back     (0);
-    nLevels[2].push_back       (0);
+    selectionTypes.push_back       ("none");  // NOLINT(*)
+    selections.emplace_back    (std::vector<bool  >{0, 0, 0, 0, 0, 0, 0, 0, 0});  // NOLINT(*)
+    ReducedData[0].emplace_back(std::vector<size_t>{                         });  // NOLINT(*)
+    nProfiles[0].push_back     (0);  // NOLINT(*)
+    nLevels[0].push_back       (0);  // NOLINT(*)
+    ReducedData[1].emplace_back(std::vector<size_t>{                         });  // NOLINT(*)
+    nProfiles[1].push_back     (0);  // NOLINT(*)
+    nLevels[1].push_back       (0);  // NOLINT(*)
+    ReducedData[2].emplace_back(std::vector<size_t>{                         });  // NOLINT(*)
+    nProfiles[2].push_back     (0);  // NOLINT(*)
+    nLevels[2].push_back       (0);  // NOLINT(*)
 
-    selectionTypes.push_back       ("subset 1");
-    selections.emplace_back    (std::vector<bool  >{0, 1, 1, 1, 0, 0, 1, 0, 1});
-    ReducedData[0].emplace_back(std::vector<size_t>{   2, 3, 4,       7,    9});
-    nProfiles[0].push_back     (3);
-    nLevels[0].push_back       (2);
-    ReducedData[1].emplace_back(std::vector<size_t>{9,    7,       4, 3, 2,  });
-    nProfiles[1].push_back     (3);
-    nLevels[1].push_back       (2);
-    ReducedData[2].emplace_back(std::vector<size_t>{9, 2, 7, 4,       3,     });
-    nProfiles[2].push_back     (3);
-    nLevels[2].push_back       (2);
+    selectionTypes.push_back       ("subset 1");  // NOLINT(*)
+    selections.emplace_back    (std::vector<bool  >{0, 1, 1, 1, 0, 0, 1, 0, 1});  // NOLINT(*)
+    ReducedData[0].emplace_back(std::vector<size_t>{   2, 3, 4,       7,    9});  // NOLINT(*)
+    nProfiles[0].push_back     (3);  // NOLINT(*)
+    nLevels[0].push_back       (2);  // NOLINT(*)
+    ReducedData[1].emplace_back(std::vector<size_t>{9,    7,       4, 3, 2,  });  // NOLINT(*)
+    nProfiles[1].push_back     (3);  // NOLINT(*)
+    nLevels[1].push_back       (2);  // NOLINT(*)
+    ReducedData[2].emplace_back(std::vector<size_t>{9, 2, 7, 4,       3,     });  // NOLINT(*)
+    nProfiles[2].push_back     (3);  // NOLINT(*)
+    nLevels[2].push_back       (2);  // NOLINT(*)
 
-    selectionTypes.push_back       ("subset 2");
-    selections.emplace_back    (std::vector<bool  >{0, 1, 1, 1, 0, 1, 0, 0, 0});
-    ReducedData[0].emplace_back(std::vector<size_t>{   2, 3, 4,    6,        });
-    nProfiles[0].push_back     (2);
-    nLevels[0].push_back       (3);
-    ReducedData[1].emplace_back(std::vector<size_t>{         6,    4, 3, 2   });
-    nProfiles[1].push_back     (2);
-    nLevels[1].push_back       (2);
-    ReducedData[2].emplace_back(std::vector<size_t>{   2,    4,    6, 3,     });
-    nProfiles[2].push_back     (3);
-    nLevels[2].push_back       (2);
+    selectionTypes.push_back       ("subset 2");  // NOLINT(*)
+    selections.emplace_back    (std::vector<bool  >{0, 1, 1, 1, 0, 1, 0, 0, 0});  // NOLINT(*)
+    ReducedData[0].emplace_back(std::vector<size_t>{   2, 3, 4,    6,        });  // NOLINT(*)
+    nProfiles[0].push_back     (2);  // NOLINT(*)
+    nLevels[0].push_back       (3);  // NOLINT(*)
+    ReducedData[1].emplace_back(std::vector<size_t>{         6,    4, 3, 2   });  // NOLINT(*)
+    nProfiles[1].push_back     (2);  // NOLINT(*)
+    nLevels[1].push_back       (2);  // NOLINT(*)
+    ReducedData[2].emplace_back(std::vector<size_t>{   2,    4,    6, 3,     });  // NOLINT(*)
+    nProfiles[2].push_back     (3);  // NOLINT(*)
+    nLevels[2].push_back       (2);  // NOLINT(*)
   }
 
-  const std::vector<size_t>      data       = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-  const std::vector<float>       floatData  = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-  const std::vector<double>      doubleData = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-  const std::vector<int32_t>     intData    = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-  const std::vector<std::string> stringData = {"A", "B", "C", "D", "E",
+  const std::vector<size_t>      data       = {1, 2, 3, 4, 5, 6, 7, 8, 9};  // NOLINT(*)
+  const std::vector<float>       floatData  = {1, 2, 3, 4, 5, 6, 7, 8, 9};  // NOLINT(*)
+  const std::vector<double>      doubleData = {1, 2, 3, 4, 5, 6, 7, 8, 9};  // NOLINT(*)
+  const std::vector<int32_t>     intData    = {1, 2, 3, 4, 5, 6, 7, 8, 9};  // NOLINT(*)
+  const std::vector<std::string> stringData = {"A", "B", "C", "D", "E",  // NOLINT(*)
                                                "F", "G", "H", "I", "J"};
   // imagine our test data is also split into 3 profiles, with 4 max levels
   const size_t unreducedNProfiles = 3;

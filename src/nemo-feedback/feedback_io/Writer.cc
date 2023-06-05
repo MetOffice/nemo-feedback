@@ -459,7 +459,7 @@ void Writer<C>::write_whole_report_variables() {
     std::vector<std::string> stationTypesSurface = metaData_.stationTypes
       .raw_surface();
     for (std::string& stationType : stationTypesSurface) {
-      strcpy(buffer + nchars*j++, stationType.c_str());
+      strcpy(buffer + nchars*j++, stationType.c_str());  // NOLINT(*)
     }
     station_type_var.putVar({0, 0},
                             {metaData_.nObs, nchars},
@@ -477,7 +477,7 @@ void Writer<C>::write_whole_report_variables() {
     std::vector<std::string> stationIDsSurface = metaData_.stationIDs
       .raw_surface();
     for (std::string& stationID : stationIDsSurface) {
-      strcpy(buffer + nchars*j++, stationID.c_str());
+      strcpy(buffer + nchars*j++, stationID.c_str());  // NOLINT(runtime/printf)
     }
     station_id_var.putVar({0, 0},
                           {metaData_.nObs, nchars},

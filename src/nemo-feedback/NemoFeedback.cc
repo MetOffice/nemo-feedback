@@ -296,9 +296,9 @@ feedback_io::MetaData NemoFeedback::setupMetaData(
         std::vector<double>(obsdb_.nlocs(), 0));
   }
 
-  auto [juldReferenceGlobal, nLevelsGlobal] = mpiSync(lats.n_levels());
+  auto [juldReferenceGlobal, nLevelsGlobal] = mpiSync(lats.n_levels());  // NOLINT(*)
 
-  auto [juldReference, julianDays] = creator.create_datetimes("MetaData",
+  auto [juldReference, julianDays] = creator.create_datetimes("MetaData",  // NOLINT(*)
       "dateTime", juldReferenceGlobal);
 
   feedback_io::Data<std::string> stationIDs, stationTypes;

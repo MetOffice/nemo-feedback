@@ -362,7 +362,8 @@ CASE("test creating reduced profile file ") {
     indices.push_back(iLoc);
   // Without eliminating empty profiles:
   std::vector<size_t> starts{0, 2, 4, 6, 11};
-  feedback_io::DataIndexer unReducedIndexer(nObs, nLevels, nLocations, starts, indices);
+  feedback_io::DataIndexer unReducedIndexer(nObs, nLevels, nLocations, starts,
+      indices);
   // Without eliminating empty profiles lenghts are {2, 2, 2, nLevels, 6};
   const std::vector<bool> toWrite{true, false,
                                   false, false,
