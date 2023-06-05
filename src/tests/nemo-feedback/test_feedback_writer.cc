@@ -28,7 +28,7 @@ namespace test {
 //-----------------------------------------------------------------------------
 
 CASE("test creating test file ") {
-  eckit::PathName test_data_path("../testoutput/simple_nemo_out.nc");
+  eckit::PathName testDataPath("../testoutput/simple_nemo_out.nc");
 
   size_t nObs = 5;
   size_t nLevels = 1;
@@ -68,56 +68,56 @@ CASE("test creating test file ") {
     int year, month, day, hour, minute, second;
     juldReferenceDT.toYYYYMMDDhhmmss(year, month, day, hour, minute,
                                            second);
-    std::ostringstream ref_stream;
-    ref_stream << std::setfill('0');
-    ref_stream << std::setw(4) << year;
-    ref_stream << std::setw(2) << month;
-    ref_stream << std::setw(2) << day;
-    ref_stream << std::setw(2) << hour;
-    ref_stream << std::setw(2) << minute;
-    ref_stream << std::setw(2) << second;
-    juldReference = ref_stream.str();
+    std::ostringstream juldReferenceSStream;
+    juldReferenceSStream << std::setfill('0');
+    juldReferenceSStream << std::setw(4) << year;
+    juldReferenceSStream << std::setw(2) << month;
+    juldReferenceSStream << std::setw(2) << day;
+    juldReferenceSStream << std::setw(2) << hour;
+    juldReferenceSStream << std::setw(2) << minute;
+    juldReferenceSStream << std::setw(2) << second;
+    juldReference = juldReferenceSStream.str();
   }
 
   feedback_io::MetaData metaData(lats, lons, julianDays, depths, stationTypes,
       stationIDs, nLevels, juldReference);
 
-  feedback_io::NameData name_data;
-  name_data.variable_names = std::vector<std::string>{"SST", "MDT"};
-  name_data.long_names = std::vector<std::string>{"this is a long name",
+  feedback_io::NameData nameData;
+  nameData.variable_names = std::vector<std::string>{"SST", "MDT"};
+  nameData.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
-  name_data.unit_names = std::vector<std::string>{"this is a unit",
+  nameData.unit_names = std::vector<std::string>{"this is a unit",
                                                   "this is another unit"};
-  name_data.additional_names = std::vector<std::string>{"Hx", "DW_FLAGS",
+  nameData.additional_names = std::vector<std::string>{"Hx", "DW_FLAGS",
                                                        "STD"};
 
   // For some reason this test fails CI with a "file not found" error instead
   // of the eckit error we expect. This is different behaviour depending on the
   // system it seems.
   // SECTION ("NameData validator can fail") {
-  //   EXPECT_THROWS_AS(name_data.validate(), eckit::BadValue);
+  //   EXPECT_THROWS_AS(nameData.validate(), eckit::BadValue);
   // }
 
-  name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
+  nameData.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
   std::vector<bool> isExtraVariable{false, true};
 
   SECTION("file writes") {
-    feedback_io::Writer<double> fdbk_writer(
-        test_data_path,
+    feedback_io::Writer<double> writer(
+        testDataPath,
         metaData,
-        name_data,
+        nameData,
         isExtraVariable);
 
     // wait up to 100 seconds for the file system...
     for (size_t waitCount = 0; waitCount < 50; ++waitCount) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
-      if (test_data_path.exists()) break;
+      if (testDataPath.exists()) break;
     }
-    EXPECT(test_data_path.exists());
+    EXPECT(testDataPath.exists());
   }
 
-  netCDF::NcFile ncFile(test_data_path.fullName().asString(),
+  netCDF::NcFile ncFile(testDataPath.fullName().asString(),
       netCDF::NcFile::read);
 
   SECTION("JULD_REFERENCE variable is correct") {
@@ -190,7 +190,7 @@ CASE("test creating test file ") {
 }
 
 CASE("test creating profile file ") {
-  eckit::PathName test_data_path("../testoutput/simple_nemo_profile_out.nc");
+  eckit::PathName testDataPath("../testoutput/simple_nemo_profile_out.nc");
 
   const size_t nLocations = 7;
   const size_t nObs = 2;
@@ -220,77 +220,79 @@ CASE("test creating profile file ") {
     int year, month, day, hour, minute, second;
     juldReferenceDT.toYYYYMMDDhhmmss(year, month, day, hour, minute,
                                            second);
-    std::ostringstream ref_stream;
-    ref_stream << std::setfill('0');
-    ref_stream << std::setw(4) << year;
-    ref_stream << std::setw(2) << month;
-    ref_stream << std::setw(2) << day;
-    ref_stream << std::setw(2) << hour;
-    ref_stream << std::setw(2) << minute;
-    ref_stream << std::setw(2) << second;
-    juldReference = ref_stream.str();
+    std::ostringstream juldReferenceSStream;
+    juldReferenceSStream << std::setfill('0');
+    juldReferenceSStream << std::setw(4) << year;
+    juldReferenceSStream << std::setw(2) << month;
+    juldReferenceSStream << std::setw(2) << day;
+    juldReferenceSStream << std::setw(2) << hour;
+    juldReferenceSStream << std::setw(2) << minute;
+    juldReferenceSStream << std::setw(2) << second;
+    juldReference = juldReferenceSStream.str();
   }
 
   feedback_io::MetaData metaData(lats, lons, julianDays, depths, stationTypes,
       stationIDs, nLevels, juldReference);
 
-  feedback_io::NameData name_data;
-  name_data.variable_names = std::vector<std::string>{"POTM", "PSAL"};
-  name_data.long_names = std::vector<std::string>{"this is a long name",
+  feedback_io::NameData nameData;
+  nameData.variable_names = std::vector<std::string>{"POTM", "PSAL"};
+  nameData.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
-  name_data.unit_names = std::vector<std::string>{"this is a unit",
+  nameData.unit_names = std::vector<std::string>{"this is a unit",
                                                   "this is another unit"};
-  name_data.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
-  name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
+  nameData.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
+  nameData.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
   const std::vector<bool> isExtraVariable{false, false};
 
   SECTION("file writes") {
-    feedback_io::Writer<double> fdbk_writer(
-        test_data_path,
+    feedback_io::Writer<double> writer(
+        testDataPath,
         metaData,
-        name_data,
+        nameData,
         isExtraVariable);
 
     std::vector<double> dataVec(nLocations);
     for (size_t iLoc = 0; iLoc < nLocations; ++iLoc) dataVec[iLoc] = iLoc;
     feedback_io::Data<double> data(indexer, dataVec);
-    fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
+    writer.write_variable_profile(nameData.variable_names[0] + "_OBS",
         data);
-    fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
+    writer.write_variable_profile(nameData.variable_names[0] + "_Hx",
         data);
-    fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_OBS",
+    writer.write_variable_profile(nameData.variable_names[1] + "_OBS",
         data);
-    fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_Hx",
+    writer.write_variable_profile(nameData.variable_names[1] + "_Hx",
         data);
 
     std::vector<int32_t> intVec(nLocations, 0);
     for (size_t iLoc = 0; iLoc < nLocations; ++iLoc) intVec[iLoc] = 10+iLoc;
     feedback_io::Data<int32_t> intData(indexer, intVec);
-    fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", intData, 0);
-    fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", intData, 0);
-    fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC", intData);
-    fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC", intData);
+    writer.write_variable_level_qc(
+        nameData.variable_names[0] + "_LEVEL_QC_FLAGS", intData, 0);
+    writer.write_variable_level_qc(
+        nameData.variable_names[1] + "_LEVEL_QC_FLAGS", intData, 0);
+    writer.write_variable_level_qc(
+        nameData.variable_names[0] + "_LEVEL_QC", intData);
+    writer.write_variable_level_qc(
+        nameData.variable_names[1] + "_LEVEL_QC", intData);
 
     // wait up to 100 seconds for the file system...
     for (size_t waitCount = 0; waitCount < 50; ++waitCount) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
-      if (test_data_path.exists()) break;
+      if (testDataPath.exists()) break;
     }
-    EXPECT(test_data_path.exists());
+    EXPECT(testDataPath.exists());
   }
 
-  netCDF::NcFile ncFile(test_data_path.fullName().asString(),
+  netCDF::NcFile ncFile(testDataPath.fullName().asString(),
       netCDF::NcFile::read);
 
-  for (const std::string& v_type : std::vector<std::string>{"_OBS", "_Hx"}) {
-    for (const std::string& v_name : name_data.variable_names) {
-      SECTION(std::string("Profile ") + v_name + v_type + " data is correct") {
-        netCDF::NcVar ncVar = ncFile.getVar(v_name + v_type);
+  for (const std::string& variableType :
+        std::vector<std::string>{"_OBS", "_Hx"}) {
+    for (const std::string& variableName : nameData.variable_names) {
+      SECTION(std::string("Profile ") + variableName
+              + variableType + " data is correct") {
+        netCDF::NcVar ncVar = ncFile.getVar(variableName + variableType);
         std::vector<double> data(metaData.nObs*metaData.nLevels, 12345);
         ncVar.getVar({0, 0}, {metaData.nObs, metaData.nLevels}, data.data());
 
@@ -309,9 +311,10 @@ CASE("test creating profile file ") {
     }
   }
 
-  for (const std::string& v_name : name_data.variable_names) {
-    SECTION(std::string("Profile ") + v_name + "_LEVEL_QC_FLAGS is correct") {
-      netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC_FLAGS");
+  for (const std::string& variableName : nameData.variable_names) {
+    SECTION(std::string("Profile ") + variableName
+            + "_LEVEL_QC_FLAGS is correct") {
+      netCDF::NcVar ncVar = ncFile.getVar(variableName + "_LEVEL_QC_FLAGS");
       std::vector<int> data(metaData.nObs*metaData.nLevels, 12345);
       ncVar.getVar({0, 0, 0}, {metaData.nObs, metaData.nLevels, 1},
           data.data());
@@ -329,8 +332,8 @@ CASE("test creating profile file ") {
       EXPECT_EQUAL(16, data[metaData.nLevels+4]);
     }
 
-    SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
-      netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC");
+    SECTION(std::string("Profile ") + variableName + "_LEVEL_QC is correct") {
+      netCDF::NcVar ncVar = ncFile.getVar(variableName + "_LEVEL_QC");
       std::vector<int> data(metaData.nObs*metaData.nLevels, 12345);
       ncVar.getVar({0, 0}, {metaData.nObs, metaData.nLevels}, data.data());
 
@@ -350,7 +353,7 @@ CASE("test creating profile file ") {
 }
 
 CASE("test creating reduced profile file ") {
-  eckit::PathName test_data_path(
+  eckit::PathName testDataPath(
       "../testoutput/simple_nemo_reduced_profile_out.nc");
 
   const size_t nLocations = 17;
@@ -390,28 +393,28 @@ CASE("test creating reduced profile file ") {
     int year, month, day, hour, minute, second;
     juldReferenceDT.toYYYYMMDDhhmmss(year, month, day, hour, minute,
                                            second);
-    std::ostringstream ref_stream;
-    ref_stream << std::setfill('0');
-    ref_stream << std::setw(4) << year;
-    ref_stream << std::setw(2) << month;
-    ref_stream << std::setw(2) << day;
-    ref_stream << std::setw(2) << hour;
-    ref_stream << std::setw(2) << minute;
-    ref_stream << std::setw(2) << second;
-    juldReference = ref_stream.str();
+    std::ostringstream juldReferenceSStream;
+    juldReferenceSStream << std::setfill('0');
+    juldReferenceSStream << std::setw(4) << year;
+    juldReferenceSStream << std::setw(2) << month;
+    juldReferenceSStream << std::setw(2) << day;
+    juldReferenceSStream << std::setw(2) << hour;
+    juldReferenceSStream << std::setw(2) << minute;
+    juldReferenceSStream << std::setw(2) << second;
+    juldReference = juldReferenceSStream.str();
   }
 
   feedback_io::MetaData metaData(lats, lons, julianDays, depths, stationTypes,
       stationIDs, nLevels, juldReference);
 
-  feedback_io::NameData name_data;
-  name_data.variable_names = std::vector<std::string>{"POTM", "PSAL"};
-  name_data.long_names = std::vector<std::string>{"this is a long name",
+  feedback_io::NameData nameData;
+  nameData.variable_names = std::vector<std::string>{"POTM", "PSAL"};
+  nameData.long_names = std::vector<std::string>{"this is a long name",
                                                   "this is another long name"};
-  name_data.unit_names = std::vector<std::string>{"this is a unit",
+  nameData.unit_names = std::vector<std::string>{"this is a unit",
                                                   "this is another unit"};
-  name_data.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
-  name_data.legacy_ops_qc_conventions = std::vector<bool>{false, false};
+  nameData.additional_names = std::vector<std::string>{"Hx", "SuperOb"};
+  nameData.legacy_ops_qc_conventions = std::vector<bool>{false, false};
 
   const std::vector<bool> isExtraVariable{false, false};
 
@@ -423,53 +426,55 @@ CASE("test creating reduced profile file ") {
     // number of locations to write should match the total number of locations
     EXPECT_EQUAL(nToWrite, metaData.nLocations);
 
-    feedback_io::Writer<double> fdbk_writer(
-        test_data_path,
+    feedback_io::Writer<double> writer(
+        testDataPath,
         metaData,
-        name_data,
+        nameData,
         isExtraVariable);
 
     std::vector<double> dataVec(nLocations);
     for (size_t iLoc = 0; iLoc < nLocations; ++iLoc) dataVec[iLoc] = iLoc;
     feedback_io::Data<double> data(indexer, dataVec);
 
-    fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_OBS",
+    writer.write_variable_profile(nameData.variable_names[0] + "_OBS",
         data);
-    fdbk_writer.write_variable_profile(name_data.variable_names[0] + "_Hx",
+    writer.write_variable_profile(nameData.variable_names[0] + "_Hx",
         data);
-    fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_OBS",
+    writer.write_variable_profile(nameData.variable_names[1] + "_OBS",
         data);
-    fdbk_writer.write_variable_profile(name_data.variable_names[1] + "_Hx",
+    writer.write_variable_profile(nameData.variable_names[1] + "_Hx",
         data);
 
     std::vector<int32_t> intVec(nLocations, 0);
     for (size_t iLoc = 0; iLoc < nLocations; ++iLoc) intVec[iLoc] = 10+iLoc;
     feedback_io::Data<int32_t> intData(indexer, intVec);
 
-    fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[0] + "_LEVEL_QC_FLAGS", intData, 0);
-    fdbk_writer.write_variable_level_qc(
-        name_data.variable_names[1] + "_LEVEL_QC_FLAGS", intData, 0);
-    fdbk_writer.write_variable_level_qc(name_data.variable_names[0]
+    writer.write_variable_level_qc(
+        nameData.variable_names[0] + "_LEVEL_QC_FLAGS", intData, 0);
+    writer.write_variable_level_qc(
+        nameData.variable_names[1] + "_LEVEL_QC_FLAGS", intData, 0);
+    writer.write_variable_level_qc(nameData.variable_names[0]
         + "_LEVEL_QC", intData);
-    fdbk_writer.write_variable_level_qc(name_data.variable_names[1]
+    writer.write_variable_level_qc(nameData.variable_names[1]
         + "_LEVEL_QC", intData);
 
     // wait up to 100 seconds for the file system...
     for (size_t waitCount = 0; waitCount < 50; ++waitCount) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
-      if (test_data_path.exists()) break;
+      if (testDataPath.exists()) break;
     }
-    EXPECT(test_data_path.exists());
+    EXPECT(testDataPath.exists());
   }
 
-  netCDF::NcFile ncFile(test_data_path.fullName().asString(),
+  netCDF::NcFile ncFile(testDataPath.fullName().asString(),
       netCDF::NcFile::read);
 
-  for (const std::string& v_type : std::vector<std::string>{"_OBS", "_Hx"}) {
-    for (const std::string& v_name : name_data.variable_names) {
-      SECTION(std::string("Profile ") + v_name + v_type + " data is correct") {
-        netCDF::NcVar ncVar = ncFile.getVar(v_name + v_type);
+  for (const std::string& variableType :
+        std::vector<std::string>{"_OBS", "_Hx"}) {
+    for (const std::string& variableName : nameData.variable_names) {
+      SECTION(std::string("Profile ") + variableName + variableType
+              + " data is correct") {
+        netCDF::NcVar ncVar = ncFile.getVar(variableName + variableType);
         std::vector<double> data(metaData.nObs*metaData.nLevels, 12345);
         ncVar.getVar({0, 0}, {metaData.nObs, metaData.nLevels}, data.data());
 
@@ -488,9 +493,10 @@ CASE("test creating reduced profile file ") {
     }
   }
 
-  for (const std::string& v_name : name_data.variable_names) {
-    SECTION(std::string("Profile ") + v_name + "_LEVEL_QC_FLAGS is correct") {
-      netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC_FLAGS");
+  for (const std::string& variableName : nameData.variable_names) {
+    SECTION(std::string("Profile ") + variableName
+            + "_LEVEL_QC_FLAGS is correct") {
+      netCDF::NcVar ncVar = ncFile.getVar(variableName + "_LEVEL_QC_FLAGS");
       std::vector<int> data(metaData.nObs*metaData.nLevels, 12345);
       ncVar.getVar({0, 0, 0}, {metaData.nObs, metaData.nLevels, 1},
           data.data());
@@ -508,8 +514,8 @@ CASE("test creating reduced profile file ") {
       // Final profile immediately rejected, as it lacks valid observations
     }
 
-    SECTION(std::string("Profile ") + v_name + "_LEVEL_QC is correct") {
-      netCDF::NcVar ncVar = ncFile.getVar(v_name + "_LEVEL_QC");
+    SECTION(std::string("Profile ") + variableName + "_LEVEL_QC is correct") {
+      netCDF::NcVar ncVar = ncFile.getVar(variableName + "_LEVEL_QC");
       std::vector<int> data(metaData.nObs*metaData.nLevels, 12345);
       ncVar.getVar({0, 0}, {metaData.nObs, metaData.nLevels}, data.data());
 

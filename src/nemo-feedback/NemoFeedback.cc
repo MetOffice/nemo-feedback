@@ -122,14 +122,14 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
                   const ufo::ObsDiagnostics &dv) {
   oops::Log::trace() << "NemoFeedback postFilter" << std::endl;
 
-  eckit::PathName test_data_path(parameters_.Filename);
+  eckit::PathName testDataPath(parameters_.Filename);
 
   if (obsdb_.comm().size() > 1) {
     std::stringstream ss;
-    ss << (test_data_path.dirName() / test_data_path.baseName(false)).asString()
+    ss << (testDataPath.dirName() / testDataPath.baseName(false)).asString()
        << "_" << std::setw(5) << std::setfill('0') << obsdb_.comm().rank()
-       << test_data_path.extension();
-    test_data_path = eckit::PathName(ss.str());
+       << testDataPath.extension();
+    testDataPath = eckit::PathName(ss.str());
   }
 
   // Handle the where option.
@@ -148,23 +148,23 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 
   OutputDtype dtype = parameters_.type.value().value_or(OutputDtype::Double);
   if (dtype == OutputDtype::Float) {
-    feedback_io::Writer<float> fdbk_writer(test_data_path,
-                                           metaData,
-                                           nameData_,
-                                           isExtraVariable_);
-    write_all_data<float> (fdbk_writer, creator);
+    feedback_io::Writer<float> writer(testDataPath,
+                                      metaData,
+                                      nameData_,
+                                      isExtraVariable_);
+    write_all_data<float> (writer, creator);
   } else {
-    feedback_io::Writer<double> fdbk_writer(test_data_path,
-                                            metaData,
-                                            nameData_,
-                                            isExtraVariable_);
-    write_all_data<double> (fdbk_writer, creator);
+    feedback_io::Writer<double> writer(testDataPath,
+                                       metaData,
+                                       nameData_,
+                                       isExtraVariable_);
+    write_all_data<double> (writer, creator);
   }
   oops::Log::trace() << "NemoFeedback postFilter done" << std::endl;
 }
 
 template <typename T>
-void NemoFeedback::write_all_data(feedback_io::Writer<T>& fdbk_writer,
+void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
                                   const NemoFeedbackDataCreator& creator) const
 {
   std::vector<ufo::DiagnosticFlag> do_not_assimilate;
@@ -180,13 +180,13 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& fdbk_writer,
 
     auto extra_var = nemoVariableParams.extravar.value().value_or(false);
     if (extra_var) {
-      fdbk_writer.write_variable_profile(nemo_name, variableData);
+      writer.write_variable_profile(nemo_name, variableData);
       // If this is an extra variable we do not want to write any of the
       // other variables with _OBS, _QC etc. added on to the name.
       continue;
     }
 
-    fdbk_writer.write_variable_profile(nemo_name + "_OBS", variableData);
+    writer.write_variable_profile(nemo_name + "_OBS", variableData);
 
     // Write Met Office QC flag data for this variable if they exist.
     feedback_io::Data<int32_t> variableQCFlagsData;
@@ -204,10 +204,10 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& fdbk_writer,
 
     // If profile data, write to level QC Flags
     if (variableData.n_levels() == 1) {
-      fdbk_writer.write_variable_surf_qc(
+      writer.write_variable_surf_qc(
           nemo_name + "_QC_FLAGS", variableQCFlagsData, 0);
     } else {
-      fdbk_writer.write_variable_level_qc(
+      writer.write_variable_level_qc(
           nemo_name + "_LEVEL_QC_FLAGS", variableQCFlagsData, 0);
     }
 
@@ -230,7 +230,7 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& fdbk_writer,
         }
         variableQCData[iProf] = (badObs == variableData.length(iProf) ? 4 : 1);
       }
-      fdbk_writer.write_variable_surf_qc("OBSERVATION_QC", variableQCData);
+      writer.write_variable_surf_qc("OBSERVATION_QC", variableQCData);
     }
 
     // Overall quality control flags
@@ -257,9 +257,9 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& fdbk_writer,
         }
       }
 
-      fdbk_writer.write_variable_surf_qc(nemo_name + "_QC",
+      writer.write_variable_surf_qc(nemo_name + "_QC",
           variableFinalQCData);
-      fdbk_writer.write_variable_level_qc(nemo_name + "_LEVEL_QC",
+      writer.write_variable_level_qc(nemo_name + "_LEVEL_QC",
           variableFinalQCData);
     }
 
@@ -271,7 +271,7 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& fdbk_writer,
       std::string ioda_group = addParams.iodaGroup.value();
       feedback_io::Data<T> variableAdditionalData(creator.create(ioda_group,
             ufo_name, T(0)));
-      fdbk_writer.write_variable_profile(add_name, variableAdditionalData);
+      writer.write_variable_profile(add_name, variableAdditionalData);
     }
   }
 }
@@ -457,16 +457,18 @@ std::tuple<util::DateTime, size_t> NemoFeedback::mpiSync(size_t nLevelsLocal)
         std::move(nLevelsGlobal));
   }
 
-  std::vector<size_t> all_nlevs(comm.size(), 0);
-  comm.allGather(nLevelsLocal, all_nlevs.begin(), all_nlevs.end());
-  nLevelsGlobal = *std::max_element(all_nlevs.begin(), all_nlevs.end());
+  std::vector<size_t> allNLevels(comm.size(), 0);
+  comm.allGather(nLevelsLocal, allNLevels.begin(), allNLevels.end());
+  nLevelsGlobal = *std::max_element(allNLevels.begin(), allNLevels.end());
 
   if (!parameters_.refDate.value()) {
     std::vector<double> juldRef;
     juldReferenceLocal.serialize(juldRef);
-    size_t index_0 = 0;
-    comm.broadcast(juldRef.begin(), juldRef.end(), 0);
-    juldReferenceGlobal.deserialize(juldRef, index_0);
+    // this could be constexpr however the functions below don't allow for a
+    // const size_t
+    size_t rootPartition = 0;
+    comm.broadcast(juldRef.begin(), juldRef.end(), rootPartition);
+    juldReferenceGlobal.deserialize(juldRef, rootPartition);
   }
 
   return std::make_tuple<util::DateTime, size_t>(std::move(juldReferenceGlobal),
