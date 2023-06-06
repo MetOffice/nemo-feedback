@@ -126,12 +126,12 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
   stream << "%" << width << "d";
   std::string format(stream.str());
   std::vector<std::string> data(obsdb_.nlocs(), missingValueOut);
-  auto buffer = std::make_unique<char[]>(width);
+  auto buffer = std::make_unique<char[]>(width + 1);
   for (size_t iOb = 0; iOb < obsdb_.nlocs(); ++iOb) {
     if (missingValue == sourceData[iOb]) {
       data[iOb] = missingValueOut.substr(0, width);
     } else {
-      snprintf(buffer.get(), width, format.c_str(), sourceData[iOb]);
+      snprintf(buffer.get(), width + 1, format.c_str(), sourceData[iOb]);
       data[iOb] = std::string(buffer.get());
     }
   }
