@@ -82,10 +82,13 @@ feedback_io::Data<T> NemoFeedbackDataCreator::create_from_obsdb(
 /// \brief create station ID feedbackData from obsdb
 feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(const
     std::string& obsGroup, const std::string& ufoName,
-    const std::string TypeInstance, size_t width) const {
+    const std::string TypeInstance, size_t width, bool leftJustify) const {
   oops::Log::trace() << NemoFeedbackDataCreator::className()
                      << ":create_from_obsdb " << obsGroup << "/" << ufoName
                      << std::endl;
+
+  ASSERT_MSG(!leftJustify,
+      "cannot left justify string variables - spaces are meaningful");
 
   std::vector<std::string> sourceData(obsdb_.nlocs());
   obsdb_.get_db(obsGroup, ufoName, sourceData);
@@ -110,7 +113,7 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(const
 /// \brief create station type feedbackData from integers in obsdb
 feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
     const std::string& obsGroup, const std::string& ufoName,
-    const int32_t TypeInstance, size_t width) const {
+    const int32_t TypeInstance, size_t width, bool leftJustify) const {
   oops::Log::trace() << NemoFeedbackDataCreator::className()
                      << ":create_from_obsdb " << obsGroup << "/" << ufoName
                      << std::endl;
@@ -123,7 +126,10 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
       "width and missing value sizes do not match");
 
   std::stringstream stream;
-  stream << "%" << width << "d";
+  stream << "%";
+  if (leftJustify)
+    stream << "-";
+  stream << width << "d";
   std::string format(stream.str());
   std::vector<std::string> data(obsdb_.nlocs(), missingValueOut);
   auto buffer = std::make_unique<char[]>(width + 1);
@@ -254,7 +260,7 @@ std::tuple<std::string, feedback_io::Data<double>>
 template<typename T>
 feedback_io::Data<std::string> NemoFeedbackDataCreator::create(const
     std::string& obsGroup, const std::string& ufoName, const T typeInstance,
-    size_t width) const {
+    size_t width, bool leftJustify) const {
   if (obsGroup == "hofx" || obsGroup == "HofX") {
     std::ostringstream err_stream;
     err_stream << NemoFeedbackDataCreator::className()
@@ -266,15 +272,15 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create(const
     throw eckit::BadValue(NemoFeedbackDataCreator::className() +
         ": missing obs variable: " + obsGroup + "/" + ufoName, Here());
   }
-  return create_from_obsdb(obsGroup, ufoName, typeInstance, width);
+  return create_from_obsdb(obsGroup, ufoName, typeInstance, width, leftJustify);
 }
 
 template feedback_io::Data<std::string> NemoFeedbackDataCreator::create(
     const std::string& obsGroup, const std::string& ufoName,
-    const int32_t typeInstance, size_t width) const;
+    const int32_t typeInstance, size_t width, bool leftJustify) const;
 template feedback_io::Data<std::string> NemoFeedbackDataCreator::create(
     const std::string& obsGroup, const std::string& ufoName,
-    const std::string typeInstance, size_t width) const;
+    const std::string typeInstance, size_t width, bool leftJustify) const;
 
 std::tuple<feedback_io::Data<std::string>, feedback_io::Data<std::string>>
 NemoFeedbackDataCreator::create_altimeter_IDs() const {

@@ -360,10 +360,10 @@ std::tuple<feedback_io::Data<std::string>, feedback_io::Data<std::string>>
   }
 
   feedback_io::Data<std::string> stationTypes;
-  constexpr size_t stationTypeWidth = 8;
+  constexpr size_t stationTypeWidth = 4;
   if (obsdb_.has("MetaData", "fdbk_station_type")) {
     stationTypes = feedback_io::Data<std::string>(creator.create("MetaData",
-          "fdbk_station_type", int32_t(0), stationTypeWidth));
+          "fdbk_station_type", int32_t(0), stationTypeWidth, true));
   } else {
     std::vector<std::string> blankStationTypeData(obsdb_.nlocs(),
         std::string(4, ' '));

@@ -56,7 +56,7 @@ class NemoFeedbackDataCreator {
   feedback_io::Data<std::string> create(const std::string& obsGroup,
       const std::string& ufoName,
       const T typeInstance,
-      size_t width) const;
+      size_t width, bool leftJustify = false) const;
 
   /// \brief create altimiter id feedback data
   std::tuple<feedback_io::Data<std::string>, feedback_io::Data<std::string>>
@@ -82,13 +82,13 @@ std::shared_ptr<feedback_io::DataIndexer> indexer() const {return indexer_;}
   feedback_io::Data<std::string> create_from_obsdb(const std::string& obsGroup,
       const std::string& ufoName,
       const int32_t typeInstance,
-      size_t width) const;
+      size_t width, bool leftJustify = false) const;
 
   /// \brief create station ID feedbackData from obsdb
   feedback_io::Data<std::string> create_from_obsdb(const std::string& obsGroup,
       const std::string& ufoName,
       const std::string typeInstance,
-      size_t width) const;
+      size_t width, bool leftJustify = false) const;
 
   /// \brief create DiagnosticFlags feedbackData from obsdb
   feedback_io::Data<int32_t> create_from_obsdb(const std::string& obsGroup,
