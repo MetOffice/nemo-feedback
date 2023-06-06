@@ -132,8 +132,7 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
       data[iOb] = missingValueOut.substr(0, width);
     } else {
       snprintf(buffer.get(), width, format.c_str(), sourceData[iOb]);
-      // construct string from char array range excluding null terminator
-      data[iOb] = std::string(buffer.get(), buffer.get() + width - 1);
+      data[iOb] = std::string(buffer.get());
     }
   }
   return feedback_io::Data<std::string>(indexer_, std::move(data));
