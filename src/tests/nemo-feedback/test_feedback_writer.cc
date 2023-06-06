@@ -27,7 +27,7 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-CASE("test creating test file ") {
+CASE("test creating surface test file ") {
   eckit::PathName testDataPath("../testoutput/simple_nemo_out.nc");
 
   size_t nObs = 5;
@@ -117,10 +117,9 @@ CASE("test creating test file ") {
     EXPECT(testDataPath.exists());
   }
 
-  netCDF::NcFile ncFile(testDataPath.fullName().asString(),
-      netCDF::NcFile::read);
-
   SECTION("JULD_REFERENCE variable is correct") {
+    netCDF::NcFile ncFile(testDataPath.fullName().asString(),
+        netCDF::NcFile::read);
     netCDF::NcVar ncVar = ncFile.getVar("JULD_REFERENCE");
     char data[15] = { ' ' };
     ncVar.getVar({0}, {14}, data);
@@ -130,6 +129,8 @@ CASE("test creating test file ") {
   }
 
   SECTION("ENTRIES variable is correct") {
+    netCDF::NcFile ncFile(testDataPath.fullName().asString(),
+        netCDF::NcFile::read);
     netCDF::NcVar entriesVar = ncFile.getVar("ENTRIES");
     char data[9] = { ' ' };
     entriesVar.getVar({0, 0}, {1, 8}, data);
@@ -144,6 +145,8 @@ CASE("test creating test file ") {
   }
 
   SECTION("VARIABLES variable is correct") {
+    netCDF::NcFile ncFile(testDataPath.fullName().asString(),
+        netCDF::NcFile::read);
     netCDF::NcVar ncVar = ncFile.getVar("VARIABLES");
     char data[9] = { ' ' };
     ncVar.getVar({0, 0}, {1, 8}, data);
@@ -153,6 +156,8 @@ CASE("test creating test file ") {
   }
 
   SECTION("STATION_TYPE variable is correct") {
+    netCDF::NcFile ncFile(testDataPath.fullName().asString(),
+        netCDF::NcFile::read);
     netCDF::NcVar ncVar = ncFile.getVar("STATION_TYPE");
     char data[5] = { ' ' };
     data[4] = '\0';
@@ -171,6 +176,8 @@ CASE("test creating test file ") {
   }
 
   SECTION("STATION_IDENTIFIER variable is correct") {
+    netCDF::NcFile ncFile(testDataPath.fullName().asString(),
+        netCDF::NcFile::read);
     netCDF::NcVar ncVar = ncFile.getVar("STATION_IDENTIFIER");
     char data[9] = { ' ' };
     data[8] = '\0';
