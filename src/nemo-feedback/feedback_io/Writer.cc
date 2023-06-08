@@ -491,6 +491,17 @@ void Writer<C>::write_whole_report_variables() {
 }
 
 template <class C>
+void Writer<C>::write_variable(
+    const std::string & variable_name,
+    const Data<C>& data) {
+  if (metaData_.nLevels == 1) {
+    write_variable_surf(variable_name, data);
+  } else {
+    write_variable_profile(variable_name, data);
+  }
+}
+
+template <class C>
 void Writer<C>::write_variable_surf(
     const std::string & variable_name,
     const Data<C>& data) {

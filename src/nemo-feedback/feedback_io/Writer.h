@@ -84,6 +84,11 @@ class Writer {
       const NameData & name_data,
       const std::vector<bool> & isExtraVariable);
 
+  /// \brief Write variable data
+  void write_variable(
+      const std::string & variable_name,
+      const Data<ncVarType>& data);
+
   /// \brief Write surface variable data
   void write_variable_surf(
       const std::string & variable_name,
