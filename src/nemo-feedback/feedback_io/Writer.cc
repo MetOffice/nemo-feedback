@@ -494,7 +494,7 @@ template <class C>
 void Writer<C>::write_variable(
     const std::string & variable_name,
     const Data<C>& data) {
-  if (metaData_.nLevels == 1) {
+  if (metaData_.nLevels <= 1) {
     write_variable_surf(variable_name, data);
   } else {
     write_variable_profile(variable_name, data);
@@ -546,7 +546,8 @@ void Writer<C>::write_variable_profile(
     const Data<C>& data) {
   oops::Log::trace() << Writer::className()
                      << "::write_variable_profile: writing "
-                     << variable_name << std::endl;
+                     << variable_name
+                     << " nLevels: " << metaData_.nLevels << std::endl;
   auto var = ncFile->getVar(variable_name);
   if (var.isNull()) {
       std::ostringstream err_stream;

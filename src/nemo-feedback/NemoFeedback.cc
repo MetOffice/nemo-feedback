@@ -180,13 +180,13 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
 
     auto extra_var = nemoVariableParams.extravar.value().value_or(false);
     if (extra_var) {
-      writer.write_variable_profile(nemo_name, variableData);
+      writer.write_variable(nemo_name, variableData);
       // If this is an extra variable we do not want to write any of the
       // other variables with _OBS, _QC etc. added on to the name.
       continue;
     }
 
-    writer.write_variable_profile(nemo_name + "_OBS", variableData);
+    writer.write_variable(nemo_name + "_OBS", variableData);
 
     // Write Met Office QC flag data for this variable if they exist.
     feedback_io::Data<int32_t> variableQCFlagsData;
@@ -271,7 +271,7 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
       std::string ioda_group = addParams.iodaGroup.value();
       feedback_io::Data<T> variableAdditionalData(creator.create(ioda_group,
             ufo_name, T(0)));
-      writer.write_variable_profile(add_name, variableAdditionalData);
+      writer.write_variable(add_name, variableAdditionalData);
     }
   }
 }
