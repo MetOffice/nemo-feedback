@@ -73,9 +73,9 @@ feedback_io::Data<T> NemoFeedbackDataCreator::create_from_obsdb(
       [missingValue](T& d){ if (d == missingValue) {
                                 d = feedback_io::typeToFill::value<T>();} });
 
-  ASSERT_MSG(indexer_->n_locations() == obsdb_.nlocs(),
+  ASSERT_MSG(indexer_->n_locations() <= obsdb_.nlocs(),
       NemoFeedbackDataCreator::className()
-      + ":create_from_obsdb indexer.n_locations() != obsdb_.nlocs()");
+      + ":create_from_obsdb indexer.n_locations() > obsdb_.nlocs()");
   return feedback_io::Data<T>(indexer_, std::move(data));
 }
 
@@ -242,9 +242,9 @@ std::tuple<std::string, feedback_io::Data<double>>
   std::vector<double> data;
   data.reserve(obsdb_.nlocs());
 
-  ASSERT_MSG(indexer_->n_locations() == obsdb_.nlocs(),
+  ASSERT_MSG(indexer_->n_locations() <= obsdb_.nlocs(),
       NemoFeedbackDataCreator::className()
-      + ":create_from_obsdb indexer.n_locations() != obsdb_.nlocs()");
+      + ":create_from_obsdb indexer.n_locations() > obsdb_.nlocs()");
 
   for (size_t iLoc = 0; iLoc < datetimes.size(); ++iLoc) {
     util::Duration duration = static_cast<util::DateTime>(datetimes[iLoc])
