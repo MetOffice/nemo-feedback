@@ -29,8 +29,8 @@ void Data<T>::validate() const {
   ASSERT_MSG(indexer_->n_locations() <= data_->size(), message.str());
   message.str(std::string());
   message << Data::className() << ": indexer created for a different vector: "
-          << indexer_->n_source_data() << " != " << data_->size();
-  ASSERT_MSG(indexer_->n_source_data() == data_->size(), message.str());
+          << indexer_->n_source_data() << " < " << data_->size();
+  ASSERT_MSG(indexer_->n_source_data() >= data_->size(), message.str());
   message.str(std::string());
 }
 
