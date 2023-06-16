@@ -67,7 +67,7 @@ feedback_io::Data<T> NemoFeedbackDataCreator::create_from_obsdb(
   if (data.size() != obsdb_.nlocs())
     throw eckit::BadValue(NemoFeedbackDataCreator::className()
         + ":create_from_obsdb no data ");
-  T missingValue = util::missingValue(T(0));
+  const T missingValue = util::missingValue<T>();
   // Convert oops missing values to NEMO missing value
   for_each(data.begin(), data.end(),
       [missingValue](T& d){ if (d == missingValue) {
@@ -92,7 +92,7 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(const
 
   std::vector<std::string> sourceData(obsdb_.nlocs());
   obsdb_.get_db(obsGroup, ufoName, sourceData);
-  const std::string missingValue = util::missingValue(std::string());
+  const std::string missingValue = util::missingValue<std::string()>();
   const std::string missingValueOut =
     feedback_io::typeToFill::value<std::string>();
   ASSERT_MSG(missingValueOut.size() == width,
@@ -119,7 +119,7 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
                      << std::endl;
   std::vector<int32_t> sourceData(obsdb_.nlocs(), 0);
   obsdb_.get_db(obsGroup, ufoName, sourceData);
-  const int32_t missingValue = util::missingValue(int32_t(0));
+  const int32_t missingValue = util::missingValue<int32_t>();
   const std::string missingValueOut =
     feedback_io::typeToFill::value<std::string>();
   ASSERT_MSG(missingValueOut.size() >= width,
@@ -179,9 +179,7 @@ feedback_io::Data<T> NemoFeedbackDataCreator::create_from_hofx(
                      << var_it_dist << " hofxObsVector_.nvars: "
                      << hofxObsVector_.nvars() << std::endl;
   // Convert oops missing values to NEMO missing value
-  double missingValue = util::missingValue(static_cast<double>(0));
-  if (hofxObsVector_.nlocs() > 0)
-      missingValue = util::missingValue(hofxObsVector_[var_it_dist]);
+  const double missingValue = util::missingValue<double>();
   auto hofxIndexer = [&](size_t iOb) -> int {
       return iOb * hofxObsVector_.nvars() + var_it_dist;
   };
