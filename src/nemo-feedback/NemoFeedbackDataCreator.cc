@@ -92,7 +92,7 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(const
 
   std::vector<std::string> sourceData(obsdb_.nlocs());
   obsdb_.get_db(obsGroup, ufoName, sourceData);
-  const std::string missingValue = util::missingValue<std::string()>();
+  const std::string missingValue = util::missingValue<std::string>();
   const std::string missingValueOut =
     feedback_io::typeToFill::value<std::string>();
   ASSERT_MSG(missingValueOut.size() == width,
@@ -231,7 +231,7 @@ std::tuple<std::string, feedback_io::Data<double>>
   if (obsdb_.nlocs() == 0) {
     return std::make_tuple<std::string, feedback_io::Data<double>>(
         std::move(juldReference),
-        std::move(feedback_io::Data<double>()));
+        feedback_io::Data<double>());
   }
 
   std::vector<util::DateTime> datetimes;
