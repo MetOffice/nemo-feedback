@@ -16,7 +16,7 @@ jobs:
           lfs: true
 
       - name: checkout jedicmake
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ci/jedicmake
           repository: JCSDA-internal/jedi-cmake
@@ -24,21 +24,21 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: checkout oops
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ci/oops
           repository: JCSDA-internal/oops
           token: ${{ secrets.GH_PAT }}
 
       - name: checkout ioda
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ci/ioda
           repository: JCSDA-internal/ioda
           token: ${{ secrets.GH_PAT }}
 
       - name: checkout ufo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ci/ufo
           repository: JCSDA-internal/ufo
