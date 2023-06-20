@@ -8,6 +8,9 @@ cmake_minimum_required( VERSION 3.12 FATAL_ERROR )
 # Initialise project nemo-feedback
 
 project( nemo-feedback VERSION 0.4.0 LANGUAGES CXX Fortran )
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 find_package( ecbuild QUIET )
 include( ecbuild_system NO_POLICY_SCOPE )
 ecbuild_declare_project()
