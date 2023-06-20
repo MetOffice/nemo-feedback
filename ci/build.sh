@@ -20,22 +20,14 @@ trap finally EXIT
 
 cd "${WORKD}"
 
-# latest JCSDA images use spack to install the environment
 source /etc/profile.d/z10_spack_environment.sh
-
-if [ -z ${LD_LIBRARY_PATH:-} ]; then
-  export LD_LIBRARY_PATH="${WORKD}/lib"
-else
-  export LD_LIBRARY_PATH="${WORKD}/lib:${LD_LIBRARY_PATH}"
-fi
-#export PLUGINS_MANIFEST_PATH="${WORKD}/share/plugins"
 
 rm -f "${HERE}/nemo-feedback"
 ln -s '..' "${HERE}/nemo-feedback"
-ecbuild -S "${HERE}" -DCMAKE_BUILD_TYPE=Debug -DMPI_ARGS="--oversubscribe"
+ecbuild -S "${HERE}"
 make -j "${NPROC}"
 
 env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
-   ctest -j "${NPROC}" -V --output-on-failure --test-dir "./nemo-feedback"
+    ctest -j "${NPROC}" -V --output-on-failure --test-dir "./nemo-feedback"
 
 exit
