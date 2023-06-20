@@ -187,9 +187,9 @@ feedback_io::Data<T> NemoFeedbackDataCreator::create_from_hofx(
   };
   std::vector<T> data;
   data.reserve(indexer_->n_locations());
-  ASSERT_MSG(indexer_->n_locations() == hofxObsVector_.nlocs(),
+  ASSERT_MSG(indexer_->n_locations() <= hofxObsVector_.nlocs(),
       NemoFeedbackDataCreator::className()
-      + ":create_from_hofx indexer.n_locations() != hofxObsVector_.nlocs()");
+      + ":create_from_hofx indexer.n_locations() > hofxObsVector_.nlocs()");
   for (size_t iOb = 0; iOb < hofxObsVector_.nlocs(); ++iOb) {
     if (hofxObsVector_[hofxIndexer(iOb)] == missingValue) {
       data.push_back(feedback_io::typeToFill::value<T>());
