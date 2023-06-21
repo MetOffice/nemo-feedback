@@ -218,7 +218,7 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
 
     // Whole Observation report QC flags
     feedback_io::Data<int32_t> variableQCData(variableData.indexer(),
-        std::vector<int32_t>(variableData.n_locations(), 1));
+        std::vector<int32_t>(variableData.n_source_data(), 1));
     {
       for (size_t iProf = 0; iProf < variableData.n_obs(); ++iProf) {
         size_t badObs = 0;
@@ -233,7 +233,7 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
             ++badObs;
           }
         }
-        variableQCData[iProf] = (badObs == variableData.length(iProf) ? 4 : 1);
+        variableQCData(iProf, 0) = (badObs == variableData.length(iProf) ? 4 : 1);
       }
       writer.write_variable_surf_qc("OBSERVATION_QC", variableQCData);
     }
