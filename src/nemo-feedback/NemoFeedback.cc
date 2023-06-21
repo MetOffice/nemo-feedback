@@ -336,7 +336,7 @@ std::tuple<feedback_io::Data<std::string>, feedback_io::Data<std::string>>
     stationIdentificationAvailable = true;
   }
 
-  int32_t buoyIDMissingValueInt = util::missingValue(buoyIDMissingValueInt);
+  const int32_t buoyIDMissingValueInt = util::missingValue<int32_t>();
   constexpr size_t buoyIDWidth = 8;
   const std::string missingStringFeedback =
     feedback_io::typeToFill::value<std::string>();
@@ -412,7 +412,7 @@ void NemoFeedback::updateAltimeterSelection(std::vector<bool>& to_write) const {
 
   // Loop through the unique values of ymd and satellite_ids.
   int latest_version;
-  auto version_missing_value = util::missingValue(version[0]);
+  const auto version_missing_value = util::missingValue<int>();
   for (int ymd_to_find : ymd_set) {
     for (int sid_to_find : sid_set) {
       latest_version = 0;
