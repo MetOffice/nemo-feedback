@@ -112,7 +112,6 @@ class Data {
   /// \brief maximum number of levels across data
   size_t n_levels() const { return indexer_->n_levels(); }
   size_t n_locations() const { return indexer_->n_locations(); }
-  size_t n_source_data() const { return indexer_->n_source_data(); }
   const std::shared_ptr<DataIndexer> indexer() const { return indexer_; }
 
  private:
