@@ -186,7 +186,7 @@ feedback_io::Data<T> NemoFeedbackDataCreator::create_from_hofx(
       return iOb * hofxObsVector_.nvars() + var_it_dist;
   };
   std::vector<T> data;
-  data.reserve(indexer_->n_locations());
+  data.reserve(hofxObsVector_.nlocs());
   ASSERT_MSG(indexer_->n_locations() <= hofxObsVector_.nlocs(),
       NemoFeedbackDataCreator::className()
       + ":create_from_hofx indexer.n_locations() > hofxObsVector_.nlocs()");
