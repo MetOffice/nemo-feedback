@@ -142,23 +142,28 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
     updateAltimeterSelection(to_write);
   }
 
-  NemoFeedbackDataCreator creator(obsdb_, ov, to_write);
+  auto n_to_write = std::count(to_write.begin(), to_write.end(), true);
+  oops::Log::trace() << "NemoFeedback postFilter : number of observations to write = " <<
+                        n_to_write << std::endl;
+  if (n_to_write > 0) {
+    NemoFeedbackDataCreator creator(obsdb_, ov, to_write);
 
-  feedback_io::MetaData metaData(setupMetaData(creator));
+    feedback_io::MetaData metaData(setupMetaData(creator));
 
-  OutputDtype dtype = parameters_.type.value().value_or(OutputDtype::Double);
-  if (dtype == OutputDtype::Float) {
-    feedback_io::Writer<float> writer(testDataPath,
-                                      metaData,
-                                      nameData_,
-                                      isExtraVariable_);
-    write_all_data<float> (writer, creator);
-  } else {
-    feedback_io::Writer<double> writer(testDataPath,
-                                       metaData,
-                                       nameData_,
-                                       isExtraVariable_);
-    write_all_data<double> (writer, creator);
+    OutputDtype dtype = parameters_.type.value().value_or(OutputDtype::Double);
+    if (dtype == OutputDtype::Float) {
+      feedback_io::Writer<float> writer(testDataPath,
+                                        metaData,
+                                        nameData_,
+                                        isExtraVariable_);
+      write_all_data<float> (writer, creator);
+    } else {
+      feedback_io::Writer<double> writer(testDataPath,
+                                         metaData,
+                                         nameData_,
+                                         isExtraVariable_);
+      write_all_data<double> (writer, creator);
+    }
   }
   oops::Log::trace() << "NemoFeedback postFilter done" << std::endl;
 }
@@ -213,7 +218,7 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
 
     // Whole Observation report QC flags
     feedback_io::Data<int32_t> variableQCData(variableData.indexer(),
-        std::vector<int32_t>(variableData.n_locations(), 1));
+        std::vector<int32_t>(variableData.indexer()->n_source_data(), 1));
     {
       for (size_t iProf = 0; iProf < variableData.n_obs(); ++iProf) {
         size_t badObs = 0;
