@@ -69,10 +69,9 @@ NemoFeedback::NemoFeedback(
     if (std::find(varnames.begin(), varnames.end(), varname) == varnames.end())
       varnames.push_back(varname);
   }
-  const oops::Variables obsVarnames(varnames, channels);
-  geovars_ = nameMap_.convertName(obsVarnames);
 
   // Generate lists of the variable names to setup the file
+  std::vector<std::string> obsGeoNames;
   bool isProfile = false;
   isAltimeter_ = false;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
@@ -84,12 +83,15 @@ NemoFeedback::NemoFeedback(
         nemoVariableParams.nemoName.value() == "PSAL") {
       isProfile = true;
     }
-    nameData_.variable_names.push_back(nemoVariableParams.nemoName.value());
-    nameData_.legacy_ops_qc_conventions.push_back(obsdb_.has("QCFlags",
+    if (nemoVariableParams.iodaGroup.value() == "HofX") {
+      obsGeoNames.emplace_back(nemoVariableParams.name.value());
+    }
+    nameData_.variable_names.emplace_back(nemoVariableParams.nemoName.value());
+    nameData_.legacy_ops_qc_conventions.emplace_back(obsdb_.has("QCFlags",
           nemoVariableParams.name.value()));
-    nameData_.long_names.push_back(nemoVariableParams.longName.value());
-    nameData_.unit_names.push_back(nemoVariableParams.units.value());
-    isExtraVariable_.push_back(nemoVariableParams.extravar.value()
+    nameData_.long_names.emplace_back(nemoVariableParams.longName.value());
+    nameData_.unit_names.emplace_back(nemoVariableParams.units.value());
+    isExtraVariable_.emplace_back(nemoVariableParams.extravar.value()
         .value_or(false));
     auto additionalVariablesParams = nemoVariableParams.variables.value();
     for (const NemoFeedbackAddVariableParameters& addVariableParams :
@@ -98,10 +100,13 @@ NemoFeedback::NemoFeedback(
       if (std::find(nameData_.additional_names.begin(),
                     nameData_.additional_names.end(), add_suffix)
           == nameData_.additional_names.end()) {
-        nameData_.additional_names.push_back(add_suffix);
+        nameData_.additional_names.emplace_back(add_suffix);
       }
     }
   }
+
+  const oops::Variables obsGeoVars(obsGeoNames, channels);
+  geovars_ = nameMap_.convertName(obsGeoVars);
 
   if (isProfile && isAltimeter_)
     throw eckit::BadValue(std::string("NemoFeedback::postFilter cannot write")
@@ -143,8 +148,8 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
   }
 
   auto n_to_write = std::count(to_write.begin(), to_write.end(), true);
-  oops::Log::trace() << "NemoFeedback postFilter : number of observations to write = " <<
-                        n_to_write << std::endl;
+  oops::Log::trace() << "NemoFeedback postFilter : number of observations "
+                     << "to write = " << n_to_write << std::endl;
   if (n_to_write > 0) {
     NemoFeedbackDataCreator creator(obsdb_, ov, to_write);
 
