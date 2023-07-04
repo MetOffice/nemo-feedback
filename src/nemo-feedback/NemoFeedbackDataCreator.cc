@@ -62,11 +62,11 @@ feedback_io::Data<T> NemoFeedbackDataCreator::create_from_obsdb(
   oops::Log::trace() << NemoFeedbackDataCreator::className()
                      << ":create_from_obsdb " << obsGroup
                      << "/" << ufoName << std::endl;
-  std::vector<T> data;
+  std::vector<T> data(obsdb_.nlocs());
   obsdb_.get_db(obsGroup, ufoName, data);
   if (data.size() != obsdb_.nlocs())
     throw eckit::BadValue(NemoFeedbackDataCreator::className()
-        + ":create_from_obsdb no data ");
+        + ":create_from_obsdb no data ", Here());
   const T missingValue = util::missingValue<T>();
   // Convert oops missing values to NEMO missing value
   for_each(data.begin(), data.end(),
@@ -152,14 +152,14 @@ feedback_io::Data<int32_t> NemoFeedbackDataCreator::create_from_obsdb(const
                      << ":create_from_obsdb ufo::DiagnosticFlag "
                      << obsGroup << "/" << ufoName << std::endl;
   std::vector<int32_t> data;
-  std::vector<ufo::DiagnosticFlag> flagData;
+  std::vector<ufo::DiagnosticFlag> flagData(obsdb_.nlocs(), 0);
   obsdb_.get_db(obsGroup, ufoName, flagData);
   for (ufo::DiagnosticFlag flag : flagData) {
-    data.push_back(flag ? whenTrue : whenFalse);
+    data.emplace_back(flag ? whenTrue : whenFalse);
   }
   if (data.size() != obsdb_.nlocs())
     throw eckit::BadValue(NemoFeedbackDataCreator::className()
-        + ":create_from_obsdb ufo::DiagnosticFlag no data.");
+        + ":create_from_obsdb ufo::DiagnosticFlag no data.", Here());
 
   return feedback_io::Data<int32_t>(indexer_, std::move(data));
 }
@@ -234,7 +234,7 @@ std::tuple<std::string, feedback_io::Data<double>>
         feedback_io::Data<double>());
   }
 
-  std::vector<util::DateTime> datetimes;
+  std::vector<util::DateTime> datetimes(obsdb_.nlocs());
   obsdb_.get_db(obsGroup, ufoName, datetimes);
 
   std::vector<double> data;

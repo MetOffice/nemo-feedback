@@ -189,6 +189,8 @@ template <typename T>
 void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
                                   const NemoFeedbackDataCreator& creator) const
 {
+  feedback_io::Data<int32_t> wholeReportQCData(creator.indexer(),
+      std::vector<int32_t>(creator.indexer()->n_source_data(), 0));
   std::vector<ufo::DiagnosticFlag> do_not_assimilate;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
@@ -210,7 +212,7 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
 
     writer.write_variable(nemo_name + "_OBS", variableData);
 
-    // Write Met Office QC flag data for this variable if they exist.
+    // Pull out QC flags from UFO
     feedback_io::Data<int32_t> variableQCFlagsData;
     bool hasMetOfficeQC = false;
     if (obsdb_.has("QCFlags", ufo_name)) {
@@ -233,35 +235,12 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
           nemo_name + "_LEVEL_QC_FLAGS", variableQCFlagsData, 0);
     }
 
-    // Whole Observation report QC flags
-    feedback_io::Data<int32_t> variableQCData(variableData.indexer(),
-        std::vector<int32_t>(variableData.indexer()->n_source_data(), 1));
-    {
-      for (size_t iProf = 0; iProf < variableData.n_obs(); ++iProf) {
-        size_t badObs = 0;
-        for (size_t iLevel = 0; iLevel < variableData.length(iProf); ++iLevel) {
-          if (hasMetOfficeQC &&
-              (variableQCFlagsData(iProf, iLevel)
-               & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport)) {
-            ++badObs;
-          }
-          if (!hasMetOfficeQC &&
-              variableQCFlagsData(iProf, iLevel)) {
-            ++badObs;
-          }
-        }
-        variableQCData[iProf] = (badObs == variableData.length(iProf) ? 4 : 1);
-      }
-      writer.write_variable_surf_qc("OBSERVATION_QC", variableQCData);
-    }
-
-    // Overall quality control flags
-    feedback_io::Data<int32_t> variableFinalQCData;
-
+    // Quality control rank variables
     if (obsdb_.has("DiagnosticFlags/FinalReject", ufo_name)) {
-      std::vector<ufo::DiagnosticFlag> final_qc;
-      variableFinalQCData = creator.create("DiagnosticFlags/FinalReject",
-          ufo_name, ufo::DiagnosticFlag(0), 4, 1);
+
+      feedback_io::Data<int32_t> variableFinalQCData =
+        creator.create("DiagnosticFlags/FinalReject", ufo_name,
+                       ufo::DiagnosticFlag(0), 4, 1);
 
       // Add do not assimilate flag if required.
       if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
@@ -279,10 +258,38 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
         }
       }
 
+      // Per-profile quality rank
+      feedback_io::Data<int32_t> wholeVariableQCData(creator.indexer(),
+          std::vector<int32_t>(creator.indexer()->n_source_data(), 0));
+      for (size_t iProfile = 0;
+          iProfile < variableFinalQCData.n_obs(); ++iProfile) {
+        size_t nBadObs = 0;
+        for (size_t iLevel = 0;
+            iLevel < variableFinalQCData.length(iProfile);
+            ++iLevel) {
+          if (variableFinalQCData(iProfile, iLevel) == 4) {
+            ++nBadObs;
+          }
+        }
+        wholeVariableQCData[iProfile] =
+          (nBadObs == variableFinalQCData.length(iProfile) ? 4 : 1);
+      }
+
       writer.write_variable_surf_qc(nemo_name + "_QC",
-          variableFinalQCData);
+        wholeVariableQCData);
       writer.write_variable_level_qc(nemo_name + "_LEVEL_QC",
           variableFinalQCData);
+
+      // Whole Observation report QC
+      {
+        for (size_t iProfile = 0; iProfile < variableData.n_obs(); ++iProfile) {
+          if (wholeReportQCData[iProfile] == 0 ||
+              wholeReportQCData[iProfile] == 4) {
+            wholeReportQCData[iProfile] =
+              (4 == wholeVariableQCData[iProfile] ? 4 : 1);
+          }
+        }
+      }
     }
 
     // Write additional variables for this variable
@@ -295,7 +302,8 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
             ufo_name, T(0)));
       writer.write_variable(add_name, variableAdditionalData);
     }
-  }
+  }  // loop: variables
+  writer.write_variable_surf_qc("OBSERVATION_QC", wholeReportQCData);
 }
 
 feedback_io::MetaData NemoFeedback::setupMetaData(
