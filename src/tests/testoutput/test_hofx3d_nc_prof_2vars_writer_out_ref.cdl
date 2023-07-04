@@ -10,12 +10,14 @@ dimensions:
 	N_LEVELS = 6 ;
 	N_VARS = 2 ;
 	N_ENTRIES = 1 ;
+	N_EXTRA = 1 ;
 variables:
 	char JULD_REFERENCE(STRINGJULD) ;
 		JULD_REFERENCE:long_name = "Date of reference for julian days" ;
 		JULD_REFERENCE:Conventions = "YYYYMMDDHHMMSS" ;
 	char VARIABLES(N_VARS, STRINGNAM) ;
 		VARIABLES:long_name = "List of variables in feedback files" ;
+	char EXTRA(N_EXTRA, STRINGNAM) ;
 	char ENTRIES(N_ENTRIES, STRINGNAM) ;
 		ENTRIES:long_name = "List of additional entries for each variable in feedback files" ;
 	double LATITUDE(N_OBS) ;
@@ -122,6 +124,9 @@ variables:
 		PSAL_IOBSK:long_name = "ORCA grid search K coordinate" ;
 	char PSAL_GRID(STRINGGRID) ;
 		PSAL_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+	double TEMP(N_OBS, N_LEVELS) ;
+		TEMP:long_name = "Insitu temperature" ;
+		TEMP:units = "Degrees Celsius" ;
 
 // global attributes:
 		:title = "NEMO observation operator output" ;
@@ -133,6 +138,9 @@ data:
  VARIABLES =
   "POTM    ",
   "PSAL    " ;
+
+ EXTRA =
+  "TEMP    " ;
 
  ENTRIES =
   "Hx      " ;
@@ -276,4 +284,8 @@ data:
   _, _, _, _, _, _ ;
 
  PSAL_GRID = "T" ;
+
+ TEMP =
+  12, 12, 12, 12, 12, 12,
+  12, 12, 12, 12, 12, 12 ;
 }
