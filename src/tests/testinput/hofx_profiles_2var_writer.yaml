@@ -17,6 +17,8 @@ observations:
           type: H5File
           obsfile: testoutput/test_hofx3d_profiles_2var_writer_jopa_out.nc
       simulated variables: [waterPotentialTemperature, salinity]
+      observed variables: [waterPotentialTemperature, salinity]
+      derived variables: [waterTemperature]
     obs operator:
       name: VertInterp
       variables:
@@ -27,6 +29,11 @@ observations:
       observation vertical coordinate group: ObsValue
       interpolation method: linear
     obs filters:
+    - filter: Variable Assignment
+      assignments:
+      - name: DerivedObsValue/waterTemperature
+        type: float
+        value: 12.0
     - filter: NEMO Feedback Writer
       filename: testoutput/test_hofx3d_nc_prof_2vars_writer_out.nc
       reference date: 1950-01-01T00:00:00Z
@@ -48,6 +55,13 @@ observations:
         - name: salinity
           feedback suffix: Hx
           ioda group: HofX
+      - long name: Insitu temperature
+        name: waterTemperature
+        ioda group: DerivedObsValue
+        nemo name: TEMP
+        units: Degrees Celsius
+        extra variable: true
+
     benchmarkFlag: 1000 # just to keep the ObsFilters test happy
     flaggedBenchmark: 0
     HofX: hofx

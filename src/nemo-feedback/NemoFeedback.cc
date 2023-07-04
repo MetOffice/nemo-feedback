@@ -62,16 +62,36 @@ NemoFeedback::NemoFeedback(
   oops::Log::trace() << "NemoFeedback constructor starting" << std::endl;
 
   const std::vector<int> channels{};
-  std::vector<std::string> varnames;
+  std::vector<std::string> obsGeoNames;
+
+  // helper function to determine if a name is a new entry in the vector
+  auto new_name = [](const std::vector<std::string> names,
+                     const std::string name) -> bool {
+    return std::find(names.begin(), names.end(), name) == names.end();
+  };
+  // Generate lists of the HofX variable name data for the filter
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
     const std::string varname = nemoVariableParams.name.value();
-    if (std::find(varnames.begin(), varnames.end(), varname) == varnames.end())
-      varnames.push_back(varname);
+    if ((nemoVariableParams.iodaObsGroup.value().value_or("") == "HofX") &&
+        new_name(obsGeoNames, varname)) {
+      obsGeoNames.emplace_back(varname);
+    }
+    const auto additionalVariablesParams = nemoVariableParams.variables.value();
+    for (const NemoFeedbackAddVariableParameters& addVariableParams :
+         additionalVariablesParams) {
+      const std::string addName = addVariableParams.name.value();
+      if ((addVariableParams.iodaGroup.value() == "HofX") &&
+          new_name(obsGeoNames, addName)) {
+        obsGeoNames.emplace_back(addName);
+      }
+    }
   }
 
-  // Generate lists of the variable names to setup the file
-  std::vector<std::string> obsGeoNames;
+  const oops::Variables obsGeoVars(obsGeoNames, channels);
+  geovars_ = nameMap_.convertName(obsGeoVars);
+
+  // Generate lists of the variable name meta data to setup the file
   bool isProfile = false;
   isAltimeter_ = false;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
@@ -82,9 +102,6 @@ NemoFeedback::NemoFeedback(
     if (nemoVariableParams.nemoName.value() == "POTM" ||
         nemoVariableParams.nemoName.value() == "PSAL") {
       isProfile = true;
-    }
-    if (nemoVariableParams.iodaGroup.value() == "HofX") {
-      obsGeoNames.emplace_back(nemoVariableParams.name.value());
     }
     nameData_.variable_names.emplace_back(nemoVariableParams.nemoName.value());
     nameData_.legacy_ops_qc_conventions.emplace_back(obsdb_.has("QCFlags",
@@ -97,16 +114,11 @@ NemoFeedback::NemoFeedback(
     for (const NemoFeedbackAddVariableParameters& addVariableParams :
         additionalVariablesParams) {
       auto add_suffix = addVariableParams.feedbackSuffix.value();
-      if (std::find(nameData_.additional_names.begin(),
-                    nameData_.additional_names.end(), add_suffix)
-          == nameData_.additional_names.end()) {
+      if (new_name(nameData_.additional_names, add_suffix)) {
         nameData_.additional_names.emplace_back(add_suffix);
       }
     }
   }
-
-  const oops::Variables obsGeoVars(obsGeoNames, channels);
-  geovars_ = nameMap_.convertName(obsGeoVars);
 
   if (isProfile && isAltimeter_)
     throw eckit::BadValue(std::string("NemoFeedback::postFilter cannot write")
