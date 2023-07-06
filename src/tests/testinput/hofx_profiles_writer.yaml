@@ -39,6 +39,11 @@ observations:
         - name: waterPotentialTemperature
           feedback suffix: Hx
           ioda group: HofX
+      where:
+      - is_true: null
+        variable:
+          name: DiagnosticFlags/ObsToWrite/waterPotentialTemperature
+
     benchmarkFlag: 1000 # just to keep the ObsFilters test happy
     flaggedBenchmark: 0
     HofX: hofx

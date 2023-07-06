@@ -6,7 +6,8 @@
 
 #include "nemo-feedback/NemoFeedback.h"
 
-#include <string.h>
+#include <string>
+#include <string_view>
 
 #include <algorithm>
 #include <utility>
@@ -37,10 +38,42 @@
 #include "ufo/filters/DiagnosticFlag.h"
 #include "ufo/filters/processWhere.h"
 #include "ufo/filters/ObsAccessor.h"
-#include "ufo/utils/metoffice/MetOfficeQCFlags.h"
 
 
 namespace nemo_feedback {
+
+/// helpers
+constexpr std::string_view defaultDepthGroup{"MetaData"};
+constexpr std::string_view defaultDepthVariable{"depthBelowWaterSurface"};
+
+/// \brief create whole report variables from a diagnostic flag
+void wholeReportQCFromDiagnosticFlags(const
+    NemoFeedbackDataCreator& creator, const std::string& group, const
+    std::string& name, feedback_io::Data<int32_t>& wholeReportQCData) {
+  if (wholeReportQCData.n_obs() == 0) {
+    wholeReportQCData = feedback_io::Data<int32_t>(creator.indexer(),
+        std::vector<int32_t>(creator.indexer()->n_source_data(), 0));
+  }
+  feedback_io::Data<int32_t> QCData =
+    creator.create(group, name,
+                   ufo::DiagnosticFlag(0), 4, 1);
+  for (size_t iProfile = 0;
+      iProfile < QCData.n_obs(); ++iProfile) {
+    size_t nBadObs = 0;
+    for (size_t iLevel = 0;
+        iLevel < QCData.length(iProfile);
+        ++iLevel) {
+      if (QCData(iProfile, iLevel) == 4) {
+        ++nBadObs;
+      }
+    }
+    if (wholeReportQCData[iProfile] == 0 ||
+        wholeReportQCData[iProfile] == 4) {
+      wholeReportQCData[iProfile] =
+        (nBadObs == QCData.length(iProfile) ? 4 : 1);
+    }
+  }
+}
 
 
 NemoFeedback::NemoFeedback(
@@ -189,6 +222,10 @@ template <typename T>
 void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
                                   const NemoFeedbackDataCreator& creator) const
 {
+  feedback_io::Data<int32_t> wholeReportQCData(creator.indexer(),
+      std::vector<int32_t>(creator.indexer()->n_source_data(), 0));
+  feedback_io::Data<int32_t> wholeReportPositionQCData;
+  feedback_io::Data<int32_t> wholeReportTimeQCData;
   std::vector<ufo::DiagnosticFlag> do_not_assimilate;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
@@ -210,12 +247,10 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
 
     writer.write_variable(nemo_name + "_OBS", variableData);
 
-    // Write Met Office QC flag data for this variable if they exist.
+    // Pull out QC flags from UFO
     feedback_io::Data<int32_t> variableQCFlagsData;
-    bool hasMetOfficeQC = false;
     if (obsdb_.has("QCFlags", ufo_name)) {
       variableQCFlagsData = creator.create("QCFlags", ufo_name, int32_t(0));
-      hasMetOfficeQC = true;
     } else {
       const size_t iv = flags_->varnames().find(ufo_name);
       std::vector<int32_t> variable_qcFlags;
@@ -233,35 +268,12 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
           nemo_name + "_LEVEL_QC_FLAGS", variableQCFlagsData, 0);
     }
 
-    // Whole Observation report QC flags
-    feedback_io::Data<int32_t> variableQCData(variableData.indexer(),
-        std::vector<int32_t>(variableData.indexer()->n_source_data(), 1));
-    {
-      for (size_t iProf = 0; iProf < variableData.n_obs(); ++iProf) {
-        size_t badObs = 0;
-        for (size_t iLevel = 0; iLevel < variableData.length(iProf); ++iLevel) {
-          if (hasMetOfficeQC &&
-              (variableQCFlagsData(iProf, iLevel)
-               & ufo::MetOfficeQCFlags::WholeObReport::FinalRejectReport)) {
-            ++badObs;
-          }
-          if (!hasMetOfficeQC &&
-              variableQCFlagsData(iProf, iLevel)) {
-            ++badObs;
-          }
-        }
-        variableQCData[iProf] = (badObs == variableData.length(iProf) ? 4 : 1);
-      }
-      writer.write_variable_surf_qc("OBSERVATION_QC", variableQCData);
-    }
-
-    // Overall quality control flags
-    feedback_io::Data<int32_t> variableFinalQCData;
-
+    // Quality control rank variables
     if (obsdb_.has("DiagnosticFlags/FinalReject", ufo_name)) {
-      std::vector<ufo::DiagnosticFlag> final_qc;
-      variableFinalQCData = creator.create("DiagnosticFlags/FinalReject",
-          ufo_name, ufo::DiagnosticFlag(0), 4, 1);
+
+      feedback_io::Data<int32_t> variableFinalQCData =
+        creator.create("DiagnosticFlags/FinalReject", ufo_name,
+                       ufo::DiagnosticFlag(0), 4, 1);
 
       // Add do not assimilate flag if required.
       if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
@@ -279,10 +291,50 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
         }
       }
 
+      // Per-profile quality rank
+      feedback_io::Data<int32_t> wholeVariableQCData(creator.indexer(),
+          std::vector<int32_t>(creator.indexer()->n_source_data(), 0));
+      for (size_t iProfile = 0;
+          iProfile < variableFinalQCData.n_obs(); ++iProfile) {
+        size_t nBadObs = 0;
+        for (size_t iLevel = 0;
+            iLevel < variableFinalQCData.length(iProfile);
+            ++iLevel) {
+          if (variableFinalQCData(iProfile, iLevel) == 4) {
+            ++nBadObs;
+          }
+        }
+        wholeVariableQCData[iProfile] =
+          (nBadObs == variableFinalQCData.length(iProfile) ? 4 : 1);
+      }
+
       writer.write_variable_surf_qc(nemo_name + "_QC",
-          variableFinalQCData);
+        wholeVariableQCData);
       writer.write_variable_level_qc(nemo_name + "_LEVEL_QC",
           variableFinalQCData);
+
+      // Whole Observation report QC
+      const std::string positionQCGroup("DiagnosticFlags/PositionReject");
+      if (obsdb_.has(positionQCGroup, ufo_name)) {
+        wholeReportQCFromDiagnosticFlags(creator, positionQCGroup, ufo_name,
+            wholeReportPositionQCData);
+      }
+
+      const std::string timeQCGroup("DiagnosticFlags/TimeReject");
+      if (obsdb_.has(timeQCGroup, ufo_name)) {
+        wholeReportQCFromDiagnosticFlags(creator, timeQCGroup, ufo_name,
+            wholeReportTimeQCData);
+      }
+
+      {
+        for (size_t iProfile = 0; iProfile < variableData.n_obs(); ++iProfile) {
+          if (wholeReportQCData[iProfile] == 0 ||
+              wholeReportQCData[iProfile] == 4) {
+            wholeReportQCData[iProfile] =
+              (4 == wholeVariableQCData[iProfile] ? 4 : 1);
+          }
+        }
+      }
     }
 
     // Write additional variables for this variable
@@ -295,6 +347,25 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
             ufo_name, T(0)));
       writer.write_variable(add_name, variableAdditionalData);
     }
+  }  // loop: variables
+
+  // Write whole report variables
+  writer.write_variable_surf_qc("OBSERVATION_QC", wholeReportQCData);
+
+  const std::string depthQCGroup("DiagnosticFlags/DepthReject");
+  const std::string depthVariable = parameters_.depthVariable.value()
+    .value_or(static_cast<std::string>(defaultDepthVariable));
+  if (obsdb_.has(depthQCGroup, depthVariable)) {
+    feedback_io::Data<int32_t> depthQCData(
+        creator.create(depthQCGroup, depthVariable,
+                       ufo::DiagnosticFlag(0), 4, 1));
+    writer.write_variable_level_qc("DEPTH_QC", depthQCData);
+  }
+  if (wholeReportPositionQCData.n_obs() != 0) {
+    writer.write_variable_surf_qc("POSITION_QC", wholeReportPositionQCData);
+  }
+  if (wholeReportTimeQCData.n_obs() != 0) {
+    writer.write_variable_surf_qc("JULD_QC", wholeReportTimeQCData);
   }
 }
 
@@ -306,9 +377,9 @@ feedback_io::MetaData NemoFeedback::setupMetaData(
   feedback_io::Data<double> lons(creator.create("MetaData", "longitude",
         static_cast<double>(0)));
   const std::string depthGroup = parameters_.depthGroup.value()
-    .value_or("MetaData");
+    .value_or(static_cast<std::string>(defaultDepthGroup));
   const std::string depthVariable = parameters_.depthVariable.value()
-    .value_or("depthBelowWaterSurface");
+    .value_or(static_cast<std::string>(defaultDepthVariable));
   feedback_io::Data<double> depths;
   if (obsdb_.has(depthGroup, depthVariable)) {
     depths = feedback_io::Data<double>(creator.create(depthGroup, depthVariable,
