@@ -164,8 +164,8 @@ data:
   "    " ;
 
  DEPTH_QC =
-  _, _, _, _, _, _,
-  _, _, _, _, _, _ ;
+  1, 1, 1, 1, 4, 4,
+  1, 1, 1, 1, 4, 4 ;
 
  DEPTH_QC_FLAGS =
   _, _,
@@ -187,13 +187,13 @@ data:
   _, _,
   _, _ ;
 
- POSITION_QC = _, _ ;
+ POSITION_QC = 1, 1 ;
 
  POSITION_QC_FLAGS =
   _, _,
   _, _ ;
 
- JULD_QC = _, _ ;
+ JULD_QC = 4, 1 ;
 
  JULD_QC_FLAGS =
   _, _,
