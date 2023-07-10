@@ -63,11 +63,11 @@ class NemoFeedbackDataCreator {
     create_altimeter_IDs() const;
 
   /// \brief create DiagnosticFlags feedbackData
-  feedback_io::Data<int32_t> create(const std::string& obsGroup,
+  feedback_io::Data<feedback_io::QC::Level> create(const std::string& obsGroup,
       const std::string& ufoName,
       const ufo::DiagnosticFlag typeInstance,
-      const int32_t whenTrue,
-      const int32_t whenFalse) const;
+      const feedback_io::QC::Level whenTrue,
+      const feedback_io::QC::Level whenFalse) const;
 
   /// \brief create feedbackData
   template<typename T>
@@ -91,11 +91,12 @@ std::shared_ptr<feedback_io::DataIndexer> indexer() const {return indexer_;}
       size_t width, bool leftJustify = false) const;
 
   /// \brief create DiagnosticFlags feedbackData from obsdb
-  feedback_io::Data<int32_t> create_from_obsdb(const std::string& obsGroup,
+  feedback_io::Data<feedback_io::QC::Level> create_from_obsdb(
+      const std::string& obsGroup,
       const std::string& ufoName,
       const ufo::DiagnosticFlag TypeInstance,
-      int32_t whenTrue,
-      int32_t whenFalse) const;
+      feedback_io::QC::Level whenTrue,
+      feedback_io::QC::Level whenFalse) const;
 
   /// \brief create feedbackData from obsdb
   template<typename T>

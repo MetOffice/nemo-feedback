@@ -20,6 +20,12 @@
 #include "oops/util/Logger.h"
 #include "oops/util/Duration.h"
 
+#define DOUBLE_FILLVALUE 99999.0
+#define FLOAT_FILLVALUE 99999.0
+#define INT32_FILLVALUE 0
+#define STRING_FILLVALUE "MISSING "
+
+
 namespace nemo_feedback {
 namespace feedback_io {
 

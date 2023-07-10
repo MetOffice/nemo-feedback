@@ -528,6 +528,19 @@ void Writer<C>::write_variable_surf_qc(
 
 template <class C>
 void Writer<C>::write_variable_surf_qc(
+    const std::string & variable_name,
+    const Data<QC::Level>& data) {
+  oops::Log::trace() << Writer::className()
+                     << "::write_variable_surf_qc: writing "
+                     << variable_name << std::endl;
+  auto surf_var = ncFile->getVar(variable_name);
+  if (data.n_locations() == 0) return;
+  std::vector<QC::Level> buffer = data.raw_surface();
+  surf_var.putVar(buffer.data());
+}
+
+template <class C>
+void Writer<C>::write_variable_surf_qc(
     const std::string& variable_name,
     const Data<int32_t>& data,
     const size_t flag_index) {
@@ -600,7 +613,43 @@ void Writer<C>::write_variable_level_qc(
       throw eckit::BadValue(err_stream.str(), Here());
   }
   for (size_t iProfile = 0; iProfile < data.n_obs(); ++iProfile) {
-    auto profileBuffer = data.raw_profile(iProfile);
+    std::vector<int32_t> profileBuffer = data.raw_profile(iProfile);
+    var.putVar({iProfile, 0},
+               {1, profileBuffer.size()},
+               profileBuffer.data());
+  }
+}
+
+template <class C>
+void Writer<C>::write_variable_level_qc(
+    const std::string & variable_name,
+    const Data<QC::Level>& data) {
+  oops::Log::trace() << Writer::className()
+                     << "::write_variable_level_qc: writing "
+                     << variable_name << std::endl;
+  auto var = ncFile->getVar(variable_name);
+  if (var.isNull()) {
+      std::ostringstream err_stream;
+      err_stream << Writer::className() << "::write_variable_level_qc"
+                 << " ncVar '" << variable_name << "' is not present in "
+                 <<"NetCDF file";
+      throw eckit::BadValue(err_stream.str(), Here());
+    }
+
+  if (data.n_locations() == 0) return;
+
+  if (metaData_.nLocations != data.n_locations()) {
+      std::ostringstream err_stream;
+      err_stream << Writer::className() << "::write_variable_level_qc "
+                 << "index range out of bounds '" << variable_name << "' "
+                 << metaData_.nLocations << " != " << data.n_locations();
+      throw eckit::BadValue(err_stream.str(), Here());
+  }
+  for (size_t iProfile = 0; iProfile < data.n_obs(); ++iProfile) {
+    std::vector<QC::Level> buffer = data.raw_profile(iProfile);
+    std::vector<int32_t> profileBuffer;
+    std::transform(buffer.begin(), buffer.end(), profileBuffer.begin(),
+        [](QC::Level value) {return static_cast<int32_t>(value);});
     var.putVar({iProfile, 0},
                {1, profileBuffer.size()},
                profileBuffer.data());

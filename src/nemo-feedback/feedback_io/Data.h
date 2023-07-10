@@ -10,9 +10,11 @@
 
 #include <nemo-feedback/feedback_io/DataIndexer.h>
 
-#include <vector>
 #include <string>
+#include <vector>
 #include <memory>
+
+#include <nemo-feedback/feedback_io/Utils.h>
 
 namespace nemo_feedback {
 namespace feedback_io {
@@ -119,5 +121,9 @@ class Data {
   std::shared_ptr<DataIndexer> indexer_;
   std::shared_ptr<std::vector<T>> data_;
 };
+
+/// \brief create whole report data from per-profile QC data
+void wholeReportFromPerProfile(const Data<feedback_io::QC::Level>& QCData,
+    Data<feedback_io::QC::Level>& wholeReportQCData);
 }  // namespace feedback_io
 }  // namespace nemo_feedback

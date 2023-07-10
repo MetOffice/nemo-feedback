@@ -104,6 +104,10 @@ class Writer {
       const std::string & variable_name,
       const Data<int32_t>& data);
 
+  void write_variable_surf_qc(
+      const std::string & variable_name,
+      const Data<QC::Level>& data);
+
   /// \brief Write surface QC data variable with specified flag
   void write_variable_surf_qc(
       const std::string & variable_name,
@@ -114,6 +118,10 @@ class Writer {
   void write_variable_level_qc(
       const std::string & variable_name,
       const Data<int32_t>& data);
+
+  void write_variable_level_qc(
+      const std::string & variable_name,
+      const Data<QC::Level>& data);
 
   /// \brief Write level QC data variable with specified flag
   void write_variable_level_qc(
