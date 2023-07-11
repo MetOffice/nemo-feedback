@@ -648,7 +648,8 @@ void Writer<C>::write_variable_level_qc(
   for (size_t iProfile = 0; iProfile < data.n_obs(); ++iProfile) {
     std::vector<QC::Level> buffer = data.raw_profile(iProfile);
     std::vector<int32_t> profileBuffer;
-    std::transform(buffer.begin(), buffer.end(), profileBuffer.begin(),
+    std::transform(buffer.begin(), buffer.end(),
+        std::back_inserter(profileBuffer),
         [](QC::Level value) {return static_cast<int32_t>(value);});
     var.putVar({iProfile, 0},
                {1, profileBuffer.size()},
