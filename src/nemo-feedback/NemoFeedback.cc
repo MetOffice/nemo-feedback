@@ -258,11 +258,13 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
           for (size_t iLevel = 0;
               iLevel < variableDoNotAssimilateData.length(iProfile);
               ++iLevel) {
-            variableFinalQCData(iProfile, iLevel) =
-              static_cast<feedback_io::QC::Level>(
+            if (variableDoNotAssimilateData(iProfile, iLevel) ==
+                feedback_io::QC::Level::DoNotAssimilate) {
+              variableFinalQCData(iProfile, iLevel) =
+               static_cast<feedback_io::QC::Level>(
                 static_cast<int32_t>(variableFinalQCData(iProfile, iLevel)) +
-                static_cast<int32_t>(
-                  variableDoNotAssimilateData(iProfile, iLevel)));
+                static_cast<int32_t>(feedback_io::QC::Level::DoNotAssimilate));
+            }
           }
         }
       }

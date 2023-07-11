@@ -47,6 +47,9 @@ template <> const float  typeToFill::value<float>() {
 template <> const int32_t  typeToFill::value<int32_t>() {
   return INT32_FILLVALUE;
 }
+template <> const QC::Level  typeToFill::value<QC::Level>() {
+  return QC::Level::None;
+}
 template <> const std::string  typeToFill::value<std::string>() {
   return STRING_FILLVALUE;
 }

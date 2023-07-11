@@ -27,6 +27,7 @@ variables:
 		LONGITUDE:units = "degrees_east" ;
 		LONGITUDE:long_name = "longitude" ;
 	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:_FillValue = 99999. ;
 		DEPTH:units = "metre" ;
 		DEPTH:long_name = "Depth" ;
 	double JULD(N_OBS) ;
