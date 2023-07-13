@@ -144,14 +144,15 @@ feedback_io::Data<std::string> NemoFeedbackDataCreator::create_from_obsdb(
   return feedback_io::Data<std::string>(indexer_, std::move(data));
 }
 
-feedback_io::Data<int32_t> NemoFeedbackDataCreator::create_from_obsdb(const
-    std::string& obsGroup, const std::string& ufoName, const
-    ufo::DiagnosticFlag TypeInstance, int32_t whenTrue,
-    int32_t whenFalse) const {
+feedback_io::Data<feedback_io::QC::Level>
+ NemoFeedbackDataCreator::create_from_obsdb(
+    const std::string& obsGroup, const std::string& ufoName, const
+    ufo::DiagnosticFlag TypeInstance, feedback_io::QC::Level whenTrue,
+    feedback_io::QC::Level whenFalse) const {
   oops::Log::trace() << NemoFeedbackDataCreator::className()
                      << ":create_from_obsdb ufo::DiagnosticFlag "
                      << obsGroup << "/" << ufoName << std::endl;
-  std::vector<int32_t> data;
+  std::vector<feedback_io::QC::Level> data;
   std::vector<ufo::DiagnosticFlag> flagData(obsdb_.nlocs(), 0);
   obsdb_.get_db(obsGroup, ufoName, flagData);
   for (ufo::DiagnosticFlag flag : flagData) {
@@ -161,7 +162,7 @@ feedback_io::Data<int32_t> NemoFeedbackDataCreator::create_from_obsdb(const
     throw eckit::BadValue(NemoFeedbackDataCreator::className()
         + ":create_from_obsdb ufo::DiagnosticFlag no data.", Here());
 
-  return feedback_io::Data<int32_t>(indexer_, std::move(data));
+  return feedback_io::Data<feedback_io::QC::Level>(indexer_, std::move(data));
 }
 
 template<typename T>
@@ -304,9 +305,10 @@ NemoFeedbackDataCreator::create_altimeter_IDs() const {
         feedback_io::Data<std::string>(indexer_, std::move(station_types)));
 }
 
-feedback_io::Data<int32_t> NemoFeedbackDataCreator::create(const std::string&
-    obsGroup, const std::string& ufoName, const ufo::DiagnosticFlag
-    typeInstance, int32_t whenTrue, int32_t whenFalse) const {
+feedback_io::Data<feedback_io::QC::Level> NemoFeedbackDataCreator::create(
+    const std::string& obsGroup, const std::string& ufoName, const
+    ufo::DiagnosticFlag typeInstance, feedback_io::QC::Level whenTrue,
+    feedback_io::QC::Level whenFalse) const {
   if (obsGroup == "hofx" || obsGroup == "HofX") {
     std::ostringstream err_stream;
     err_stream << NemoFeedbackDataCreator::className()

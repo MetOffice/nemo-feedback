@@ -219,6 +219,9 @@ void Writer<C>::write_metadata_variables(
 /// JULD_QC_FLAGS, POSITION_QC, POSITION_QC_FLAGS
 template <class C>
 void Writer<C>::define_whole_report_variables() {
+  // Note: This ought to be true/deleted, but it is set to false for OPS
+  // compatibilty reasons until OS46 release and to make our intentions clear
+  constexpr bool kSetQCFillValues = false;
   std::string flag_conventions = "JEDI UFO QC flag conventions";
   {
     const std::vector<netCDF::NcDim> dims{*nobs_dim, ncFile->getDim(STRINGWMO)};
@@ -237,6 +240,11 @@ void Writer<C>::define_whole_report_variables() {
   {
     const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
     netCDF::NcVar tmp_var = ncFile->addVar("DEPTH_QC", netCDF::ncInt, dims);
+    if (kSetQCFillValues) {
+      const auto fill =
+        static_cast<int32_t>(typeToFill::value<QC::Level>());
+      tmp_var.setFill(true, fill);
+    }
     tmp_var.putAtt("long_name", "Quality on depth");
     tmp_var.putAtt("Conventions", QC_CONVENTIONS);
   }
@@ -253,6 +261,11 @@ void Writer<C>::define_whole_report_variables() {
   {
     netCDF::NcVar tmp_var = ncFile->addVar("OBSERVATION_QC", netCDF::ncInt,
         *nobs_dim);
+    if (kSetQCFillValues) {
+      const auto fill =
+        static_cast<int32_t>(typeToFill::value<QC::Level>());
+      tmp_var.setFill(true, fill);
+    }
     tmp_var.putAtt("long_name", "Quality on observation");
     tmp_var.putAtt("Conventions", QC_CONVENTIONS);
   }
@@ -268,6 +281,11 @@ void Writer<C>::define_whole_report_variables() {
   {
     netCDF::NcVar tmp_var = ncFile->addVar("POSITION_QC", netCDF::ncInt,
         *nobs_dim);
+    if (kSetQCFillValues) {
+      const auto fill =
+        static_cast<int32_t>(typeToFill::value<QC::Level>());
+      tmp_var.setFill(true, fill);
+    }
     tmp_var.putAtt("long_name", "Quality on position");
     tmp_var.putAtt("Conventions", QC_CONVENTIONS);
   }
@@ -282,6 +300,11 @@ void Writer<C>::define_whole_report_variables() {
 
   {
     netCDF::NcVar tmp_var = ncFile->addVar("JULD_QC", netCDF::ncInt, *nobs_dim);
+    if (kSetQCFillValues) {
+      const auto fill =
+        static_cast<int32_t>(typeToFill::value<QC::Level>());
+      tmp_var.setFill(true, fill);
+    }
     tmp_var.putAtt("long_name", "Quality on date and time");
     tmp_var.putAtt("Conventions", QC_CONVENTIONS);
   }
@@ -324,7 +347,7 @@ void Writer<C>::define_variable(
             typeToNcType(), dims);
   obs_var.putAtt("long_name", longName);
   obs_var.putAtt("units", units);
-  obs_var.setFill(true, feedback_io::typeToFill::value<C>());
+  obs_var.setFill(true, typeToFill::value<C>());
 
   for (const auto &name : name_data_.additional_names) {
     netCDF::NcVar add_var;
@@ -332,14 +355,14 @@ void Writer<C>::define_variable(
             typeToNcType(), dims);
     add_var.putAtt("long_name", longName + " " + name);
     add_var.putAtt("units", units);
-    add_var.setFill(true, feedback_io::typeToFill::value<C>());
+    add_var.setFill(true, typeToFill::value<C>());
   }
 
   {
     const std::vector<netCDF::NcDim> qcf_dims{*nobs_dim, *nqcf_dim};
     netCDF::NcVar qc_flags_var = ncFile->addVar(variable_name + "_QC_FLAGS",
         netCDF::ncInt, qcf_dims);
-    qc_flags_var.setFill(true, feedback_io::typeToFill::value<int32_t>());
+    qc_flags_var.setFill(true, typeToFill::value<int32_t>());
     qc_flags_var.putAtt("long_name", std::string("quality flags on ")
                         + longName);
     qc_flags_var.putAtt("Conventions", flag_conventions);
@@ -350,7 +373,7 @@ void Writer<C>::define_variable(
         *nqcf_dim};
     netCDF::NcVar level_qc_flags_var = ncFile->addVar(variable_name
         + "_LEVEL_QC_FLAGS", netCDF::ncInt, lvl_qcf_dims);
-    level_qc_flags_var.setFill(true, feedback_io::typeToFill::value<int32_t>());
+    level_qc_flags_var.setFill(true, typeToFill::value<int32_t>());
     level_qc_flags_var.putAtt("long_name",
         std::string("quality flags for each level on ") + longName);
     level_qc_flags_var.putAtt("Conventions", flag_conventions);
@@ -363,7 +386,9 @@ void Writer<C>::define_variable(
 
   netCDF::NcVar level_qc_var = ncFile->addVar(variable_name + "_LEVEL_QC",
       netCDF::ncInt, dims);
-  level_qc_var.setFill(true, feedback_io::typeToFill::value<int32_t>());
+  const auto fill =
+    static_cast<int32_t>(typeToFill::value<QC::Level>());
+  level_qc_var.setFill(true, fill);
   level_qc_var.putAtt("long_name", std::string("quality for each level on ")
                       + longName);
   level_qc_var.putAtt("Conventions", QC_CONVENTIONS);
@@ -421,6 +446,7 @@ void Writer<C>::write_coord_variables() {
   const std::vector<netCDF::NcDim> dims{*nobs_dim, *nlevels_dim};
   netCDF::NcVar depth_var = ncFile->addVar("DEPTH", netCDF::ncDouble,
       dims);
+  depth_var.setFill(true, typeToFill::value<double>());
   depth_var.putAtt("units", "metre");
   depth_var.putAtt("long_name", "Depth");
 
@@ -528,6 +554,19 @@ void Writer<C>::write_variable_surf_qc(
 
 template <class C>
 void Writer<C>::write_variable_surf_qc(
+    const std::string & variable_name,
+    const Data<QC::Level>& data) {
+  oops::Log::trace() << Writer::className()
+                     << "::write_variable_surf_qc: writing "
+                     << variable_name << std::endl;
+  auto surf_var = ncFile->getVar(variable_name);
+  if (data.n_locations() == 0) return;
+  std::vector<QC::Level> buffer = data.raw_surface();
+  surf_var.putVar(buffer.data());
+}
+
+template <class C>
+void Writer<C>::write_variable_surf_qc(
     const std::string& variable_name,
     const Data<int32_t>& data,
     const size_t flag_index) {
@@ -600,7 +639,44 @@ void Writer<C>::write_variable_level_qc(
       throw eckit::BadValue(err_stream.str(), Here());
   }
   for (size_t iProfile = 0; iProfile < data.n_obs(); ++iProfile) {
-    auto profileBuffer = data.raw_profile(iProfile);
+    std::vector<int32_t> profileBuffer = data.raw_profile(iProfile);
+    var.putVar({iProfile, 0},
+               {1, profileBuffer.size()},
+               profileBuffer.data());
+  }
+}
+
+template <class C>
+void Writer<C>::write_variable_level_qc(
+    const std::string & variable_name,
+    const Data<QC::Level>& data) {
+  oops::Log::trace() << Writer::className()
+                     << "::write_variable_level_qc: writing "
+                     << variable_name << std::endl;
+  auto var = ncFile->getVar(variable_name);
+  if (var.isNull()) {
+      std::ostringstream err_stream;
+      err_stream << Writer::className() << "::write_variable_level_qc"
+                 << " ncVar '" << variable_name << "' is not present in "
+                 <<"NetCDF file";
+      throw eckit::BadValue(err_stream.str(), Here());
+    }
+
+  if (data.n_locations() == 0) return;
+
+  if (metaData_.nLocations != data.n_locations()) {
+      std::ostringstream err_stream;
+      err_stream << Writer::className() << "::write_variable_level_qc "
+                 << "index range out of bounds '" << variable_name << "' "
+                 << metaData_.nLocations << " != " << data.n_locations();
+      throw eckit::BadValue(err_stream.str(), Here());
+  }
+  for (size_t iProfile = 0; iProfile < data.n_obs(); ++iProfile) {
+    std::vector<QC::Level> buffer = data.raw_profile(iProfile);
+    std::vector<int32_t> profileBuffer;
+    std::transform(buffer.begin(), buffer.end(),
+        std::back_inserter(profileBuffer),
+        [](QC::Level value) {return static_cast<int32_t>(value);});
     var.putVar({iProfile, 0},
                {1, profileBuffer.size()},
                profileBuffer.data());

@@ -16,11 +16,6 @@
 
 #include "oops/util/DateTime.h"
 
-#define DOUBLE_FILLVALUE 99999.0
-#define FLOAT_FILLVALUE 99999.0
-#define INT32_FILLVALUE 0
-#define STRING_FILLVALUE "MISSING "
-
 namespace nemo_feedback {
 namespace feedback_io {
 
@@ -61,5 +56,18 @@ struct NameData {
 
   void validate() const;
 };
+
+namespace QC {
+
+enum class Level : int32_t {
+  None = 0,
+  Good = 1,
+  Bad = 4,
+  DoNotAssimilate = 128,
+  GoodDoNotAssimilate = 129,
+  BadDoNotAssimilate = 132
+};
+
+}  // namespace QC
 }  // namespace feedback_io
 }  // namespace nemo_feedback

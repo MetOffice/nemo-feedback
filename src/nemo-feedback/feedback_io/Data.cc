@@ -88,7 +88,71 @@ std::vector<T> Data<T>::raw_profile(size_t iProfile) const {
 template class Data<std::string>;
 template class Data<size_t>;
 template class Data<int32_t>;
+template class Data<feedback_io::QC::Level>;
 template class Data<float>;
 template class Data<double>;
+
+/// \brief update the whole report QC information for a profile based on the
+///        current whole variable QC information
+feedback_io::QC::Level wholeReportUpdate(feedback_io::QC::Level current, const
+    size_t length, const size_t nGoodObs, const size_t nBadObs, const size_t
+    nBadDoNotAssimilate, const size_t nDoNotAssimilate) {
+  // If good obs were previously found, the report is good
+  if (current == QC::Level::Good) {
+    return QC::Level::Good;
+  }
+  // Upgrade any reports if they contain any good obs (goodDoNotAssimilate ->
+  // good)
+  if (nGoodObs > 0) {
+    return QC::Level::Good;
+  }
+  // Check currently bad, do-not-assimilate or not-yet-checked reports and
+  // downgrade where necessary
+  if (nBadObs == length) {
+    return QC::Level::Bad;
+  } else if (nBadDoNotAssimilate == length) {
+    // No good observations, all bad-do-not-assimilate
+    return QC::Level::BadDoNotAssimilate;
+  } else if (nDoNotAssimilate == length) {
+    // No good observations, some mix of good and bad do-not-assimilate types
+    //     -> GoodDoNotAssimilate
+    return QC::Level::GoodDoNotAssimilate;
+  } else {
+    // No good observations, some mix of bad and do-not-assimilate -> Bad
+    return QC::Level::Bad;
+  }
+}
+
+void wholeReportFromPerProfile(const Data<feedback_io::QC::Level>& QCData,
+    Data<feedback_io::QC::Level>& wholeReportQCData) {
+  for (size_t iProfile = 0;
+      iProfile < QCData.n_obs(); ++iProfile) {
+    size_t nGoodObs = 0;
+    size_t nBadObs = 0;
+    size_t nBadDoNotAssimilate = 0;
+    size_t nDoNotAssimilate = 0;
+    for (size_t iLevel = 0;
+        iLevel < QCData.length(iProfile);
+        ++iLevel) {
+      if (QCData(iProfile, iLevel) == QC::Level::Bad) {
+        ++nBadObs;
+      } else if (QCData(iProfile, iLevel) ==
+                 QC::Level::BadDoNotAssimilate) {
+        ++nBadDoNotAssimilate;
+      }
+      if (QCData(iProfile, iLevel) == QC::Level::BadDoNotAssimilate ||
+          QCData(iProfile, iLevel) == QC::Level::GoodDoNotAssimilate ||
+          QCData(iProfile, iLevel) == QC::Level::DoNotAssimilate) {
+        ++nDoNotAssimilate;
+      }
+      if (QCData(iProfile, iLevel) == QC::Level::Good) {
+        ++nGoodObs;
+      }
+    }
+    wholeReportQCData[iProfile] = wholeReportUpdate(
+        wholeReportQCData[iProfile], QCData.length(iProfile), nGoodObs,
+        nBadObs, nBadDoNotAssimilate, nDoNotAssimilate);
+  }
+}
 }  // namespace feedback_io
 }  // namespace nemo_feedback

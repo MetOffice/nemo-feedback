@@ -27,6 +27,7 @@ variables:
 		LONGITUDE:units = "degrees_east" ;
 		LONGITUDE:long_name = "longitude" ;
 	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:_FillValue = 99999. ;
 		DEPTH:units = "metre" ;
 		DEPTH:long_name = "Depth" ;
 	double JULD(N_OBS) ;
@@ -181,7 +182,7 @@ data:
   _, _,
   _, _ ;
 
- OBSERVATION_QC = 1, 1 ;
+ OBSERVATION_QC = 1, 129 ;
 
  OBSERVATION_QC_FLAGS =
   _, _,
@@ -227,11 +228,11 @@ data:
   1, _,
   1, _ ;
 
- POTM_QC = 1, 1 ;
+ POTM_QC = 1, 129 ;
 
  POTM_LEVEL_QC =
   1, 1, 1, 4, 1, 1,
-  1, 1, 1, 4, 1, 1 ;
+  129, 129, 129, 132, 129, 129 ;
 
  POTM_IOBSI = _, _ ;
 
@@ -269,11 +270,11 @@ data:
   1, _,
   1, _ ;
 
- PSAL_QC = 1, 1 ;
+ PSAL_QC = 1, 129 ;
 
  PSAL_LEVEL_QC =
   1, 1, 1, 4, 1, 1,
-  1, 1, 1, 4, 1, 1 ;
+  129, 129, 129, 132, 129, 129 ;
 
  PSAL_IOBSI = _, _ ;
 

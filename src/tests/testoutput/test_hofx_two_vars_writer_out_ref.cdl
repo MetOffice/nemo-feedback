@@ -25,6 +25,7 @@ variables:
 		LONGITUDE:units = "degrees_east" ;
 		LONGITUDE:long_name = "longitude" ;
 	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:_FillValue = 99999. ;
 		DEPTH:units = "metre" ;
 		DEPTH:long_name = "Depth" ;
 	double JULD(N_OBS) ;
@@ -210,7 +211,7 @@ data:
   _, _,
   _, _ ;
 
- OBSERVATION_QC = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+ OBSERVATION_QC = 1, 1, 1, 1, 1, 1, 132, 1, 1, 1, 129 ;
 
  OBSERVATION_QC_FLAGS =
   _, _,
@@ -309,7 +310,7 @@ data:
   _, _,
   _, _ ;
 
- ICECONC_QC = 1, 4, 1, 1, 4, 1, 4, 1, 1, 1, 4 ;
+ ICECONC_QC = 1, 4, 1, 1, 4, 1, 132, 129, 1, 1, 132 ;
 
  ICECONC_LEVEL_QC =
   1,
@@ -318,11 +319,11 @@ data:
   1,
   4,
   1,
-  4,
+  132,
+  129,
   1,
   1,
-  1,
-  4 ;
+  132 ;
 
  ICECONC_IOBSI = _, _, _, _, _, _, _, _, _, _, _ ;
 
@@ -395,7 +396,7 @@ data:
   _, _,
   _, _ ;
 
- SST_QC = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+ SST_QC = 1, 1, 1, 1, 1, 129, 132, 1, 1, 1, 129 ;
 
  SST_LEVEL_QC =
   1,
@@ -403,12 +404,12 @@ data:
   1,
   1,
   1,
+  129,
+  132,
   1,
   1,
   1,
-  1,
-  1,
-  1 ;
+  129 ;
 
  SST_IOBSI = _, _, _, _, _, _, _, _, _, _, _ ;
 

@@ -6,8 +6,8 @@
 
 #include "nemo-feedback/NemoFeedback.h"
 
-#include <string>
 #include <string_view>
+#include <string>
 
 #include <algorithm>
 #include <utility>
@@ -45,35 +45,6 @@ namespace nemo_feedback {
 /// helpers
 constexpr std::string_view defaultDepthGroup{"MetaData"};
 constexpr std::string_view defaultDepthVariable{"depthBelowWaterSurface"};
-
-/// \brief create whole report variables from a diagnostic flag
-void wholeReportQCFromDiagnosticFlags(const
-    NemoFeedbackDataCreator& creator, const std::string& group, const
-    std::string& name, feedback_io::Data<int32_t>& wholeReportQCData) {
-  if (wholeReportQCData.n_obs() == 0) {
-    wholeReportQCData = feedback_io::Data<int32_t>(creator.indexer(),
-        std::vector<int32_t>(creator.indexer()->n_source_data(), 0));
-  }
-  feedback_io::Data<int32_t> QCData =
-    creator.create(group, name,
-                   ufo::DiagnosticFlag(0), 4, 1);
-  for (size_t iProfile = 0;
-      iProfile < QCData.n_obs(); ++iProfile) {
-    size_t nBadObs = 0;
-    for (size_t iLevel = 0;
-        iLevel < QCData.length(iProfile);
-        ++iLevel) {
-      if (QCData(iProfile, iLevel) == 4) {
-        ++nBadObs;
-      }
-    }
-    if (wholeReportQCData[iProfile] == 0 ||
-        wholeReportQCData[iProfile] == 4) {
-      wholeReportQCData[iProfile] =
-        (nBadObs == QCData.length(iProfile) ? 4 : 1);
-    }
-  }
-}
 
 
 NemoFeedback::NemoFeedback(
@@ -222,10 +193,11 @@ template <typename T>
 void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
                                   const NemoFeedbackDataCreator& creator) const
 {
-  feedback_io::Data<int32_t> wholeReportQCData(creator.indexer(),
-      std::vector<int32_t>(creator.indexer()->n_source_data(), 0));
-  feedback_io::Data<int32_t> wholeReportPositionQCData;
-  feedback_io::Data<int32_t> wholeReportTimeQCData;
+  feedback_io::Data<feedback_io::QC::Level> wholeReportQCData(creator.indexer(),
+      std::vector<feedback_io::QC::Level>(creator.indexer()->n_source_data(),
+        feedback_io::QC::Level::None));
+  feedback_io::Data<feedback_io::QC::Level> wholeReportPositionQCData;
+  feedback_io::Data<feedback_io::QC::Level> wholeReportTimeQCData;
   std::vector<ufo::DiagnosticFlag> do_not_assimilate;
   for (const NemoFeedbackVariableParameters& nemoVariableParams :
         parameters_.variables.value()) {
@@ -270,70 +242,78 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
 
     // Quality control rank variables
     if (obsdb_.has("DiagnosticFlags/FinalReject", ufo_name)) {
-
-      feedback_io::Data<int32_t> variableFinalQCData =
+      feedback_io::Data<feedback_io::QC::Level> variableFinalQCData =
         creator.create("DiagnosticFlags/FinalReject", ufo_name,
-                       ufo::DiagnosticFlag(0), 4, 1);
+            ufo::DiagnosticFlag(0), feedback_io::QC::Level::Bad,
+            feedback_io::QC::Level::Good);
 
-      // Add do not assimilate flag if required.
+      // Add do not assimilate flag if required to the final QC information.
       if (obsdb_.has("DiagnosticFlags/DoNotAssimilate", ufo_name)) {
-        feedback_io::Data<int32_t> variableDoNotAssimilateData(
+        feedback_io::Data<feedback_io::QC::Level> variableDoNotAssimilateData(
             creator.create("DiagnosticFlags/DoNotAssimilate", ufo_name,
-              ufo::DiagnosticFlag(0), 128, 0));
+              ufo::DiagnosticFlag(0), feedback_io::QC::Level::DoNotAssimilate,
+              feedback_io::QC::Level::None));
         for (size_t iProfile = 0;
             iProfile < variableDoNotAssimilateData.n_obs(); ++iProfile) {
           for (size_t iLevel = 0;
               iLevel < variableDoNotAssimilateData.length(iProfile);
               ++iLevel) {
-            variableFinalQCData(iProfile, iLevel) +=
-              variableDoNotAssimilateData(iProfile, iLevel);
+            if (variableDoNotAssimilateData(iProfile, iLevel) ==
+                feedback_io::QC::Level::DoNotAssimilate) {
+              variableFinalQCData(iProfile, iLevel) =
+               static_cast<feedback_io::QC::Level>(
+                static_cast<int32_t>(variableFinalQCData(iProfile, iLevel)) +
+                static_cast<int32_t>(feedback_io::QC::Level::DoNotAssimilate));
+            }
           }
         }
       }
 
-      // Per-profile quality rank
-      feedback_io::Data<int32_t> wholeVariableQCData(creator.indexer(),
-          std::vector<int32_t>(creator.indexer()->n_source_data(), 0));
-      for (size_t iProfile = 0;
-          iProfile < variableFinalQCData.n_obs(); ++iProfile) {
-        size_t nBadObs = 0;
-        for (size_t iLevel = 0;
-            iLevel < variableFinalQCData.length(iProfile);
-            ++iLevel) {
-          if (variableFinalQCData(iProfile, iLevel) == 4) {
-            ++nBadObs;
-          }
-        }
-        wholeVariableQCData[iProfile] =
-          (nBadObs == variableFinalQCData.length(iProfile) ? 4 : 1);
-      }
+      // set per-profile quality rank for the variable
+      feedback_io::Data<feedback_io::QC::Level> wholeVariableQCData(
+          creator.indexer(), std::vector<feedback_io::QC::Level>(
+            creator.indexer()->n_source_data(), feedback_io::QC::Level::None));
+      feedback_io::wholeReportFromPerProfile(variableFinalQCData,
+          wholeVariableQCData);
+      // update set per-profile quality rank for the whole report
+      feedback_io::wholeReportFromPerProfile(variableFinalQCData,
+          wholeReportQCData);
 
       writer.write_variable_surf_qc(nemo_name + "_QC",
         wholeVariableQCData);
       writer.write_variable_level_qc(nemo_name + "_LEVEL_QC",
           variableFinalQCData);
 
-      // Whole Observation report QC
+      // Whole Observation Position report QC
       const std::string positionQCGroup("DiagnosticFlags/PositionReject");
       if (obsdb_.has(positionQCGroup, ufo_name)) {
-        wholeReportQCFromDiagnosticFlags(creator, positionQCGroup, ufo_name,
+        feedback_io::Data<feedback_io::QC::Level> QCData = creator.create(
+            positionQCGroup, ufo_name, ufo::DiagnosticFlag(0),
+            feedback_io::QC::Level::Bad, feedback_io::QC::Level::Good);
+        if (wholeReportPositionQCData.n_obs() == 0) {
+          wholeReportPositionQCData = feedback_io::Data<feedback_io::QC::Level>(
+              creator.indexer(), std::vector<feedback_io::QC::Level>(
+                creator.indexer()->n_source_data(),
+                feedback_io::QC::Level::None));
+        }
+        feedback_io::wholeReportFromPerProfile(QCData,
             wholeReportPositionQCData);
       }
 
+      // Whole Observation time report QC
       const std::string timeQCGroup("DiagnosticFlags/TimeReject");
       if (obsdb_.has(timeQCGroup, ufo_name)) {
-        wholeReportQCFromDiagnosticFlags(creator, timeQCGroup, ufo_name,
-            wholeReportTimeQCData);
-      }
-
-      {
-        for (size_t iProfile = 0; iProfile < variableData.n_obs(); ++iProfile) {
-          if (wholeReportQCData[iProfile] == 0 ||
-              wholeReportQCData[iProfile] == 4) {
-            wholeReportQCData[iProfile] =
-              (4 == wholeVariableQCData[iProfile] ? 4 : 1);
-          }
+        feedback_io::Data<feedback_io::QC::Level> QCData =
+          creator.create(timeQCGroup, ufo_name, ufo::DiagnosticFlag(0),
+              feedback_io::QC::Level::Bad, feedback_io::QC::Level::Good);
+        if (wholeReportTimeQCData.n_obs() == 0) {
+          wholeReportTimeQCData = feedback_io::Data<feedback_io::QC::Level>(
+              creator.indexer(), std::vector<feedback_io::QC::Level>(
+                creator.indexer()->n_source_data(),
+                feedback_io::QC::Level::None));
         }
+        feedback_io::wholeReportFromPerProfile(QCData,
+            wholeReportTimeQCData);
       }
     }
 
@@ -356,9 +336,9 @@ void NemoFeedback::write_all_data(feedback_io::Writer<T>& writer,
   const std::string depthVariable = parameters_.depthVariable.value()
     .value_or(static_cast<std::string>(defaultDepthVariable));
   if (obsdb_.has(depthQCGroup, depthVariable)) {
-    feedback_io::Data<int32_t> depthQCData(
-        creator.create(depthQCGroup, depthVariable,
-                       ufo::DiagnosticFlag(0), 4, 1));
+    feedback_io::Data<feedback_io::QC::Level> depthQCData(
+        creator.create(depthQCGroup, depthVariable, ufo::DiagnosticFlag(0),
+          feedback_io::QC::Level::Bad, feedback_io::QC::Level::Good));
     writer.write_variable_level_qc("DEPTH_QC", depthQCData);
   }
   if (wholeReportPositionQCData.n_obs() != 0) {
@@ -424,7 +404,6 @@ std::tuple<feedback_io::Data<std::string>, feedback_io::Data<std::string>>
     stationIdentificationAvailable = true;
   }
 
-  const int32_t buoyIDMissingValueInt = util::missingValue<int32_t>();
   constexpr size_t buoyIDWidth = 8;
   const std::string missingStringFeedback =
     feedback_io::typeToFill::value<std::string>();
