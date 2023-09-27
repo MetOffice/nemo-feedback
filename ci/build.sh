@@ -20,7 +20,7 @@ trap finally EXIT
 
 cd "${WORKD}"
 
-source /etc/profile.d/z10_spack_environment.sh
+source /opt/spack-environment/activate.sh
 
 rm -f "${HERE}/nemo-feedback"
 ln -s '..' "${HERE}/nemo-feedback"
