@@ -1,6 +1,5 @@
-# (C) Crown Copyright 2021, the Met Office. All rights reserved.
+# (C) Crown Copyright 2023 Met Office
 #
-# Refer to COPYRIGHT.txt of this distribution for details.
 
 list( APPEND nemo_fdbk_src_files
     instantiateObsFilterFactory.h
