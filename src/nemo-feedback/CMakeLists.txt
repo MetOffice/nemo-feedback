@@ -1,4 +1,4 @@
-# (C) Crown Copyright 2023 Met Office
+# (C) British Crown Copyright 2023 Met Office
 #
 
 list( APPEND nemo_fdbk_src_files
