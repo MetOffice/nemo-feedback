@@ -6,12 +6,12 @@
 #pragma once
 
 #include <nemo-feedback/feedback_io/DataIndexer.h>
+#include <nemo-feedback/feedback_io/Utils.h>
 
 #include <string>
 #include <vector>
 #include <memory>
 
-#include <nemo-feedback/feedback_io/Utils.h>
 
 namespace nemo_feedback {
 namespace feedback_io {
