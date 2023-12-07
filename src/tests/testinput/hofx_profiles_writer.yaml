@@ -1,5 +1,6 @@
-window begin: 2021-06-29T12:00:00Z
-window end: 2021-06-30T12:00:00Z
+time window:
+  begin: 2021-06-29T12:00:00Z
+  end: 2021-06-30T12:00:00Z
 observations:
   - obs space:
       name: Sea Temperature
