@@ -1,3 +1,5 @@
+# (C) British Crown Copyright 2024 Met Office
+
 add_subdirectory(testinput)
 add_subdirectory(testoutput)
 add_subdirectory(Data)

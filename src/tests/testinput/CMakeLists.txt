@@ -1,3 +1,4 @@
+# (C) British Crown Copyright 2024 Met Office
 
 list( APPEND fdbk_writer_test_input
   hofx_sic_writer.yaml
