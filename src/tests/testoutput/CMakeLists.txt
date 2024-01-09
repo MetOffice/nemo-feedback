@@ -1,3 +1,4 @@
+# (C) British Crown Copyright 2024 Met Office
 
 list( APPEND fdbk_writer_test_output
   test_hofx_sic_writer_out_ref.cdl

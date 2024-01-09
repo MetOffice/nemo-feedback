@@ -1,3 +1,5 @@
+# (C) British Crown Copyright 2024 Met Office
+
 include_directories( ${PROJECT_SOURCE_DIR}/src )
 
 ecbuild_add_test( TARGET  test_nemo_feedback_writer.x

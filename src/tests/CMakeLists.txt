@@ -1,8 +1,15 @@
+# (C) British Crown Copyright 2024 Met Office
+
 add_subdirectory(testinput)
 add_subdirectory(testoutput)
 add_subdirectory(Data)
 add_subdirectory(nemo-feedback)
 add_subdirectory(mains)
+
+ecbuild_add_test( TARGET test_nemo_feedback_coding_norms
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/cpplint.py
+                  ARGS --recursive ${CMAKE_CURRENT_SOURCE_DIR}/../ )
 
 ecbuild_add_test( TARGET test_nemo_feedback_hofx_ice_writer
                   OMP 1

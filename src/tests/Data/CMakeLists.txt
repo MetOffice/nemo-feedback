@@ -1,3 +1,4 @@
+# (C) British Crown Copyright 2024 Met Office
 
 list( APPEND nemofeedback_test_data
 hofx_sic_obs.nc

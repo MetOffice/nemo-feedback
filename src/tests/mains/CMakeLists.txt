@@ -1,3 +1,5 @@
+# (C) British Crown Copyright 2024 Met Office
+
 ecbuild_add_executable( TARGET  test_NemoInputsFilters.x
                         SOURCES TestObsFilters.cc
                         LIBS    nemo_feedback ufo oops)

@@ -1,17 +1,17 @@
 /*
- * (C) British Crown Copyright 2023 Met Office
+ * (C) British Crown Copyright 2024 Met Office
  */
 
 
 #pragma once
 
 #include <nemo-feedback/feedback_io/DataIndexer.h>
+#include <nemo-feedback/feedback_io/Utils.h>
 
 #include <string>
 #include <vector>
 #include <memory>
 
-#include <nemo-feedback/feedback_io/Utils.h>
 
 namespace nemo_feedback {
 namespace feedback_io {
