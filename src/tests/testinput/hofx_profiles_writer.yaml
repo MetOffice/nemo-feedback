@@ -41,7 +41,7 @@ observations:
           feedback suffix: Hx
           ioda group: HofX
       where:
-      - is_true: null
+      - value: is_true
         variable:
           name: DiagnosticFlags/ObsToWrite/waterPotentialTemperature
 
