@@ -21,7 +21,7 @@ observations:
       where:
       - variable:
           name: DiagnosticFlags/ObsToWrite/seaIceFraction
-        is_true:
+        value: is_true
       variables:
       - name: seaIceFraction
         nemo name: ICECONC
