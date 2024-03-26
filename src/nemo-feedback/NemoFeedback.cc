@@ -153,7 +153,7 @@ void NemoFeedback::postFilter(const ufo::GeoVaLs & gv,
 
   // Handle the where option.
   std::vector<bool> to_write = ufo::processWhere(parameters_.where, data_,
-                                   ufo::WhereOperator::AND);
+                                                 ufo::WhereOperator::AND, "");
   if (to_write.size() != obsdb_.nlocs()) to_write.assign(obsdb_.nlocs(), true);
 
   // exclude all but the latest altimetry observations
