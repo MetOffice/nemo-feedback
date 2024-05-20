@@ -21,6 +21,7 @@
 #include "ioda/ObsSpace.h"
 #include "ioda/ObsVector.h"
 #include "oops/base/Variables.h"
+#include "oops/base/ObsVariables.h"
 #include "oops/mpi/mpi.h"
 #include "oops/util/Logger.h"
 #include "oops/util/DateTime.h"
@@ -63,7 +64,6 @@ NemoFeedback::NemoFeedback(
 {
   oops::Log::trace() << "NemoFeedback constructor starting" << std::endl;
 
-  const std::vector<int> channels{};
   std::vector<std::string> obsGeoNames;
 
   // helper function to determine if a name is a new entry in the vector
@@ -90,7 +90,7 @@ NemoFeedback::NemoFeedback(
     }
   }
 
-  const oops::Variables obsGeoVars(obsGeoNames, channels);
+  const oops::ObsVariables obsGeoVars(obsGeoNames);
   geovars_ = nameMap_.convertName(obsGeoVars);
 
   // Generate lists of the variable name meta data to setup the file
