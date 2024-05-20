@@ -12,6 +12,7 @@
 #include "eckit/mpi/Comm.h"
 #include "ioda/ObsDataVector.h"
 #include "oops/base/Variables.h"
+#include "oops/base/ObsVariables.h"
 #include "oops/interface/ObsFilterBase.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -48,7 +49,7 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   void checkFilterData(const oops::FilterStage filterStage) override {}
 
   oops::Variables requiredVars() const override {return geovars_;}
-  oops::Variables requiredHdiagnostics() const override {return extradiagvars_;}
+  oops::ObsVariables requiredHdiagnostics() const override {return extradiagvars_;}
 
  private:
   /// \brief write the data to the feedback file depending on chosen type
@@ -78,7 +79,7 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
   ioda::ObsSpace & obsdb_;
   ufo::ObsFilterData data_;
   oops::Variables geovars_;
-  oops::Variables extradiagvars_;
+  oops::ObsVariables extradiagvars_;
   std::shared_ptr<ioda::ObsDataVector<int>> flags_;
   std::shared_ptr<ioda::ObsDataVector<float>> obsErrors_;
   NemoFeedbackParameters parameters_;
