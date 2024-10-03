@@ -8,11 +8,11 @@
 #include <vector>
 
 #include "eckit/exception/Exceptions.h"
-#include "oops/generic/ObsFilterParametersBase.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/RequiredParameter.h"
 #include "ufo/filters/processWhere.h"
+#include "ufo/ObsFilterParametersBase.h"
 #include "nemo-feedback/NemoFeedbackParameterTraitsOutputDtype.h"
 
 namespace nemo_feedback {
@@ -43,9 +43,9 @@ class NemoFeedbackVariableParameters : public oops::Parameters {
 };
 
 /// \brief NemoFeedback options.
-class NemoFeedbackParameters : public oops::ObsFilterParametersBase {
+class NemoFeedbackParameters : public ufo::ObsFilterParametersBase {
   OOPS_CONCRETE_PARAMETERS(NemoFeedbackParameters,
-      oops::ObsFilterParametersBase)
+      ufo::ObsFilterParametersBase)
 
  public:
   oops::Parameter<std::string> Filename{"filename", "nemo_fdbk_out.nc", this};

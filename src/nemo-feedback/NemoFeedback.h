@@ -13,20 +13,20 @@
 #include "ioda/ObsDataVector.h"
 #include "oops/base/Variables.h"
 #include "oops/base/ObsVariables.h"
-#include "oops/interface/ObsFilterBase.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 #include "nemo-feedback/NemoFeedbackParameters.h"
 #include "nemo-feedback/feedback_io/Writer.h"
 #include "nemo-feedback/NemoFeedbackDataCreator.h"
 #include "ufo/filters/ObsFilterData.h"
+#include "ufo/ObsFilterBase.h"
 #include "ufo/ObsTraits.h"
 #include "ufo/utils/VariableNameMap.h"
 
 namespace nemo_feedback {
 
 /// \brief UFO filter for outputting data to NEMO feedback file
-class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
+class NemoFeedback : public ufo::ObsFilterBase,
                      private util::ObjectCounter<NemoFeedback> {
  public:
   static const std::string classname() {return "nemo_feedback::NemoFeedback";}
@@ -46,7 +46,7 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
                   const ioda::ObsVector &ov,
                   const ioda::ObsVector &bv,
                   const ufo::ObsDiagnostics &dv) override;
-  void checkFilterData(const oops::FilterStage filterStage) override {}
+  void checkFilterData(const ufo::FilterStage filterStage) override {}
 
   oops::Variables requiredVars() const override {return geovars_;}
   oops::ObsVariables requiredHdiagnostics() const override {return extradiagvars_;}
