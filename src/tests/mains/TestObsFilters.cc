@@ -6,7 +6,6 @@
 #include "oops/runs/Run.h"
 #include "nemo-feedback/instantiateObsFilterFactory.h"
 #include "ufo/instantiateObsFilterFactory.h"
-#include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
