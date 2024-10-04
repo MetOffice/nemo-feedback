@@ -20,7 +20,6 @@
 #include "nemo-feedback/NemoFeedbackDataCreator.h"
 #include "ufo/filters/ObsFilterData.h"
 #include "ufo/ObsFilterBase.h"
-#include "ufo/ObsTraits.h"
 #include "ufo/utils/VariableNameMap.h"
 
 namespace nemo_feedback {
