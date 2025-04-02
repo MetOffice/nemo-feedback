@@ -1,7 +1,5 @@
 /*
- * (C) Crown Copyright 2020, the Met Office. All rights reserved.
- *
- * Refer to COPYRIGHT.txt of this distribution for details.
+ * (C) British Crown Copyright 2024 Met Office
  */
 
 #pragma once
@@ -10,13 +8,15 @@
 #include <vector>
 
 #include "eckit/exception/Exceptions.h"
-#include "oops/generic/ObsFilterParametersBase.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/RequiredParameter.h"
 #include "ufo/filters/processWhere.h"
+#include "ufo/ObsFilterParametersBase.h"
+#include "nemo-feedback/NemoFeedbackParameterTraitsOutputDtype.h"
 
 namespace nemo_feedback {
+
 /// \brief NemoFeedback options for an "additional" variable.
 class NemoFeedbackAddVariableParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(NemoFeedbackAddVariableParameters, oops::Parameters)
@@ -43,9 +43,9 @@ class NemoFeedbackVariableParameters : public oops::Parameters {
 };
 
 /// \brief NemoFeedback options.
-class NemoFeedbackParameters : public oops::ObsFilterParametersBase {
+class NemoFeedbackParameters : public ufo::ObsFilterParametersBase {
   OOPS_CONCRETE_PARAMETERS(NemoFeedbackParameters,
-      oops::ObsFilterParametersBase)
+      ufo::ObsFilterParametersBase)
 
  public:
   oops::Parameter<std::string> Filename{"filename", "nemo_fdbk_out.nc", this};
@@ -54,10 +54,15 @@ class NemoFeedbackParameters : public oops::ObsFilterParametersBase {
   oops::OptionalParameter<util::DateTime> refDate{"reference date", this};
   oops::OptionalParameter<std::string> depthGroup{"depth group", this};
   oops::OptionalParameter<std::string> depthVariable{"depth variable", this};
-  /// Logic used to select locations to be written to file.
-  /// If not specified, all locations will be written.
+  /// Data Type (float or default to double) of the netCDF output data
+  oops::OptionalParameter<OutputDtype> type{"type", this};
+  /// \brief boolean mask to select locations to be written to file.
+  ///        If not specified, all locations will be written.
   oops::Parameter<std::vector<ufo::WhereParameters>> where{"where", {}, this};
+  /// \brief Parameter specifying path to yaml file containing Observation to
+  ///        GeoVaL name mapping
+  oops::OptionalParameter<std::string> geoVaLsAliasFile{
+    "observation alias file", this};
 };
 
 }  // namespace nemo_feedback
-

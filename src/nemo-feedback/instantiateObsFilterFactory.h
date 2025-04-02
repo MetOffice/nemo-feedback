@@ -1,19 +1,16 @@
 /*
- * (C) Crown Copyright 2020, the Met Office. All rights reserved.
- *
- * Refer to COPYRIGHT.txt of this distribution for details.
+ * (C) British Crown Copyright 2024 Met Office
  */
 
 #pragma once
 
-#include "oops/interface/ObsFilterBase.h"
 #include "nemo-feedback/NemoFeedback.h"
+#include "ufo/ObsFilterBase.h"
 
 namespace nemo_feedback {
 
-template<typename OBS>
 void instantiateObsFilterFactory() {
-  static oops::interface::FilterMaker<OBS, NemoFeedback>
+  static ufo::FilterMaker<NemoFeedback>
     makerNemoFeedback_("NEMO Feedback Writer");
 }
 

@@ -1,0 +1,2 @@
+src/tests/Data/*.nc filter=lfs diff=lfs merge=lfs -text
+src/tests/Data/*.odb filter=lfs diff=lfs merge=lfs -text

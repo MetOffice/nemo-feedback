@@ -6,8 +6,8 @@ dimensions:
 	STRINGNAM = 8 ;
 	STRINGTYP = 4 ;
 	STRINGWMO = 8 ;
-	N_OBS = 1 ;
-	N_LEVELS = 10 ;
+	N_OBS = 2 ;
+	N_LEVELS = 9 ;
 	N_VARS = 1 ;
 	N_ENTRIES = 1 ;
 variables:
@@ -25,6 +25,7 @@ variables:
 		LONGITUDE:units = "degrees_east" ;
 		LONGITUDE:long_name = "longitude" ;
 	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:_FillValue = 99999. ;
 		DEPTH:units = "metre" ;
 		DEPTH:long_name = "Depth" ;
 	double JULD(N_OBS) ;
@@ -39,25 +40,25 @@ variables:
 		DEPTH_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int DEPTH_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
 		DEPTH_QC_FLAGS:long_name = "Quality on depth" ;
-		DEPTH_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		DEPTH_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int OBSERVATION_QC(N_OBS) ;
 		OBSERVATION_QC:long_name = "Quality on observation" ;
 		OBSERVATION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int OBSERVATION_QC_FLAGS(N_OBS, N_QCF) ;
 		OBSERVATION_QC_FLAGS:long_name = "Quality on observation" ;
-		OBSERVATION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		OBSERVATION_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int POSITION_QC(N_OBS) ;
 		POSITION_QC:long_name = "Quality on position" ;
 		POSITION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int POSITION_QC_FLAGS(N_OBS, N_QCF) ;
 		POSITION_QC_FLAGS:long_name = "Quality on position" ;
-		POSITION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		POSITION_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int JULD_QC(N_OBS) ;
 		JULD_QC:long_name = "Quality on date and time" ;
 		JULD_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int JULD_QC_FLAGS(N_OBS, N_QCF) ;
 		JULD_QC_FLAGS:long_name = "Quality on date and time" ;
-		JULD_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		JULD_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int ORIGINAL_FILE_INDEX(N_OBS) ;
 		ORIGINAL_FILE_INDEX:long_name = "Index in original data file" ;
 	double POTM_OBS(N_OBS, N_LEVELS) ;
@@ -105,23 +106,27 @@ data:
  ENTRIES =
   "Hx      " ;
 
- LATITUDE = 35 ;
+ LATITUDE = 35, 36 ;
 
- LONGITUDE = -40 ;
+ LONGITUDE = -40, -42 ;
 
  DEPTH =
-  0, 1, 2, 3, 4, 5, 10, 100, 200, 1000 ;
+  0, 1, 2, 3, 4, 5, 10, 100, 200,
+  0, 1, _, _, _, _, _, _, _ ;
 
- JULD = 26113.5 ;
+ JULD = 26113.5, 26113.5 ;
 
  STATION_IDENTIFIER =
-  "20190615" ;
+  "20190615",
+  "   12345" ;
 
  STATION_TYPE =
+  "    ",
   "    " ;
 
  DEPTH_QC =
-  _, _, _, _, _, _, _, _, _, _ ;
+  _, _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _, _ ;
 
  DEPTH_QC_FLAGS =
   _, _,
@@ -133,34 +138,46 @@ data:
   _, _,
   _, _,
   _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
   _, _ ;
 
- OBSERVATION_QC = 1 ;
+ OBSERVATION_QC = 1, 1 ;
 
  OBSERVATION_QC_FLAGS =
+  _, _,
   _, _ ;
 
- POSITION_QC = _ ;
+ POSITION_QC = _, _ ;
 
  POSITION_QC_FLAGS =
+  _, _,
   _, _ ;
 
- JULD_QC = _ ;
+ JULD_QC = _, _ ;
 
  JULD_QC_FLAGS =
+  _, _,
   _, _ ;
 
- ORIGINAL_FILE_INDEX = _ ;
+ ORIGINAL_FILE_INDEX = _, _ ;
 
  POTM_OBS =
-  12.3000001907349, 12.3999996185303, 12.8999996185303, _, 11.6999998092651, 
-    10.3000001907349, 10.6999998092651, 9.30000019073486, 9.10000038146973, _ ;
+  12.3, 12.4, 12.9, _, 11.7, 10.3, 10.7, 9.3000002, 9.1000004,
+  18, 18.5, _, _, _, _, _, _, _ ;
 
  POTM_Hx =
-  18.1944444613818, 18.1638889034759, 18.13333334557, 18.1027777876641, 
-    18.0722222297581, 18.0416666718522, _, _, _, _ ;
+  18.194445, 18.163889, 18.133333, 18.102777, 18.072222, 18.041666, _, _, _,
+  18.299999, 18.6, _, _, _, _, _, _, _ ;
 
  POTM_QC_FLAGS =
+  _, _,
   _, _ ;
 
  POTM_LEVEL_QC_FLAGS =
@@ -173,19 +190,29 @@ data:
   _, _,
   _, _,
   _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
+  _, _,
   _, _ ;
 
- POTM_QC = 1 ;
+ POTM_QC = 1, 1 ;
 
  POTM_LEVEL_QC =
-  1, 1, 1, 4, 1, 1, 4, 4, 4, 4 ;
+  1, 1, 1, 4, 1, 1, 4, 4, 4,
+  1, 1, _, _, _, _, _, _, _ ;
 
- POTM_IOBSI = _ ;
+ POTM_IOBSI = _, _ ;
 
- POTM_IOBSJ = _ ;
+ POTM_IOBSJ = _, _ ;
 
  POTM_IOBSK =
-  _, _, _, _, _, _, _, _, _, _ ;
+  _, _, _, _, _, _, _, _, _,
+  _, _, _, _, _, _, _, _, _ ;
 
  POTM_GRID = "T" ;
 }

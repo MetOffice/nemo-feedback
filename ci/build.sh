@@ -20,16 +20,14 @@ trap finally EXIT
 
 cd "${WORKD}"
 
-export LD_LIBRARY_PATH="${WORKD}/lib:$LD_LIBRARY_PATH"
-export PLUGINS_MANIFEST_PATH="${WORKD}/share/plugins"
-export ATLAS_DATA_PATH=/usr/local/src/nemo-feedback/ci/atlas-data
+source /opt/spack-environment/activate.sh
 
-ecbuild -S "${HERE}" -DCMAKE_BUILD_TYPE=Debug -DECBUILD_2_COMPAT="ON" -DMPI_ARGS="--oversubscribe"
+rm -f "${HERE}/nemo-feedback"
+ln -s '..' "${HERE}/nemo-feedback"
+ecbuild -S "${HERE}"
 make -j "${NPROC}"
 
-./bin/atlas-grids ORCA2_T --info
-
-#env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
-#    ctest -j "${NPROC}" -V --output-on-failure --test-dir './nemo-feedback'
+env OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+    ctest -j "${NPROC}" -V --output-on-failure --test-dir "./nemo-feedback"
 
 exit

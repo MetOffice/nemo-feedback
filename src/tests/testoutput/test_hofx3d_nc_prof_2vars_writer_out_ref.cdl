@@ -10,12 +10,14 @@ dimensions:
 	N_LEVELS = 6 ;
 	N_VARS = 2 ;
 	N_ENTRIES = 1 ;
+	N_EXTRA = 1 ;
 variables:
 	char JULD_REFERENCE(STRINGJULD) ;
 		JULD_REFERENCE:long_name = "Date of reference for julian days" ;
 		JULD_REFERENCE:Conventions = "YYYYMMDDHHMMSS" ;
 	char VARIABLES(N_VARS, STRINGNAM) ;
 		VARIABLES:long_name = "List of variables in feedback files" ;
+	char EXTRA(N_EXTRA, STRINGNAM) ;
 	char ENTRIES(N_ENTRIES, STRINGNAM) ;
 		ENTRIES:long_name = "List of additional entries for each variable in feedback files" ;
 	double LATITUDE(N_OBS) ;
@@ -25,6 +27,7 @@ variables:
 		LONGITUDE:units = "degrees_east" ;
 		LONGITUDE:long_name = "longitude" ;
 	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:_FillValue = 99999. ;
 		DEPTH:units = "metre" ;
 		DEPTH:long_name = "Depth" ;
 	double JULD(N_OBS) ;
@@ -39,25 +42,25 @@ variables:
 		DEPTH_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int DEPTH_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
 		DEPTH_QC_FLAGS:long_name = "Quality on depth" ;
-		DEPTH_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		DEPTH_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int OBSERVATION_QC(N_OBS) ;
 		OBSERVATION_QC:long_name = "Quality on observation" ;
 		OBSERVATION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int OBSERVATION_QC_FLAGS(N_OBS, N_QCF) ;
 		OBSERVATION_QC_FLAGS:long_name = "Quality on observation" ;
-		OBSERVATION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		OBSERVATION_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int POSITION_QC(N_OBS) ;
 		POSITION_QC:long_name = "Quality on position" ;
 		POSITION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int POSITION_QC_FLAGS(N_OBS, N_QCF) ;
 		POSITION_QC_FLAGS:long_name = "Quality on position" ;
-		POSITION_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		POSITION_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int JULD_QC(N_OBS) ;
 		JULD_QC:long_name = "Quality on date and time" ;
 		JULD_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
 	int JULD_QC_FLAGS(N_OBS, N_QCF) ;
 		JULD_QC_FLAGS:long_name = "Quality on date and time" ;
-		JULD_QC_FLAGS:Conventions = "OPS flag conventions" ;
+		JULD_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
 	int ORIGINAL_FILE_INDEX(N_OBS) ;
 		ORIGINAL_FILE_INDEX:long_name = "Index in original data file" ;
 	double POTM_OBS(N_OBS, N_LEVELS) ;
@@ -122,6 +125,9 @@ variables:
 		PSAL_IOBSK:long_name = "ORCA grid search K coordinate" ;
 	char PSAL_GRID(STRINGGRID) ;
 		PSAL_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+	double TEMP(N_OBS, N_LEVELS) ;
+		TEMP:long_name = "Insitu temperature" ;
+		TEMP:units = "Degrees Celsius" ;
 
 // global attributes:
 		:title = "NEMO observation operator output" ;
@@ -133,6 +139,9 @@ data:
  VARIABLES =
   "POTM    ",
   "PSAL    " ;
+
+ EXTRA =
+  "TEMP    " ;
 
  ENTRIES =
   "Hx      " ;
@@ -156,8 +165,8 @@ data:
   "    " ;
 
  DEPTH_QC =
-  _, _, _, _, _, _,
-  _, _, _, _, _, _ ;
+  1, 1, 1, 1, 4, 4,
+  1, 1, 1, 1, 4, 4 ;
 
  DEPTH_QC_FLAGS =
   _, _,
@@ -173,19 +182,19 @@ data:
   _, _,
   _, _ ;
 
- OBSERVATION_QC = 4, 4 ;
+ OBSERVATION_QC = 1, 129 ;
 
  OBSERVATION_QC_FLAGS =
   _, _,
   _, _ ;
 
- POSITION_QC = _, _ ;
+ POSITION_QC = 1, 1 ;
 
  POSITION_QC_FLAGS =
   _, _,
   _, _ ;
 
- JULD_QC = _, _ ;
+ JULD_QC = 4, 1 ;
 
  JULD_QC_FLAGS =
   _, _,
@@ -194,14 +203,12 @@ data:
  ORIGINAL_FILE_INDEX = _, _ ;
 
  POTM_OBS =
-  12.3000001907349, 12.3999996185303, 12.8999996185303, _, 11.6999998092651, 
-    10.3000001907349,
-  13.3000001907349, 13.3999996185303, 13.8999996185303, _, 12.6999998092651, 
-    11.3000001907349 ;
+  12.3, 12.4, 12.9, _, 11.7, 10.3,
+  13.3, 13.4, 13.9, _, 12.7, 11.3 ;
 
  POTM_Hx =
-  18.1944444613818, 18.1638889034759, 18.1027777876641, _, _, _,
-  18.2000000067484, 18.1686111163633, 18.1058333355931, _, _, _ ;
+  18.194445, 18.163889, 18.102777, _, _, _,
+  18.200001, 18.168612, 18.105833, _, _, _ ;
 
  POTM_QC_FLAGS =
   _, _,
@@ -221,11 +228,11 @@ data:
   1, _,
   1, _ ;
 
- POTM_QC = _, _ ;
+ POTM_QC = 1, 129 ;
 
  POTM_LEVEL_QC =
-  _, _, _, _, _, _,
-  _, _, _, _, _, _ ;
+  1, 1, 1, 4, 1, 1,
+  129, 129, 129, 132, 129, 129 ;
 
  POTM_IOBSI = _, _ ;
 
@@ -238,14 +245,12 @@ data:
  POTM_GRID = "T" ;
 
  PSAL_OBS =
-  35.2999992370605, 35.4000015258789, 35.9000015258789, _, 35.7000007629395, 
-    35.2999992370605,
-  36.2999992370605, 36.4000015258789, 36.9000015258789, _, 36.7000007629395, 
-    36.2999992370605 ;
+  35.299999, 35.400002, 35.900002, _, 35.700001, 35.299999,
+  36.299999, 36.400002, 36.900002, _, 36.700001, 36.299999 ;
 
  PSAL_Hx =
-  35.1944444613818, 35.1638889034759, 35.1027777876641, _, _, _,
-  35.2000000067484, 35.1686111163633, 35.1058333355931, _, _, _ ;
+  35.194443, 35.163887, 35.102779, _, _, _,
+  35.200001, 35.16861, 35.105835, _, _, _ ;
 
  PSAL_QC_FLAGS =
   _, _,
@@ -265,11 +270,11 @@ data:
   1, _,
   1, _ ;
 
- PSAL_QC = _, _ ;
+ PSAL_QC = 1, 129 ;
 
  PSAL_LEVEL_QC =
-  _, _, _, _, _, _,
-  _, _, _, _, _, _ ;
+  1, 1, 1, 4, 1, 1,
+  129, 129, 129, 132, 129, 129 ;
 
  PSAL_IOBSI = _, _ ;
 
@@ -280,4 +285,8 @@ data:
   _, _, _, _, _, _ ;
 
  PSAL_GRID = "T" ;
+
+ TEMP =
+  12, 12, 12, 12, 12, 12,
+  12, 12, 12, 12, 12, 12 ;
 }

@@ -1,0 +1,43 @@
+time window:
+  begin: 2021-06-28T12:00:00Z
+  end: 2021-06-30T12:00:00Z
+observations:
+  - obs space:
+      name: Sea Ice
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/hofx_sic_obs.nc
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: testoutput/test_hofx_sic_jopa_out.nc
+      simulated variables: [seaIceFraction]
+    obs filters:
+    - filter: NEMO Feedback Writer
+      reference date: 2021-06-30T12:00:00Z
+      filename: testoutput/test_hofx_sic_writer_out.nc
+      observation alias file: testinput/test_name_map.yaml
+      where:
+      - variable:
+          name: DiagnosticFlags/ObsToWrite/seaIceFraction
+        value: is_true
+      variables:
+      - name: seaIceFraction
+        nemo name: ICECONC
+        long name: ice area fraction
+        units: Fraction
+        additional variables:
+        - name: seaIceFraction
+          feedback suffix: Hx
+          ioda group: HofX
+      - name: seaIceFraction
+        nemo name: MDT
+        long name: fake MDT
+        units: fake metres
+        extra variable: true
+    benchmarkFlag: 1000 # just to keep the ObsFilters test happy
+    flaggedBenchmark: 0
+    HofX: hofx
+    geovals:
+      filename: Data/test_hofx_sic_writer_geovals.nc

@@ -1,9 +1,11 @@
+# (C) British Crown Copyright 2024 Met Office
 
 list( APPEND fdbk_writer_test_input
-  seaice_obs_writer.yaml
+  hofx_sic_writer.yaml
   hofx_two_vars_writer.yaml
   hofx_profiles_writer.yaml
   hofx_profiles_2var_writer.yaml
+  test_name_map.yaml
 )
 
 foreach(FILENAME ${fdbk_writer_test_input})

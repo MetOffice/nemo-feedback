@@ -1,31 +1,31 @@
 /*
- * (C) Crown Copyright 2021, the Met Office. All rights reserved.
- *
- * Refer to COPYRIGHT.txt of this distribution for details.
+ * (C) British Crown Copyright 2024 Met Office
  */
 
 #pragma once
-
 #include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include "eckit/mpi/Comm.h"
 #include "ioda/ObsDataVector.h"
 #include "oops/base/Variables.h"
-#include "oops/interface/ObsFilterBase.h"
+#include "oops/base/ObsVariables.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 #include "nemo-feedback/NemoFeedbackParameters.h"
-#include "nemo-feedback/NemoFeedbackWriter.h"
+#include "nemo-feedback/feedback_io/Writer.h"
+#include "nemo-feedback/NemoFeedbackDataCreator.h"
 #include "ufo/filters/ObsFilterData.h"
-#include "ufo/ObsTraits.h"
+#include "ufo/ObsFilterBase.h"
+#include "ufo/utils/VariableNameMap.h"
 
 namespace nemo_feedback {
 
 /// \brief UFO filter for outputting data to NEMO feedback file
-class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
+class NemoFeedback : public ufo::ObsFilterBase,
                      private util::ObjectCounter<NemoFeedback> {
  public:
   static const std::string classname() {return "nemo_feedback::NemoFeedback";}
@@ -45,44 +45,48 @@ class NemoFeedback : public oops::interface::ObsFilterBase<ufo::ObsTraits>,
                   const ioda::ObsVector &ov,
                   const ioda::ObsVector &bv,
                   const ufo::ObsDiagnostics &dv) override;
-  void checkFilterData(const oops::FilterStage filterStage) override {}
+  void checkFilterData(const ufo::FilterStage filterStage) override {}
 
   oops::Variables requiredVars() const override {return geovars_;}
-  oops::Variables requiredHdiagnostics() const override {return extradiagvars_;}
+  oops::ObsVariables requiredHdiagnostics() const override {return extradiagvars_;}
 
  private:
-  /// \brief group coordinate data by the ioda record whilst filtering
-  ///        observations to write to the file
-  void groupCoordsByRecord(const std::vector<bool>& to_write,
-                          NemoFeedbackWriter::CoordData& coords,
-                          bool is_profile) const;
-  /// \brief Setup the NEMO STATION_TYPES and STATION_IDS netCDF variables for
-  ///        altimeter observations.  Filter observations based on the latest
-  ///        version. TODO: move this into another UFO filter.
-  void setupAltimeterIds(const size_t n_obs,
-                        std::vector<std::string>& station_ids,
-                        std::vector<std::string>& station_types,
-                        std::vector<bool>& to_write) const;
+  /// \brief write the data to the feedback file depending on chosen type
+  template <typename T>
+  void write_all_data(feedback_io::Writer<T>& fdbk_writer,
+                      const NemoFeedbackDataCreator& creator) const;
+  /// \brief Update the observations to write based upon the latest available
+  ///        version of the data. This step ought to be moved to a separate ufo
+  ///        filter when possible.
+  void updateAltimeterSelection(std::vector<bool>& to_write) const;
+  /// \brief setup the feedback file metadata - this is data that is written to
+  ///        the file during construction of the feedback file. This step should
+  ///        ensure that the number of levels and the reference Julian day are
+  ///        shared across MPI processes.
+  feedback_io::MetaData setupMetaData(const NemoFeedbackDataCreator& creator)
+    const;
   /// \brief Setup the NEMO STATION_TYPES and STATION_IDS netCDF variables
-  void setupIds(const size_t n_obs,
-                const std::vector<size_t>& record_starts,
-                const std::vector<size_t>& record_counts,
-                std::vector<std::string>& station_ids,
-                std::vector<std::string>& station_types) const;
-  /// \brief Sync relevent coordinate data across MPI processes
-  void mpi_sync_coordinates(NemoFeedbackWriter::CoordData& coords,
-                            const eckit::mpi::Comm& comm);
+  ///        In the case of altimetry data, this requires additional processing
+  ///        of the satelliteIdentifier to extract these variables.
+  std::tuple<feedback_io::Data<std::string>, feedback_io::Data<std::string>>
+    setupIDs(const NemoFeedbackDataCreator& creator) const;
+  /// \brief Sync number of levels and reference julian day data across MPI
+  /// processes
+  std::tuple<util::DateTime, size_t> mpiSync(size_t nLevelsLocal) const;
   void print(std::ostream &) const override;
 
   ioda::ObsSpace & obsdb_;
   ufo::ObsFilterData data_;
   oops::Variables geovars_;
-  oops::Variables extradiagvars_;
+  oops::ObsVariables extradiagvars_;
   std::shared_ptr<ioda::ObsDataVector<int>> flags_;
   std::shared_ptr<ioda::ObsDataVector<float>> obsErrors_;
-  const util::DateTime validityTime_;
-
   NemoFeedbackParameters parameters_;
+  ufo::VariableNameMap nameMap_;
+  const util::DateTime validityTime_;
+  feedback_io::NameData nameData_;
+  std::vector<bool> isExtraVariable_;
+  bool isAltimeter_;
 };
 
 }  // namespace nemo_feedback

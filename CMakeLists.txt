@@ -1,16 +1,18 @@
-
+# (C) British Crown Copyright 2024 Met Office
 ############################################################################################
 # nemo-feedback
 
 cmake_minimum_required( VERSION 3.12 FATAL_ERROR )
 
-find_package( ecbuild 3.4 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild )
-include( ecbuild_system NO_POLICY_SCOPE )
-
 ################################################################################
 # Initialise project nemo-feedback
 
-project( nemo-feedback LANGUAGES CXX )
+project( nemo-feedback VERSION 0.4.0 LANGUAGES CXX Fortran )
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package( ecbuild QUIET )
+include( ecbuild_system NO_POLICY_SCOPE )
 ecbuild_declare_project()
 
 set( CMAKE_DIRECTORY_LABELS "nemo-feedback" )
@@ -18,21 +20,19 @@ set( CMAKE_DIRECTORY_LABELS "nemo-feedback" )
 ################################################################################
 # Required packages
 
-ecbuild_find_package( NAME eckit VERSION 1.16 REQUIRED )
+find_package( eckit 1.16 REQUIRED )
 ecbuild_debug( "   eckit_FEATURES : [${eckit_FEATURES}]" )
 
-ecbuild_find_package( NAME oops )
+find_package( oops REQUIRED )
 ecbuild_debug( "   oops_FEATURES : [${oops_FEATURES}]" )
 
-ecbuild_find_package( NAME ioda )
+find_package( ioda REQUIRED )
 ecbuild_debug( "   ioda_FEATURES : [${ioda_FEATURES}]" )
 
-ecbuild_find_package( NAME ufo )
+find_package( ufo REQUIRED )
 ecbuild_debug( "   ufo_FEATURES : [${ufo_FEATURES}]" )
 
-ecbuild_find_package( NAME orca-jedi )
-
-#ecbuild_find_package( NAME NetCDF COMPONENTS CXX)
+ecbuild_find_package( NAME NetCDF COMPONENTS CXX Fortran )
 find_package( NetCDF COMPONENTS CXX)
 ecbuild_debug( "   NetCDF_FEATURES: [${NetCDF_FEATURES}]" )
 

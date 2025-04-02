@@ -1,115 +1,65 @@
-geometry :
-  nemo variables:
-    - name: depth
-      nemo field name: nav_lev
-      model space: vertical
-    - name: sea_water_potential_temperature
-      nemo field name: votemper
-      model space: volume
-    - name: sea_water_potential_temperature_background_error
-      nemo field name: t_tot_var
-      model space: volume
-      variable type: background variance
-    - name: sea_water_salinity
-      nemo field name: vosaline
-      model space: volume
-    - name: sea_water_salinity_background_error
-      nemo field name: t_tot_var
-      model space: volume
-      variable type: background variance
-  grid name: ORCA2_T
-  number levels: 3
-state :
-  date: 2021-06-30T00:00:00Z
-  state variables:
-  - sea_water_potential_temperature
-  - sea_water_potential_temperature_background_error
-  - depth
-  - sea_water_salinity
-  - sea_water_salinity_background_error
-  nemo field file: ../../../orca-jedi/src/tests/Data/orca2_t_nemo.nc
-  variance field file: ../../../orca-jedi/src/tests/Data/orca2_t_bkg_var.nc
-window begin: 2021-06-29T12:00:00Z
-window length: P1D
+time window:
+  begin: 2021-06-29T12:00:00Z
+  end: 2021-06-30T12:00:00Z
 observations:
-  observers:
   - obs space:
       name: Sea Temperature
       obsdatain:
-        obsfile: ../../../orca-jedi/src/tests/Data/hofx_prof_2var_obs.nc
+        engine:
+          type: H5File
+          obsfile: Data/hofx_prof_2var_obs.nc
         obsgrouping:
-          group variables: [ "station_id", "dateTime"]
-          sort variable: depth
+          group variables: ["stationIdentification", "dateTime"]
+          sort variable: depthBelowWaterSurface
           sort group: ObsValue
-          sort order: descending
+          sort order: ascending
       obsdataout:
-        obsfile: testoutput/test_hofx3d_profiles_2var_writer_jopa_out.nc
-      simulated variables: [sea_water_potential_temperature, sea_water_salinity]
-    get values:
-      atlas-interpolator:
-        type: unstructured-bilinear-lonlat
-        non_linear: missing-if-all-missing
+        engine:
+          type: H5File
+          obsfile: testoutput/test_hofx3d_profiles_2var_writer_jopa_out.nc
+      simulated variables: [waterPotentialTemperature, salinity]
+      observed variables: [waterPotentialTemperature, salinity]
+      derived variables: [waterTemperature]
     obs operator:
       name: VertInterp
       variables:
-      - name: sea_water_potential_temperature
-      - name: sea_water_salinity
-      vertical coordinate: depth
+      - name: waterPotentialTemperature
+      - name: salinity
+      observation alias file: testinput/test_name_map.yaml
+      vertical coordinate: depthBelowWaterSurface
       observation vertical coordinate group: ObsValue
+      interpolation method: linear
     obs filters:
-#    - filter: Create Diagnostic Flags
-#      flags:
-#      - name: FinalReject
-#        initial value: false
-#    - filter: RejectList
-#      defer to post: true
-#      where:
-#      - variable:
-#          name: sea_water_potential_temperature@ObsValue
-#        is_not_defined:
-#      actions:
-#      - name: set
-#        flag: FinalReject
-#      - name: reject
-#    - filter: RejectList
-#      defer to post: true
-#      where:
-#      - variable:
-#          name: sea_water_potential_temperature@HofX
-#        is_not_defined:
-#      actions:
-#      - name: set
-#        flag: FinalReject
-#      - name: reject
-#    - filter: GOMsaver
-#      filename: test_hofx3d_prof_2var_jopa_out_geovals.nc
-    - filter: Variable Assignment
-      assignments:
-      - name: sea_water_potential_temperature@QCFlags
-        type: int
-        value: 1
-      - name: sea_water_salinity@QCFlags
-        type: int
-        value: 1
     - filter: NEMO Feedback Writer
       filename: testoutput/test_hofx3d_nc_prof_2vars_writer_out.nc
       reference date: 1950-01-01T00:00:00Z
+      observation alias file: testinput/test_name_map.yaml
       variables:
-      - name: sea_water_potential_temperature
+      - name: waterPotentialTemperature
         nemo name: POTM
         long name: sea water potential temperature
         units: degrees Celsius
         additional variables:
-        - name: sea_water_potential_temperature
+        - name: waterPotentialTemperature
           feedback suffix: Hx
           ioda group: HofX
-      - name: sea_water_salinity
+      - name: salinity
         nemo name: PSAL
         long name: sea water salinity
         units: degrees Celsius
         additional variables:
-        - name: sea_water_salinity
+        - name: salinity
           feedback suffix: Hx
           ioda group: HofX
-test:
-  reference filename: testoutput/test_hofx3d_nc_prof_2vars_writer.ref
+      - long name: Insitu temperature
+        name: waterTemperature
+        ioda group: DerivedObsValue
+        nemo name: TEMP
+        units: Degrees Celsius
+        extra variable: true
+
+    benchmarkFlag: 1000 # just to keep the ObsFilters test happy
+    flaggedBenchmark: 0
+    HofX: hofx
+    geovals:
+      filename: Data/test_hofx3d_nc_prof_2vars_writer_geovals.nc
