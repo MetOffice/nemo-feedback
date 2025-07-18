@@ -55,3 +55,26 @@ ecbuild_add_test( TARGET test_nemo_feedback_hofx_profiles_two_vars_file
                   COMMAND ./mains/compare_nc_cdl.sh
                   TEST_DEPENDS test_nemo_feedback_hofx_profiles_two_vars_writer)
 
+ecbuild_add_test( TARGET test_nemo_feedback_hofx_mpi_2_writer
+                  OMP 1
+                  MPI 2
+                  ARGS testinput/hofx_mpi_2_writer.yaml
+                  COMMAND test_NemoInputsFilters.x )
+
+ecbuild_add_test( TARGET test_nemo_feedback_hofx_mpi_2_file
+                  OMP 1
+                  ARGS testoutput/test_hofx_mpi_2_writer_out_00001.nc testoutput/test_hofx_mpi_2_writer_out_00001_ref.cdl
+                  COMMAND ./mains/compare_nc_cdl.sh
+                  TEST_DEPENDS test_nemo_feedback_hofx_mpi_2_writer)
+
+ecbuild_add_test( TARGET test_nemo_feedback_hofx_mpi_3_writer
+                  OMP 1
+                  MPI 3
+                  ARGS testinput/hofx_mpi_3_writer.yaml
+                  COMMAND test_NemoInputsFilters.x )
+
+ecbuild_add_test( TARGET test_nemo_feedback_hofx_mpi_3_file
+                  OMP 1
+                  ARGS testoutput/test_hofx_mpi_3_writer_out_00001.nc testoutput/test_hofx_mpi_3_writer_out_00001_ref.cdl
+                  COMMAND ./mains/compare_nc_cdl.sh
+                  TEST_DEPENDS test_nemo_feedback_hofx_mpi_3_writer)

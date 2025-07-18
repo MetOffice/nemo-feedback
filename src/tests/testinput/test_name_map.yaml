@@ -11,4 +11,5 @@ variable maps:
     alias: sea_water_salinity
   - name: depthBelowWaterSurface
     alias: depth
-
+  - name: seaSurfaceHeightAnomaly
+    alias: sea_surface_height_anomaly

@@ -1,0 +1,172 @@
+netcdf test_hofx_mpi_3_writer_out_00001 {
+dimensions:
+	N_QCF = 2 ;
+	STRINGGRID = 1 ;
+	STRINGJULD = 14 ;
+	STRINGNAM = 8 ;
+	STRINGTYP = 4 ;
+	STRINGWMO = 8 ;
+	N_OBS = 1 ;
+	N_LEVELS = 1 ;
+	N_VARS = 1 ;
+	N_ENTRIES = 1 ;
+variables:
+	char JULD_REFERENCE(STRINGJULD) ;
+		JULD_REFERENCE:long_name = "Date of reference for julian days" ;
+		JULD_REFERENCE:Conventions = "YYYYMMDDHHMMSS" ;
+	char VARIABLES(N_VARS, STRINGNAM) ;
+		VARIABLES:long_name = "List of variables in feedback files" ;
+	char ENTRIES(N_ENTRIES, STRINGNAM) ;
+		ENTRIES:long_name = "List of additional entries for each variable in feedback files" ;
+	double LATITUDE(N_OBS) ;
+		LATITUDE:units = "degrees_north" ;
+		LATITUDE:long_name = "latitude" ;
+	double LONGITUDE(N_OBS) ;
+		LONGITUDE:units = "degrees_east" ;
+		LONGITUDE:long_name = "longitude" ;
+	double DEPTH(N_OBS, N_LEVELS) ;
+		DEPTH:_FillValue = 99999. ;
+		DEPTH:units = "metre" ;
+		DEPTH:long_name = "Depth" ;
+	double JULD(N_OBS) ;
+		JULD:units = "days since JULD_REFERENCE" ;
+		JULD:long_name = "Julian day" ;
+	char STATION_IDENTIFIER(N_OBS, STRINGWMO) ;
+		STATION_IDENTIFIER:long_name = "Station identifier" ;
+	char STATION_TYPE(N_OBS, STRINGTYP) ;
+		STATION_TYPE:long_name = "Code instrument type" ;
+	int DEPTH_QC(N_OBS, N_LEVELS) ;
+		DEPTH_QC:long_name = "Quality on depth" ;
+		DEPTH_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int DEPTH_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		DEPTH_QC_FLAGS:long_name = "Quality on depth" ;
+		DEPTH_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
+	int OBSERVATION_QC(N_OBS) ;
+		OBSERVATION_QC:long_name = "Quality on observation" ;
+		OBSERVATION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int OBSERVATION_QC_FLAGS(N_OBS, N_QCF) ;
+		OBSERVATION_QC_FLAGS:long_name = "Quality on observation" ;
+		OBSERVATION_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
+	int POSITION_QC(N_OBS) ;
+		POSITION_QC:long_name = "Quality on position" ;
+		POSITION_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int POSITION_QC_FLAGS(N_OBS, N_QCF) ;
+		POSITION_QC_FLAGS:long_name = "Quality on position" ;
+		POSITION_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
+	int JULD_QC(N_OBS) ;
+		JULD_QC:long_name = "Quality on date and time" ;
+		JULD_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int JULD_QC_FLAGS(N_OBS, N_QCF) ;
+		JULD_QC_FLAGS:long_name = "Quality on date and time" ;
+		JULD_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
+	int ORIGINAL_FILE_INDEX(N_OBS) ;
+		ORIGINAL_FILE_INDEX:long_name = "Index in original data file" ;
+	double SLA_OBS(N_OBS, N_LEVELS) ;
+		SLA_OBS:long_name = "Sea Surface Height Anomaly" ;
+		SLA_OBS:units = "Fraction" ;
+		SLA_OBS:_FillValue = 99999. ;
+	double SLA_Hx(N_OBS, N_LEVELS) ;
+		SLA_Hx:long_name = "Sea Surface Height Anomaly Hx" ;
+		SLA_Hx:units = "Fraction" ;
+		SLA_Hx:_FillValue = 99999. ;
+	int SLA_QC_FLAGS(N_OBS, N_QCF) ;
+		SLA_QC_FLAGS:_FillValue = 0 ;
+		SLA_QC_FLAGS:long_name = "quality flags on Sea Surface Height Anomaly" ;
+		SLA_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
+	int SLA_LEVEL_QC_FLAGS(N_OBS, N_LEVELS, N_QCF) ;
+		SLA_LEVEL_QC_FLAGS:_FillValue = 0 ;
+		SLA_LEVEL_QC_FLAGS:long_name = "quality flags for each level on Sea Surface Height Anomaly" ;
+		SLA_LEVEL_QC_FLAGS:Conventions = "JEDI UFO QC flag conventions" ;
+	int SLA_QC(N_OBS) ;
+		SLA_QC:long_name = "quality on Sea Surface Height Anomaly" ;
+		SLA_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int SLA_LEVEL_QC(N_OBS, N_LEVELS) ;
+		SLA_LEVEL_QC:_FillValue = 0 ;
+		SLA_LEVEL_QC:long_name = "quality for each level on Sea Surface Height Anomaly" ;
+		SLA_LEVEL_QC:Conventions = "U.S. Integrated Ocean Observing System, 2017. Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1" ;
+	int SLA_IOBSI(N_OBS) ;
+		SLA_IOBSI:long_name = "ORCA grid search I coordinate" ;
+	int SLA_IOBSJ(N_OBS) ;
+		SLA_IOBSJ:long_name = "ORCA grid search J coordinate" ;
+	int SLA_IOBSK(N_OBS, N_LEVELS) ;
+		SLA_IOBSK:long_name = "ORCA grid search K coordinate" ;
+	char SLA_GRID(STRINGGRID) ;
+		SLA_GRID:long_name = "ORCA grid search grid (T,U,V)" ;
+
+// global attributes:
+		:title = "NEMO observation operator output" ;
+		:Convention = "NEMO unified observation operator output" ;
+data:
+
+ JULD_REFERENCE = "20210630120000" ;
+
+ VARIABLES =
+  "SLA     " ;
+
+ ENTRIES =
+  "Hx      " ;
+
+ LATITUDE = 28.26 ;
+
+ LONGITUDE = 33.350002 ;
+
+ DEPTH =
+  0 ;
+
+ JULD = 1461.1639 ;
+
+ STATION_IDENTIFIER =
+  "1005    " ;
+
+ STATION_TYPE =
+  "1005" ;
+
+ DEPTH_QC =
+  _ ;
+
+ DEPTH_QC_FLAGS =
+  _, _ ;
+
+ OBSERVATION_QC = 0 ;
+
+ OBSERVATION_QC_FLAGS =
+  _, _ ;
+
+ POSITION_QC = _ ;
+
+ POSITION_QC_FLAGS =
+  _, _ ;
+
+ JULD_QC = _ ;
+
+ JULD_QC_FLAGS =
+  _, _ ;
+
+ ORIGINAL_FILE_INDEX = _ ;
+
+ SLA_OBS =
+  0.00099999993 ;
+
+ SLA_Hx =
+  -0.072882071 ;
+
+ SLA_QC_FLAGS =
+  _, _ ;
+
+ SLA_LEVEL_QC_FLAGS =
+  _, _ ;
+
+ SLA_QC = _ ;
+
+ SLA_LEVEL_QC =
+  _ ;
+
+ SLA_IOBSI = _ ;
+
+ SLA_IOBSJ = _ ;
+
+ SLA_IOBSK =
+  _ ;
+
+ SLA_GRID = "T" ;
+}
