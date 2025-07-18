@@ -63,8 +63,9 @@ class NemoFeedback : public ufo::ObsFilterBase,
   ///        the file during construction of the feedback file. This step should
   ///        ensure that the number of levels and the reference Julian day are
   ///        shared across MPI processes.
-  feedback_io::MetaData setupMetaData(const NemoFeedbackDataCreator& creator)
-    const;
+  feedback_io::MetaData setupMetaData(const NemoFeedbackDataCreator& creator,
+                                      const util::DateTime juldReferenceGlobal,
+                                      const size_t nLevelsGlobal) const;
   /// \brief Setup the NEMO STATION_TYPES and STATION_IDS netCDF variables
   ///        In the case of altimetry data, this requires additional processing
   ///        of the satelliteIdentifier to extract these variables.

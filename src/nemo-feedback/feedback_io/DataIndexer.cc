@@ -29,6 +29,10 @@ DataIndexer::DataIndexer(const size_t nObs, const size_t nLevels,
   nObs_(nObs), nLevels_(nLevels),  sourceDataSize_(sourceDataSize),
   indices_(indices), starts_(starts) {
   counts_.reserve(nObs);
+  if (nObs == 0) {
+    validate();
+    return;
+  }
   for (size_t iProf = 0; iProf < nObs - 1; ++iProf) {
     counts_.push_back(starts[iProf +1] - starts[iProf]);
   }
