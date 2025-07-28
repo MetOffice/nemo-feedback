@@ -495,11 +495,9 @@ void NemoFeedback::updateAltimeterSelection(std::vector<bool>& to_write) const {
 std::tuple<util::DateTime, size_t> NemoFeedback::mpiSync(
     size_t nLevelsLocal) const {
   auto& comm = obsdb_.comm();
-  util::DateTime juldReferenceLocal = parameters_.refDate.value().value_or(
-      util::DateTime{"1950-01-01T00:00:00Z"});
   std::vector<util::DateTime> datetimes;
   obsdb_.get_db("MetaData", "dateTime", datetimes);
-  juldReferenceLocal = parameters_.refDate.value().value_or(datetimes[0]);
+  util::DateTime juldReferenceLocal = parameters_.refDate.value().value_or(datetimes[0]);
   oops::Log::trace() << "NemoFeedback::mpiSync " << juldReferenceLocal
                      << " and " << nLevelsLocal << " levels" << std::endl;
 
