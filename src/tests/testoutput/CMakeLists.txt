@@ -5,6 +5,8 @@ list( APPEND fdbk_writer_test_output
   test_hofx_two_vars_writer_out_ref.cdl
   test_hofx_profiles_writer_out_ref.cdl
   test_hofx3d_nc_prof_2vars_writer_out_ref.cdl
+  test_hofx_mpi_2_writer_out_00001_ref.cdl
+  test_hofx_mpi_3_writer_out_00001_ref.cdl
 )
 
 foreach(FILENAME ${fdbk_writer_test_output})

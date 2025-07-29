@@ -5,6 +5,8 @@ list( APPEND fdbk_writer_test_input
   hofx_two_vars_writer.yaml
   hofx_profiles_writer.yaml
   hofx_profiles_2var_writer.yaml
+  hofx_mpi_2_writer.yaml
+  hofx_mpi_3_writer.yaml
   test_name_map.yaml
 )
 

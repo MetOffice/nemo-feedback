@@ -1,0 +1,38 @@
+time window:
+  begin: 2024-06-28T12:00:00Z
+  end: 2025-07-18T12:00:00Z
+observations:
+  - obs space:
+      name: Sea Surface Height Anomaly MPI 
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/hofx_mpi_obs.nc
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: testoutput/test_hofx_mpi_2_jopa_out.nc
+      simulated variables: [seaSurfaceHeightAnomaly]
+    obs filters:
+    - filter: NEMO Feedback Writer
+      reference date: 2021-06-30T12:00:00Z
+      filename: testoutput/test_hofx_mpi_2_writer_out.nc
+      observation alias file: testinput/test_name_map.yaml
+      where:
+      - variable:
+          name: DiagnosticFlags/ObsToWrite/seaSurfaceHeightAnomaly
+        value: is_true
+      variables:
+      - name: seaSurfaceHeightAnomaly
+        nemo name: SLA
+        long name: Sea Surface Height Anomaly
+        units: Fraction
+        additional variables:
+        - name: seaSurfaceHeightAnomaly
+          feedback suffix: Hx
+          ioda group: HofX
+    benchmarkFlag: 1000 # just to keep the ObsFilters test happy
+    flaggedBenchmark: 0
+    HofX: hofx
+    geovals:
+      filename: Data/test_hofx_mpi_writer_geovals.nc
