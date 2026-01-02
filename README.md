@@ -1,6 +1,6 @@
 ![CI](https://github.com/MetOffice/nemo-feedback/actions/workflows/ci.yml/badge.svg)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-&copy; British Crown Copyright 2025 Met Office. All rights reserved.
+&copy; British Crown Copyright 2026 Met Office. All rights reserved.
 
 # nemo-feedback
 
