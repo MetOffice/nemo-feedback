@@ -1,4 +1,4 @@
-# (C) British Crown Copyright 2025 Met Office
+# (C) British Crown Copyright 2026 Met Office
 
 ecbuild_add_executable( TARGET  test_NemoInputsFilters.x
                         SOURCES TestObsFilters.cc

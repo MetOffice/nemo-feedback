@@ -1,4 +1,4 @@
-# (C) British Crown Copyright 2025 Met Office
+# (C) British Crown Copyright 2026 Met Office
 
 add_subdirectory(testinput)
 add_subdirectory(testoutput)
