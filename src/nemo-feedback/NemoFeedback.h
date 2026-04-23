@@ -35,8 +35,8 @@ class NemoFeedback : public ufo::ObsFilterBase,
   typedef NemoFeedbackParameters Parameters_;
 
   NemoFeedback(ioda::ObsSpace &, const Parameters_ &,
-               std::shared_ptr<ioda::ObsDataVector<int> > flags,
-               std::shared_ptr<ioda::ObsDataVector<float> > obsErrors);
+               ioda::ObsDataVector<int> & flags,
+               ioda::ObsDataVector<float> & obsErrors);
   ~NemoFeedback();
 
   void preProcess() override {}
@@ -80,8 +80,8 @@ class NemoFeedback : public ufo::ObsFilterBase,
   ufo::ObsFilterData data_;
   oops::Variables geovars_;
   oops::ObsVariables extradiagvars_;
-  std::shared_ptr<ioda::ObsDataVector<int>> flags_;
-  std::shared_ptr<ioda::ObsDataVector<float>> obsErrors_;
+  ioda::ObsDataVector<int> & flags_;
+  ioda::ObsDataVector<float> & obsErrors_;
   NemoFeedbackParameters parameters_;
   ufo::VariableNameMap nameMap_;
   const util::DateTime validityTime_;
