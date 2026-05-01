@@ -45,13 +45,13 @@ constexpr std::string_view defaultDepthVariable{"depthBelowWaterSurface"};
 
 NemoFeedback::NemoFeedback(
     ioda::ObsSpace& obsdb, const Parameters_& params,
-    std::shared_ptr<ioda::ObsDataVector<int>> flags,
-    std::shared_ptr<ioda::ObsDataVector<float>> obsErrors)
+    ioda::ObsDataVector<int> & flags,
+    ioda::ObsDataVector<float> & obsErrors)
     : obsdb_(obsdb),
       data_(obsdb_),
       geovars_(),
-      flags_(std::move(flags)),
-      obsErrors_(std::move(obsErrors)),
+      flags_(flags),
+      obsErrors_(obsErrors),
       parameters_(params),
       nameMap_(params.geoVaLsAliasFile.value()),
       validityTime_(obsdb.windowStart() +
@@ -216,9 +216,9 @@ void NemoFeedback::write_all_data(
     if (obsdb_.has("QCFlags", ufo_name)) {
       variableQCFlagsData = creator.create("QCFlags", ufo_name, int32_t(0));
     } else {
-      const size_t iv = flags_->varnames().find(ufo_name);
+      const size_t iv = flags_.varnames().find(ufo_name);
       std::vector<int32_t> variable_qcFlags;
-      variable_qcFlags.assign((*flags_)[iv].begin(), (*flags_)[iv].end());
+      variable_qcFlags.assign(flags_[iv].begin(), flags_[iv].end());
       variableQCFlagsData =
           feedback_io::Data<int32_t>(creator.indexer(), variable_qcFlags);
     }
