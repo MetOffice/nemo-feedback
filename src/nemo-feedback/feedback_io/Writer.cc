@@ -9,9 +9,13 @@
 // https://github.com/Unidata/netcdf-cxx4
 
 #include <algorithm>
-#include <sstream>
-#include <iomanip>
 #include <cstring>
+#include <iomanip>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "eckit/exception/Exceptions.h"
 
@@ -179,7 +183,9 @@ void Writer<C>::write_metadata_variables(
       for (size_t j=0; j < STRINGNAM_NUM; ++j) {
         if (j < name_data_.variable_names[i].length()) {
           data[j] = static_cast<char>(name_data_.variable_names.at(i).at(j));
-        } else {data[j] = ' ';}
+        } else {
+          data[j] = ' ';
+        }
       }
       if (isExtraVariable[i]) {
         nc_var_list_extra.putVar({iextra++, 0}, {1, STRINGNAM_NUM}, data);
@@ -203,7 +209,9 @@ void Writer<C>::write_metadata_variables(
       for (size_t j=0; j < STRINGNAM_NUM; ++j) {
         if (j < name_data_.additional_names[i].length()) {
           data[j] = static_cast<char>(name_data_.additional_names.at(i).at(j));
-        } else {data[j] = ' ';}
+        } else {
+          data[j] = ' ';
+        }
       }
       nc_entries_var.putVar({i, 0}, {1, STRINGNAM_NUM}, data);
     }

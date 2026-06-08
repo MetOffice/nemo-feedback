@@ -8,9 +8,10 @@
 // https://github.com/Unidata/netcdf-cxx4
 
 #include <algorithm>
-#include <sstream>
-#include <iomanip>
 #include <cstring>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
 #include "eckit/exception/Exceptions.h"
 

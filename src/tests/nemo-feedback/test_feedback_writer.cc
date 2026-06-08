@@ -2,15 +2,16 @@
  * (C) British Crown Copyright 2026 Met Office
  */
 
-#include<netcdf>
+#include <netcdf>
 
-#include<string>
-#include<chrono>
-#include<thread>
 #include <algorithm>
+#include <chrono>
+#include <iomanip>
 #include <numeric>
 #include <sstream>
-#include <iomanip>
+#include <string>
+#include <thread>
+#include <vector>
 
 #include "eckit/log/Bytes.h"
 
