@@ -10,6 +10,7 @@
 #include <bitset>
 #include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -214,7 +215,7 @@ void NemoFeedback::write_all_data(
     // Pull out QC flags from UFO
     feedback_io::Data<int32_t> variableQCFlagsData;
     if (obsdb_.has("QCFlags", ufo_name)) {
-      variableQCFlagsData = creator.create("QCFlags", ufo_name, int32_t(0));
+      variableQCFlagsData = creator.create("QCFlags", ufo_name, static_cast<int32_t>(0));
     } else {
       const size_t iv = flags_.varnames().find(ufo_name);
       std::vector<int32_t> variable_qcFlags;
@@ -396,7 +397,7 @@ NemoFeedback::setupIDs(const NemoFeedbackDataCreator& creator) const {
 
   if (obsdb_.has("MetaData", "buoyIdentifier")) {
     feedback_io::Data<std::string> buoyIDs(
-        creator.create("MetaData", "buoyIdentifier", int32_t(0), buoyIDWidth));
+        creator.create("MetaData", "buoyIdentifier", static_cast<int32_t>(0), buoyIDWidth));
     for (size_t iOb = 0; iOb < stationIDs.n_obs(); ++iOb) {
       if (stationIdentificationAvailable) {
         if (buoyIDs[iOb] != missingStringFeedback &&
@@ -421,7 +422,7 @@ NemoFeedback::setupIDs(const NemoFeedbackDataCreator& creator) const {
   constexpr size_t stationTypeWidth = 4;
   if (obsdb_.has("MetaData", "fdbk_station_type")) {
     stationTypes = feedback_io::Data<std::string>(creator.create(
-        "MetaData", "fdbk_station_type", int32_t(0), stationTypeWidth, true));
+        "MetaData", "fdbk_station_type", static_cast<int32_t>(0), stationTypeWidth, true));
   } else {
     std::vector<std::string> blankStationTypeData(obsdb_.nlocs(),
                                                   std::string(4, ' '));
