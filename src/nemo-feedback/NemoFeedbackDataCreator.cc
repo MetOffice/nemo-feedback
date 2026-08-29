@@ -6,6 +6,7 @@
 
 #include <string.h>
 
+#include <iomanip>
 #include <tuple>
 #include <vector>
 #include <memory>
