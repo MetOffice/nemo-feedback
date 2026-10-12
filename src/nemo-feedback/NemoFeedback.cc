@@ -96,7 +96,9 @@ NemoFeedback::NemoFeedback(
       isAltimeter_ = true;
     }
     if (nemoVariableParams.nemoName.value() == "POTM" ||
-        nemoVariableParams.nemoName.value() == "PSAL") {
+        nemoVariableParams.nemoName.value() == "COTM" ||
+        nemoVariableParams.nemoName.value() == "PSAL" ||
+        nemoVariableParams.nemoName.value() == "ASAL") {
       isProfile = true;
     }
     nameData_.variable_names.emplace_back(nemoVariableParams.nemoName.value());
